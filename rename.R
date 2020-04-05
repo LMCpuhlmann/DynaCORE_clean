@@ -54,7 +54,7 @@ rename <- function(df){
   names(df)[85] <- "H2_05"
   names(df)[86] <- "H2_06"
   names(df)[87] <- "H2_07"
-  names(df)[88] <- "H2_08"
+  names(df)[88] <- "CSS" #change in COVID-19 support
   names(df)[89] <- "H3_01"
   names(df)[90] <- "H4_01"
   names(df)[91] <- "H4_02"

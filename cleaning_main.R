@@ -194,8 +194,13 @@ data_en$occupational.status[xx] <- NA
 # find people that are employed in 12 but not working in 13
 # STILL to do
 
+# find people with inconsistent corona info
+data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA
+# indicate individuals with inconsistent symptoms in CE_01 symptom.severity
+
+
 # I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
-data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
+ data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
 
 
 
@@ -220,7 +225,7 @@ data_en$P <- rowSums(data_en[GHQ])
 #PSS (percieved social support):
 term <- "H2_"
 PSSindex <- grep(term, names(data_en))
-PSSindex <- SOZU[1:7]
+PSSindex <- PSSindex[1:7]
 data_en$PSS <- rowSums(data_en[PSSindex])
 
 #COVID-19 support:
@@ -285,12 +290,12 @@ term <- "GE_"
 GE <- grep(term, names(data_en))
 GE <- GE[1:12]
 data_en$Eg.SCM <- rowSums(data_en[GE] >0) #stressor count
-data_en$Eg.SMM <- rowSums(data_en[GE])/5 #weighted
+data_en$Eg.SSM <- rowSums(data_en[GE])/5 #weighted
 
 #combined:
 Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:30])
 data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
-data_en$Ec.SMM <- rowSums(data_en[Eall])/5 #weighted
+data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
 # test
 which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")]))
@@ -334,12 +339,22 @@ data_en$in.eu = 0
 data_en$in.eu[xx] = 1
 data_en$in.eu = as.factor(data_en$in.eu)
 
+
+# index people who work in healthcare
+# index people who are unemployed
+
+# index people who work as freelancers
+
+# list of mental health conditions
+
+
 ##################### identify subjects to exclude ##############
 # exclude subjects under 18
 data_en$Respondent.ID[which(data_en$age < 18)]<- NA
 
-# exclude subjects with very short completion time
-# data_en$Respondent.ID[which(data_en$completionTime < 400)]<- NA
+# exclude subjects with very short completion time?
+#t = threshold completion time
+# data_en$Respondent.ID[which(data_en$completionTime < t)]<- NA
 
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # for now, the above list does not include Russia (148), Kasakhstan (92) & Turkey (186), since they are trans-continental
@@ -380,28 +395,14 @@ data_en$Respondent.ID[which(data_en$response_variance == 0)]<- NA
 # #add variance as an additional column in the data frame
 # data_en$variance_Q1 <- apply(data_en,1,function(row) var(as.vector(row[x]))) 
 
-### exclude subjects based on completion time?
-#data_en$Respondent.ID[which(data_en$completionTime < 400)]<- NA
-
 xx = which(is.na(data_en$Respondent.ID))
-data_en = data_en[-xx,]
+if(length(xx)>0){data_en = data_eu[-xx,]}
 
 # remove unnecessary columns 
 xx = grep("X", colnames(data_en))
 data_en = data_en[-xx]
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
-
-
-######### processing covariates ############
-
-# index people who work in healthcare
-# index people who are unemployed
-
-# index people who work as freelancers
-
-# list of mental health conditions
-                           
 
 
 ##### quality control #####
