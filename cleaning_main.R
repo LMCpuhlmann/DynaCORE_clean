@@ -194,8 +194,9 @@ data_en$occupational.status[xx] <- NA
 # find people that are employed in 12 but not working in 13
 # STILL to do
 
-# find people with inconsistent corona info
-data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA
+#  inconsistent corona info
+data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA # set symptom severity rating to NA if they indicated they were not tested pos
+
 # indicate individuals with inconsistent symptoms in CE_01 symptom.severity
 
 
@@ -227,9 +228,6 @@ term <- "H2_"
 PSSindex <- grep(term, names(data_en))
 PSSindex <- PSSindex[1:7]
 data_en$PSS <- rowSums(data_en[PSSindex])
-
-#COVID-19 support:
-data_en$CSS <- as.numeric(data_en$H2_08)
 
 #Optimism:
 data_en$OPT <- as.numeric(data_en$H3_01)
@@ -272,7 +270,7 @@ data_en$PAS <- rowMeans(PAS)
 #CORONA specific appraisal:
 term <- "H1_Cor_"
 PAC <- grep(term, names(data_en))
-data_en$PAC <- rowSums(data_en[CorAS])
+data_en$PAC <- rowSums(data_en[PAC])
 
 #### calculation of stressors
 # SCM = stressor count method
@@ -410,3 +408,17 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 # "years.of.education.fulltext" includes the full answer for years.of.education for anyone with less than 10 years
 # check these answers to make sure this was not due to typos or nor summing the total years of 
 
+# frequency table of mental health conditions
+# frequency table of quarantine situations
+
+##################### supplementary tables #################
+
+######### table 1: sample demographics and health status 
+# (all the initial basic variables and people‘s thinking about how the crisis is managed). 
+
+
+######### table 2: average values + SD of the sample in all the dependent and independent variables
+
+
+
+######### table 3: intercorrelations of dependent and independent variables
