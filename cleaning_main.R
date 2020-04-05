@@ -183,27 +183,40 @@ data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)]
 
 ### Employment
 employed = c("1", "2", "3", "4")
+not.employed = c("7", "8", "9", "10", "12") #parental leave, sick leave, unemployment w/ or w/o benefits, retired
 data_en$employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse="|"), ch))
+data_en$not.employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(not.employed, collapse="|"), ch))
 data_en$employed.13[sapply(data_en$employed.13, function(x) length(x)==0)] <- NA
+data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x)==0)] <- NA
 
 # find people that are unemployed in 12 but working in 13
-xx = which(!is.na(data_en$not.working.12) && !is.na(data_en$employed.13))
+index = which(!is.na(data_en$not.working.12)) %in% which(!is.na(data_en$employed.13))
+xx = which(!is.na(data_en$not.working.12))[index]
 data_en$occupation[xx] <- NA
 data_en$occupational.status[xx] <- NA
 
-# find people that are employed in 12 but not working in 13
-# STILL to do
+
+# add 'not working' to occupational status to all individuals listing forms of not working in 13
+index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
+xx = which(is.na(data_en$not.working.12))[index]
+data_en$occupational.status[xx][[1]][length(data_en$occupational.status[xx][[1]])+1] <- 16
 
 #  inconsistent corona info
 data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA # set symptom severity rating to NA if they indicated they were not tested pos
 
-# indicate individuals with inconsistent symptoms in CE_01 symptom.severity
+# indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
+data_en$symptom.inconsistency = NA
+data_en$symptom.inconsistency[which(data_en$symptom.severity >0 && data_en$CE_01 == 0)] = 1
 
+# indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
+# PLEASE MAKE SURE THAT THE 'risk.group' SCALE ACTUALLY STARTS WITH A 0, such that 1 corresponds to 'yes'. if the scale starts with a 1, then 2 = yes
+data_en$risk.group.inconsistency = NA
+data_en$risk.group.inconsistency[which(data_en$risk.group == 1 && data_en$CE_04 == 0)] = 1
+
+data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not happen" if participants indicated in covariates they were not in a risk group
 
 # I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
  data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
-
-
 
 ################### restructure questionnaire variables ########################
 
@@ -337,22 +350,27 @@ data_en$in.eu = 0
 data_en$in.eu[xx] = 1
 data_en$in.eu = as.factor(data_en$in.eu)
 
+# example of subgroup indices:
 
-# index people who work in healthcare
-# index people who are unemployed
+# index people who work in at risk jobs
 
-# index people who work as freelancers
 
-# list of mental health conditions
+# index people with potentially precarious job conditions: freelancer, self-employed, temp contract, unemployed, by excluding everyone with a stable status
+stable.occupational.status = c("1", "3", "7", "8", "11", "12")
+insecure.occulational.status = c("2", "4", "5", "6", "9", "10")
 
+index.stable.occupational.status <- lapply(data_en$occupational.status, function(ch) grep(paste(stable.occupational.status, collapse="|"), ch))
+index.stable.occupational.status[sapply(index.stable.occupational.status, function(x) length(x)==0)] <- NA
+
+data_en$stable.occupational.status = 1 # 1 = yes, stable status
+data_en$stable.occupational.status[which(is.na(index.stable.occupational.status))] = 0 # 0 = no, unstable status
 
 ##################### identify subjects to exclude ##############
+
 # exclude subjects under 18
 data_en$Respondent.ID[which(data_en$age < 18)]<- NA
 
-# exclude subjects with very short completion time?
-#t = threshold completion time
-# data_en$Respondent.ID[which(data_en$completionTime < t)]<- NA
+# exclude subjects with mental health conditions?
 
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # for now, the above list does not include Russia (148), Kasakhstan (92) & Turkey (186), since they are trans-continental
@@ -384,19 +402,26 @@ data_en$response_variance = rowSums(var)
  
 data_en$Respondent.ID[which(data_en$response_variance == 0)]<- NA
 
-###Comment: if the columns are not neatly lined up (e.g. following the 5:10 example) you can also use a vector. In it, specify column names, example below
-# x = c("colname1", "colname2", "colname3", "colname4", "colname5", "colname6") #specify columns per questionnaire
-# for (i in 1:nrow(data_en)){ 
-#   print(var(as.vector(as.matrix(data_en[i, x])))) #x reflects columns used, change accordingly per questionnaire (i.e. change with another vector) 
-# }
 
-# #add variance as an additional column in the data frame
-# data_en$variance_Q1 <- apply(data_en,1,function(row) var(as.vector(row[x]))) 
+####### outliers
+
+# distribution of response variance
+hist(data_en$response_variance)
+
+# distribution of completion time
+hist(data_en$completionTime)
+
+# exclude subjects with very short completion time?
+#t = threshold completion time
+# data_en$Respondent.ID[which(data_en$completionTime < t)]<- NA
+
+# distribution of age
+hist(data_en$age)
 
 xx = which(is.na(data_en$Respondent.ID))
 if(length(xx)>0){data_en = data_eu[-xx,]}
 
-# remove unnecessary columns 
+######### remove unnecessary columns 
 xx = grep("X", colnames(data_en))
 data_en = data_en[-xx]
 
@@ -408,8 +433,31 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 # "years.of.education.fulltext" includes the full answer for years.of.education for anyone with less than 10 years
 # check these answers to make sure this was not due to typos or nor summing the total years of 
 
-# frequency table of mental health conditions
-# frequency table of quarantine situations
+#####
+# number of subjects that were inconsistent in whether they had COVID related symptoms or not:
+sum(data_en$symptom.inconsistency, na.rm = T)
+
+# number of subjects that were inconsistent in whether they belong to a risk group:
+sum(data_en$risk.group.inconsistency, na.rm = T)
+
+# depending on the question addressed, these may be excluded:
+# xx = which(data_en$symptom.inconsistency==1) # COVID test
+# xx = which(data_en$risk.group.inconsistency==1) # risk group
+
+# if(length(xx)>0){data_en = data_eu[-xx,]}
+
+### ideas for quality control:
+# of people listing 'full-time studying" in 13, how many indicate undergoing education in 12? 
+
+# among people listing 'being in an occupation with enhanced risk of infection' what are the most frequent occupations?
+
+# frequency table of 10 most frequent mental health conditions
+head(count(data_en, 'mental.health.details'), n = 10)
+
+# frequency table of 10 most frequent other quarantine situations
+head(count(data_en, 'quarantine.status.text'), n = 10)
+
+# financial insecurity by profession
 
 ##################### supplementary tables #################
 
