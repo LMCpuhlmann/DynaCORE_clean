@@ -465,13 +465,24 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 ##################### supplementary tables #################
 
 ######### table 1: sample demographics and health status 
-# (all the initial basic variables and people‘s thinking about how the crisis is managed). 
+# (all the initial basic variables and people‘s thinking about how the crisis is managed).
+
+''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
 
 demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status", 
              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health", 
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures", 
              "adherence.to.recommended.procedures" )
 demog <- data_en[demovar]
+age <- summary(demog$age)
+gender <- 
+demog.summary <- data.frame()
+age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
+Gender_title <- c("Gender", "")
+Male
+'''
+#demog.summary <- rbind(age_descr,sex_title)
+
 
 
 ######### table 2: average values + SD of the sample in all the dependent and independent variables
