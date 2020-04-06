@@ -108,9 +108,15 @@ data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz 
 # data_en$End.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
 
 #completion time
-data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime) 
+data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime)
 # #test
-# data_en$completionTime[3] #gives time difference in minutes
+# data_en$completionTime[3] #gives time difference in mins
+
+data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
+
+# #test
+# data_en$completionTime[3] #returns numeric, equals time in seconds (1 minute=60 seconds)
+
 
 
 ###### date of Corona test #####
