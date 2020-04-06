@@ -21,6 +21,9 @@ require(dplyr)
 require(stringr)
 require(BBmisc)
 require(stringr)
+require(formattable)
+require(Hmisc)
+require(corrplot)
 # run the functions 'rename.R', 'formatting.R', ... or source:
 # source("/.../DynaCORE_clean/rename.R")
 # source("/.../DynaCORE_clean/formatting.R")
@@ -389,7 +392,7 @@ var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
 for (i in 1:nrow(data_en)){ 
   var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
   var[i,2] = (var(as.vector(as.matrix(data_en[i, PSSindex])))) 
-  var[i,3] = (var(as.vector(as.matrix(data_en[i, ASKU])))) 
+  var[i,3] = (var(as.vector(as.matrix(data_en[i, ASKU])))) #object asku not found
   var[i,4] = (var(as.vector(as.matrix(data_en[i, BRS])))) 
   var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
   var[i,6] = (var(as.vector(as.matrix(data_en[i, CERQ])))) 
@@ -473,6 +476,57 @@ demog <- data_en[demovar]
 
 ######### table 2: average values + SD of the sample in all the dependent and independent variables
 
+###step 1: extract all variables of interest into a new dataframe
+##NOTE: excel sheet SR_Ec.SCM SR_Ec.SSM do not match in R, in R they are defined as SR_c.SCM and SR_c.SSM - if adjusted, change in line below and code above
+variables.of.interest = data_en[, c("SR_Eg.SCM", "SR_Es.SCM", "SR_c.SCM", "SR_Eg.SSM", "SR_Es.SSM", "SR_c.SSM", "PAS", "PSS", "CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC", "P", "Es.SCM", "Es.SSM", "Eg.SCM", "Eg.SSM", "Ec.SCM", "Ec.SSM", "CERQSum", "PAS", "age")]
+
+###step 2: calculate mean/SD and put into a new dataframe
+##NOTE: SR... variables are Z-scores, mean of Z-score is always 0 and SD will be 1 -> pointless to calculate?
+Mean = as.data.frame(colMeans(variables.of.interest))
+SD = as.data.frame(apply(variables.of.interest, 2, sd))
+table.mean.sd = cbind(Mean, SD) #combine mean and SD into one table
+colnames(table.mean.sd)[1] <- "Mean" #rename header
+colnames(table.mean.sd)[2] <- "SD" #rename header
+table.mean.sd[, c(1:2)] = table.mean.sd %>% mutate_at(vars(Mean, SD), funs(round(., 2))) #round to two decimals
+
+###step 3: use formattable package to create a nice table that can be viewed in the viewer window of R
+formattable(table.mean.sd)
 
 
 ######### table 3: intercorrelations of dependent and independent variables
+
+###Basic correlation matrix
+corr.matrix = as.data.frame(cor(variables.of.interest, use = "complete.obs")) #intercorrelation matrix
+corr.matrix[, c(1:25)] = corr.matrix %>% mutate_at(vars(c(1:25)), funs(round(., 2))) #round to two decimals
+formattable(corr.matrix, 
+            align = c("c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c") #center values
+)
+
+###basic cor(...) does not give p-values, so use rcorr instead (requires more than 4 cases)
+##variables.of.interest[nrow(variables.of.interest) + 1,] = 1 #testing purpose (needed more than 4 cases, ignore this line) 
+
+corr.p.matrix <- rcorr(as.matrix(variables.of.interest))
+corr.p.matrix$r #gives correlations
+corr.p.matrix$P #gives p values of correlations
+
+flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+  )
+}
+
+corr.p.matrix <- as.data.frame(flattenCorrMatrix(corr.p.matrix$r, corr.p.matrix$P))
+corr.p.matrix$Sign <- ifelse(corr.p.matrix$p < 0.05, "significant", "not significant") #threshold set at .05
+corr.p.matrix[, c(3,4)] = round(corr.p.matrix[, c(-1, -2, -5)],2) #round 2 decimals, change last value (the 2) if you want more/less decimals
+formattable(corr.p.matrix) #viewer table
+
+
+###helpful intercorrlation matrix graph 
+x = cor(variables.of.interest)
+corrplot(x, type = "lower")
+
+
