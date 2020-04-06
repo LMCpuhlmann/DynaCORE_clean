@@ -387,7 +387,7 @@ Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 
 data_eu = data_en[xx,]
 
 
-### exclude subjects with no response variance (check block-wise)
+### exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)
 var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
 for (i in 1:nrow(data_en)){ 
   var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
@@ -397,6 +397,7 @@ for (i in 1:nrow(data_en)){
   var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
   var[i,6] = (var(as.vector(as.matrix(data_en[i, CERQ])))) 
   var[i,7] = (var(as.vector(as.matrix(data_en[i, CE])))) 
+  var[i,8] = (var(as.vector(as.matrix(data_en[i, GE])))) 
 }
 
 data_en$response_variance = rowSums(var)
