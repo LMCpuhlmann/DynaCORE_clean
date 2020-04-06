@@ -388,7 +388,7 @@ data_eu = data_en[xx,]
 var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
 for (i in 1:nrow(data_en)){ 
   var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
-  var[i,2] = (var(as.vector(as.matrix(data_en[i, SOZU])))) 
+  var[i,2] = (var(as.vector(as.matrix(data_en[i, PSSindex])))) 
   var[i,3] = (var(as.vector(as.matrix(data_en[i, ASKU])))) 
   var[i,4] = (var(as.vector(as.matrix(data_en[i, BRS])))) 
   var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
