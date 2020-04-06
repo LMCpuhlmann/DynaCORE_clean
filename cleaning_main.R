@@ -229,10 +229,11 @@ data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not hap
 
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
 
-#get rid of any cases with missings:
-
+# indicate any cases with missings:
+# (since we have loads of incomplete data, we will describe them rather than getting rid off them all)
+ 
 data_en$missing <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-#data_en <- data_en[data_en$missing == 0,]
+#data_en <- data_en[data_en$missing == 0,] 
 
 #Mental Health Problems 'P': 
 data_en$CM_07 <- 5 - data_en$CM_07
