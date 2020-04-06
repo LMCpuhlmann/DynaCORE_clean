@@ -47,7 +47,6 @@ data_en = formatting(data_en) #group occupation + status in lists
 # remove rows without respondent ID
 xx = which(is.na(data_en$Respondent.ID))
 data_en = data_en[-xx,]
-# note that in the real data, the above step will also exclude the column IP address
 
 ########## combine files from multiple languages
 
@@ -204,7 +203,6 @@ xx = which(!is.na(data_en$not.working.12))[index]
 data_en$occupation[xx] <- NA
 data_en$occupational.status[xx] <- NA
 
-
 # add 'not working' to occupational status to all individuals listing forms of not working in 13
 index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
 xx = which(is.na(data_en$not.working.12))[index]
@@ -234,7 +232,7 @@ data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
 #get rid of any cases with missings:
 
 data_en$missing <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-data_en <- data_en[data_en$missing == 0,]
+#data_en <- data_en[data_en$missing == 0,]
 
 #Mental Health Problems 'P': 
 data_en$CM_07 <- 5 - data_en$CM_07
@@ -361,7 +359,7 @@ data_en$in.eu = as.factor(data_en$in.eu)
 
 # example of subgroup indices:
 
-# index people who work in at risk jobs
+# index people who work in at risk jobs?
 
 # index people with potentially precarious job conditions: freelancer, self-employed, temp contract, unemployed, by excluding everyone with a stable status
 stable.occupational.status = c("1", "3", "7", "8", "11", "12")
@@ -415,11 +413,18 @@ data_en$response_variance = rowSums(var)
  
 data_en$Respondent.ID[which(data_en$response_variance == 0)]<- NA
 
+#### exclude all subjects that were set to NA:
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
 
 ####### outliers
 
 # distribution of response variance
 hist(data_en$response_variance)
+
+# exclude subjects with just little response variance?
+# v = threshold variance
+# data_en$Respondent.ID[which(data_en$response_variance < v)]<- NA
 
 # distribution of completion time
 hist(data_en$completionTime)
@@ -431,12 +436,15 @@ hist(data_en$completionTime)
 # distribution of age
 hist(data_en$age)
 
+
+#### exclude all subjects that were set to NA:
 xx = which(is.na(data_en$Respondent.ID))
-if(length(xx)>0){data_en = data_eu[-xx,]}
+if(length(xx)>0){data_en = data_en[-xx,]}
 
 ######### remove unnecessary columns 
 xx = grep("X", colnames(data_en))
 data_en = data_en[-xx]
+# note that in the real data, the above step will also exclude the column IP address
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
@@ -459,6 +467,7 @@ sum(data_en$risk.group.inconsistency, na.rm = T)
 # if(length(xx)>0){data_en = data_eu[-xx,]}
 
 ### ideas for quality control:
+
 # of people listing 'full-time studying" in 13, how many indicate undergoing education in 12? 
 
 # among people listing 'being in an occupation with enhanced risk of infection' what are the most frequent occupations?
