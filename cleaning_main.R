@@ -357,7 +357,6 @@ data_en$in.eu = as.factor(data_en$in.eu)
 
 # index people who work in at risk jobs
 
-
 # index people with potentially precarious job conditions: freelancer, self-employed, temp contract, unemployed, by excluding everyone with a stable status
 stable.occupational.status = c("1", "3", "7", "8", "11", "12")
 insecure.occulational.status = c("2", "4", "5", "6", "9", "10")
@@ -365,8 +364,12 @@ insecure.occulational.status = c("2", "4", "5", "6", "9", "10")
 index.stable.occupational.status <- lapply(data_en$occupational.status, function(ch) grep(paste(stable.occupational.status, collapse="|"), ch))
 index.stable.occupational.status[sapply(index.stable.occupational.status, function(x) length(x)==0)] <- NA
 
-data_en$stable.occupational.status = 1 # 1 = yes, stable status
-data_en$stable.occupational.status[which(is.na(index.stable.occupational.status))] = 0 # 0 = no, unstable status
+index.insecure.occupational.status <- lapply(data_en$occupational.status, function(ch) grep(paste(insecure.occulational.status, collapse="|"), ch))
+index.insecure.occupational.status[sapply(index.insecure.occupational.status, function(x) length(x)==0)] <- NA
+
+data_en$unstable.occupational.status = NA 
+data_en$unstable.occupational.status[which(!is.na(index.stable.occupational.status))] = 0 # 0 = no, stable status
+data_en$unstable.occupational.status[which(is.na(index.stable.occupational.status)&!is.na(index.insecure.occupational.status))] = 1 # 1 = yes, unstable status (and no additional stable status)
 
 ##################### identify subjects to exclude ##############
 
@@ -437,7 +440,6 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 # "years.of.education.fulltext" includes the full answer for years.of.education for anyone with less than 10 years
 # check these answers to make sure this was not due to typos or nor summing the total years of 
 
-#####
 # number of subjects that were inconsistent in whether they had COVID related symptoms or not:
 sum(data_en$symptom.inconsistency, na.rm = T)
 
@@ -462,6 +464,9 @@ head(count(data_en, 'mental.health.details'), n = 10)
 head(count(data_en, 'quarantine.status.text'), n = 10)
 
 # financial insecurity by profession
+
+########### check incomplete datasets #######
+
 
 ##################### supplementary tables #################
 
