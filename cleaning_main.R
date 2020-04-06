@@ -392,7 +392,7 @@ var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
 for (i in 1:nrow(data_en)){ 
   var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
   var[i,2] = (var(as.vector(as.matrix(data_en[i, PSSindex])))) 
-  var[i,3] = (var(as.vector(as.matrix(data_en[i, ASKU])))) #object asku not found
+  var[i,3] = (var(as.vector(as.matrix(data_en[i, GSEindex])))) #object asku not found
   var[i,4] = (var(as.vector(as.matrix(data_en[i, BRS])))) 
   var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
   var[i,6] = (var(as.vector(as.matrix(data_en[i, CERQ])))) 
