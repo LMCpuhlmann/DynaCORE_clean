@@ -464,6 +464,12 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 ######### table 1: sample demographics and health status 
 # (all the initial basic variables and people‘s thinking about how the crisis is managed). 
 
+demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status", 
+             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health", 
+             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures", 
+             "adherence.to.recommended.procedures" )
+demog <- data_en[demovar]
+
 
 ######### table 2: average values + SD of the sample in all the dependent and independent variables
 
