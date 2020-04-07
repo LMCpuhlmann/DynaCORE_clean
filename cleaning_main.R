@@ -276,6 +276,7 @@ data_en$NEU <- rowSums(data_en[BFI])
 #Behavioral Coping style
 term <- "COPE"
 COPE <- grep(term, names(data_en))
+COPE <- COPE[c(1:5,7:9)]
 data_en$BCS <- rowSums(data_en[COPE])
 
 #CERQ
