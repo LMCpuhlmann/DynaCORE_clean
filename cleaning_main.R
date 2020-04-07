@@ -15,11 +15,10 @@ require(foreign)
 require(plyr)
 require(dplyr)
 require(stringr)
-require(BBmisc)
-require(stringr)
-require(formattable)
-require(Hmisc)
-require(corrplot)
+#require(BBmisc)
+#require(formattable)
+#require(Hmisc)
+#require(corrplot)
 # run the functions 'rename.R', 'formatting.R', ... or source:
 # source("/.../DynaCORE_clean/rename.R")
 # source("/.../DynaCORE_clean/formatting.R")
@@ -31,7 +30,8 @@ numextract <- function(string){
 # load data and add column indicating the origin of the data
 # must have 171 columns!
 data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-data_en$survey_country = as.factor("en")
+# data_en$survey_country = as.factor("en")
+
 
 ########## combine files from multiple languages?
 
@@ -44,7 +44,6 @@ data_en$survey_country = as.factor("en")
 
 
 ####### general cleaning & first formatting
-
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
@@ -61,6 +60,11 @@ data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,
 
 # indicate any cases with missings:
 data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+
+# indicate incomplete covariates:
+length(which(data_en$infection.test.status==2 & is.na(as.numeric(data_en$symptom.severity))))
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
 
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # the above list does not include Russia (148), Kasakhstan (92), Turkey (186) & Georgia (67), since they are trans-continental
@@ -80,6 +84,10 @@ for(i in 1:length(data_en$complete.eu)){
 
 data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
 dim(data_en[data_en$missings == 0,]) # should be 5000
+
+#data_en$country.of.residence = revalue(data_en$country.of.residence, 
+#      c("1"="Afghanistan", "2"="Albania", "3"="Algeria", ))
+
 
 ## quality control: number of responses per country
 count(data_en, 'country.of.residence')
@@ -159,10 +167,13 @@ data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.sta
 # data_en$age[2] = "2o"
 # data_en$age[4] = "I am 711 years old"
 
+data_en$age.fulltext = data_en$age
 data_en$age = gsub("o", "0", data_en$age)
-# if any ages are 0, this could be due to a leading o
+
+# note that if any ages are 0, this could be due to a leading o. Check fulltext:
+data_en$age.fulltext[which(data_en$age==0)]
  
-# extract the numeric component of free form age response
+# extract the numeric component from age response
 data_en$age = numextract(data_en$age)
 data_en$age = as.numeric(data_en$age)
 data_en$age[which(data_en$age > 100)] = NA
@@ -189,10 +200,7 @@ for(i in 1:length(data_en$Respondent.ID)){
 }
 
 ###### current.location ####
-## combines the variables "country.of.residence", "current.stay.out.of.town.country" and "currently.away" into a variable "current.location" -> if subjects are away, their their location is the away country location, if they are not, the country of residence location is
-##R can default character columns to factors, so first step is to make sure variables of interest are characters
-data_en[ , c("current.stay.out.of.town.country" ,"country.of.residence") ] <- sapply( data_en[ , c("current.stay.out.of.town.country" ,"country.of.residence") ] , as.character )
-##now we use a simple ifelse statement to create a new variable that gives us currenty location (country)
+## combine the variables "country.of.residence", "current.stay.out.of.town.country" and "currently.away" into a variable "current.location" 
 data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
 
 # #test
@@ -201,7 +209,7 @@ data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data
 # data_en$current.stay.out.of.town[2] #Gives Yes, so current loc should be Andorra
 # data_en$current.location[2] #gives Andorra, hooray            
 
-#### clean-up inconsistent responses ####
+#### clean up inconsistent responses ####
 # set responses for place of location to NA if away currently was answered with 0
 data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] <- NA
 data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)] <- NA
@@ -255,8 +263,7 @@ data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not hap
 ################### restructure questionnaire variables ########################
 
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
- 
-#data_en <- data_en[data_en$missings == 0,] 
+#data_en <- data_en[data_en$missings == 0,] # remove any cases with missings
 
 #Mental Health Problems 'P': 
 data_en$CM_07 <- 5 - data_en$CM_07
@@ -430,14 +437,14 @@ if(length(xx)>0){data_en = data_en[-xx,]}
 # distribution of response variance
 hist(data_en$response_variance)
 
-# exclude subjects with just little response variance?
+# consider excluding subjects with unusually little response variance
 # v = threshold variance
 # data_en$Respondent.ID[which(data_en$response_variance < v)]<- NA
 
 # distribution of completion time
 hist(data_en$completionTime)
 
-# exclude subjects with very short completion time?
+# consider excluding subjects with unusually short completion time
 #t = threshold completion time
 # data_en$Respondent.ID[which(data_en$completionTime < t)]<- NA
 
@@ -489,7 +496,6 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 # financial insecurity by profession
 
 ########### check incomplete datasets #######
-### remove missings 
 
 ##################### supplementary tables #################
 
