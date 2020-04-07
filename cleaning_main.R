@@ -1,10 +1,9 @@
 # pipeline template to clean and structure data from the DynaCORE project for analysis
 # contributors:
 # Matthias Zerban (matthias.zerban@unimedizin-mainz.de)
-# Kenneth Yuen ()
 # Lara Puhlmann (puhlmann@cbs.mpg.de)
 # Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be)
-
+# Haakon Engen
 
 
 
@@ -231,9 +230,9 @@ data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
 
 # indicate any cases with missings:
 # (since we have loads of incomplete data, we will describe them rather than getting rid off them all)
- 
-data_en$missing <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-#data_en <- data_en[data_en$missing == 0,] 
+data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+dim(data_en[data_en$missings == 0,]) # should be 5000
+#data_en <- data_en[data_en$missings == 0,] 
 
 #Mental Health Problems 'P': 
 data_en$CM_07 <- 5 - data_en$CM_07
@@ -324,11 +323,12 @@ which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")]))
 ##################### SR Score ###################
 
 #adapted from Haakon's script
-m1 <- summary(lm(scale(P)~scale(Eg.SCM),data= data_en))
-data_en$SR_Eg.SCM <-as.numeric(scale(resid(m1)))
 
-m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en))
-data_en$SR_Es.SCM <-as.numeric(scale(resid(m2)))
+m1 <- summary(lm(scale(P)~scale(Eg.SCM),data= data_en[!is.na(data_en$Eg.SCM)]))
+data_en$SR_Eg.SCM[!is.na(data_en$Eg.SCM)] <-as.numeric(scale(resid(m1)))
+
+m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM)]))
+data_en$SR_Es.SCM[!is.na(data_en$Es.SCM)] <-as.numeric(scale(resid(m2)))
 
 m3 <- summary(lm(scale(P)~scale(Ec.SCM),data= data_en))
 data_en$SR_c.SCM <-as.numeric(scale(resid(m3)))
@@ -347,6 +347,7 @@ data_en$SR_c.SSM <-as.numeric(scale(resid(m6)))
 ##### select subjects FROM Europe
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # for now, the above list does not include Russia (148), Kasakhstan (92) & Turkey (186), since they are trans-continental
+# NOTE: List of countries migh change when Kosovo is included!
 
 xx = which(data_en$country.of.residence %in% Europe)
 data_en$from.eu = 0
@@ -483,7 +484,8 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 # financial insecurity by profession
 
 ########### check incomplete datasets #######
-
+### remove missings 
+data_complete <- data_en[data_en$missings == 0,]
 
 ##################### supplementary tables #################
 
