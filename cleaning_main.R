@@ -5,12 +5,9 @@
 # Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be)
 # Haakon Engen
 
-
-
 #
-#WARNING: Only run once! 
+# WARNING: Only run once! 
 #
-
 
 
 rm(list = ls())
@@ -32,22 +29,11 @@ numextract <- function(string){
 } 
 
 # load data and add column indicating the origin of the data
+# must have 171 columns!
 data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-#data_test = read.csv("DynaCORE_test_data_firstround.csv", sep = ",", stringsAsFactors = FALSE)
-
 data_en$survey_country = as.factor("en")
 
-data_en = rename(data_en)
-data_en = formatting(data_en) #group occupation + status in lists
-
-
-################### general cleaning ########################
-
-# remove rows without respondent ID
-xx = which(is.na(data_en$Respondent.ID))
-data_en = data_en[-xx,]
-
-########## combine files from multiple languages
+########## combine files from multiple languages?
 
 # data_xx = read.csv("DynaCORE_test_data_xx.csv", sep = ",", stringsAsFactors = FALSE)
 # data_xx$survey_country = as.factor("xx")
@@ -57,8 +43,50 @@ data_en = data_en[-xx,]
 # data_all = rbind(data_en, data_xx, data_xy)
 
 
+####### general cleaning & first formatting
+
+data_en = rename(data_en) #rename variables
+data_en = formatting(data_en) #group occupation + status in lists
+
+# remove rows without respondent ID
+xx = which(is.na(data_en$Respondent.ID))
+data_en = data_en[-xx,]
+
+# format data type
+data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
+
+
+###### select all data up to 5000 complete responses from European residents ######
+
+# indicate any cases with missings:
+data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+
+Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
+# the above list does not include Russia (148), Kasakhstan (92), Turkey (186) & Georgia (67), since they are trans-continental
+
+# exclude all non Europeans
+xx = which(data_en$country.of.residence %in% Europe)
+data_en = data_en[xx,]
+
+data_en$complete.eu = NA
+c = 0
+for(i in 1:length(data_en$complete.eu)){
+  if (data_en$missings[i] == 0){
+  c = c+1
+  data_en$complete.eu[i] = c
+  }
+}
+
+data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
+dim(data_en[data_en$missings == 0,]) # should be 5000
+
+## quality control: number of responses per country
+count(data_en, 'country.of.residence')
+# frequency table of 10 most frequent countries
+head(count(data_en, 'country.of.residence'), n = 10)
+
 #################### covariates: plausibility checks & basic formatting ########################
-data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)
 
 data_en$household.income = factor(data_en$household.income, order = TRUE)
 data_en$health.status = factor(data_en$health.status, order = TRUE)
@@ -212,12 +240,12 @@ data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA # set sy
 
 # indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
 data_en$symptom.inconsistency = NA
-data_en$symptom.inconsistency[which(data_en$symptom.severity >0 && data_en$CE_01 == 0)] = 1
+data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 == 0)] = 1
 
 # indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
 # PLEASE MAKE SURE THAT THE 'risk.group' SCALE ACTUALLY STARTS WITH A 0, such that 1 corresponds to 'yes'. if the scale starts with a 1, then 2 = yes
 data_en$risk.group.inconsistency = NA
-data_en$risk.group.inconsistency[which(data_en$risk.group == 1 && data_en$CE_04 == 0)] = 1
+data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
 
 data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not happen" if participants indicated in covariates they were not in a risk group
 
@@ -227,11 +255,7 @@ data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not hap
 ################### restructure questionnaire variables ########################
 
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
-
-# indicate any cases with missings:
-# (since we have loads of incomplete data, we will describe them rather than getting rid off them all)
-data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-dim(data_en[data_en$missings == 0,]) # should be 5000
+ 
 #data_en <- data_en[data_en$missings == 0,] 
 
 #Mental Health Problems 'P': 
@@ -297,14 +321,14 @@ data_en$PAC <- rowSums(data_en[PAC])
 # SCM = stressor count method
 # SSM = stressor severity method
 
-#CORONA Stressors:
+#Corona pandmeic related stressors:
 term <- "CE_"
 CE <- grep(term, names(data_en))
 CE <- CE[1:30]
 data_en$Es.SCM <- rowSums(data_en[CE] >0) #stressor count
 data_en$Es.SSM <- rowSums(data_en[CE])/5 #weighted
 
-#DHs:
+#general stressors:
 term <- "GE_"
 GE <- grep(term, names(data_en))
 GE <- GE[1:12]
@@ -324,31 +348,28 @@ which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")]))
 
 #adapted from Haakon's script
 
-m1 <- summary(lm(scale(P)~scale(Eg.SCM),data= data_en[!is.na(data_en$Eg.SCM)]))
+m1 <- summary(lm(scale(P)~scale(Eg.SCM),data= data_en[!is.na(data_en$Eg.SCM),]))
 data_en$SR_Eg.SCM[!is.na(data_en$Eg.SCM)] <-as.numeric(scale(resid(m1)))
 
-m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM)]))
+m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM),]))
 data_en$SR_Es.SCM[!is.na(data_en$Es.SCM)] <-as.numeric(scale(resid(m2)))
 
-m3 <- summary(lm(scale(P)~scale(Ec.SCM),data= data_en))
-data_en$SR_c.SCM <-as.numeric(scale(resid(m3)))
+m3 <- summary(lm(scale(P)~scale(Ec.SCM),data= data_en[!is.na(data_en$Ec.SCM),]))
+data_en$SR_c.SCM[!is.na(data_en$Ec.SCM)] <-as.numeric(scale(resid(m3)))
 
-## do the same with severity ratings?
-m4 <- summary(lm(scale(P)~scale(Eg.SSM),data= data_en))
-data_en$SR_Eg.SSM <-as.numeric(scale(resid(m4)))
+## do the same with severity ratings
+m4 <- summary(lm(scale(P)~scale(Eg.SSM),data= data_en[!is.na(data_en$Eg.SSM),]))
+data_en$SR_Eg.SSM[!is.na(data_en$Eg.SSM)] <-as.numeric(scale(resid(m4)))
 
-m5 <- summary(lm(scale(P)~scale(Es.SSM),data= data_en))
-data_en$SR_Es.SSM <-as.numeric(scale(resid(m5)))
+m5 <- summary(lm(scale(P)~scale(Es.SSM),data= data_en[!is.na(data_en$Es.SSM),]))
+data_en$SR_Es.SSM[!is.na(data_en$Es.SSM)] <-as.numeric(scale(resid(m5)))
 
-m6 <- summary(lm(scale(P)~scale(Ec.SSM),data= data_en))
-data_en$SR_c.SSM <-as.numeric(scale(resid(m6)))
+m6 <- summary(lm(scale(P)~scale(Ec.SSM),data= data_en[!is.na(data_en$Ec.SSM),]))
+data_en$SR_c.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
+
 ######################## subgroup selection ######################## 
 
-##### select subjects FROM Europe
-Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
-# for now, the above list does not include Russia (148), Kasakhstan (92) & Turkey (186), since they are trans-continental
-# NOTE: List of countries migh change when Kosovo is included!
-
+## indicate subjects from Europe
 xx = which(data_en$country.of.residence %in% Europe)
 data_en$from.eu = 0
 data_en$from.eu[xx] = 1
@@ -361,8 +382,6 @@ data_en$in.eu[xx] = 1
 data_en$in.eu = as.factor(data_en$in.eu)
 
 # example of subgroup indices:
-
-# index people who work in at risk jobs?
 
 # index people with potentially precarious job conditions: freelancer, self-employed, temp contract, unemployed, by excluding everyone with a stable status
 stable.occupational.status = c("1", "3", "7", "8", "11", "12")
@@ -382,20 +401,6 @@ data_en$unstable.occupational.status[which(is.na(index.stable.occupational.statu
 
 # exclude subjects under 18
 data_en$Respondent.ID[which(data_en$age < 18)]<- NA
-
-# exclude subjects with mental health conditions?
-
-Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
-# for now, the above list does not include Russia (148), Kasakhstan (92) & Turkey (186), since they are trans-continental
-
-##### select subjects FROM Europe
-#xx = which(data_en$country.of.residence %in% Europe)
-
-##### select subjects IN Europe
-#xx = which(data_en$current.location %in% Europe)
-
-data_eu = data_en[xx,]
-
 
 ### exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)
 var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
@@ -485,7 +490,6 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 
 ########### check incomplete datasets #######
 ### remove missings 
-data_complete <- data_en[data_en$missings == 0,]
 
 ##################### supplementary tables #################
 
