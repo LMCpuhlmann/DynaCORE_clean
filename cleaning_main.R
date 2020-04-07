@@ -30,16 +30,12 @@ numextract <- function(string){
 # load data and add column indicating the origin of the data
 # must have 171 columns!
 data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-# data_en$survey_country = as.factor("en")
-
 
 ########## combine files from multiple languages?
 
 # data_xx = read.csv("DynaCORE_test_data_xx.csv", sep = ",", stringsAsFactors = FALSE)
-# data_xx$survey_country = as.factor("xx")
 # 
 # data_xy = read.csv("DynaCORE_test_data_xx.csv", sep = ",", stringsAsFactors = FALSE)
-# data_xy$survey_country = as.factor("xy")
 # data_all = rbind(data_en, data_xx, data_xy)
 
 
@@ -51,6 +47,11 @@ data_en = formatting(data_en) #group occupation + status in lists
 xx = which(is.na(data_en$Respondent.ID))
 data_en = data_en[-xx,]
 
+# indicate incomplete covariates:
+length(which(data_en$infection.test.status==2 & is.na(as.numeric(data_en$symptom.severity))))
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
+
 # format data type
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
 data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
@@ -60,11 +61,6 @@ data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,
 
 # indicate any cases with missings:
 data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-
-# indicate incomplete covariates:
-length(which(data_en$infection.test.status==2 & is.na(as.numeric(data_en$symptom.severity))))
-length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
-length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
 
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # the above list does not include Russia (148), Kasakhstan (92), Turkey (186) & Georgia (67), since they are trans-continental
@@ -496,83 +492,83 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 # financial insecurity by profession
 
 ########### check incomplete datasets #######
-
-##################### supplementary tables #################
-
-######### table 1: sample demographics and health status 
-# (all the initial basic variables and people‘s thinking about how the crisis is managed).
-
-''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
-
-demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status", 
-             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health", 
-             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures", 
-             "adherence.to.recommended.procedures" )
-demog <- data_en[demovar]
-age <- summary(demog$age)
-gender <- 
-demog.summary <- data.frame()
-age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
-Gender_title <- c("Gender", "")
-Male
-'''
-#demog.summary <- rbind(age_descr,sex_title)
-
-
-
-######### table 2: average values + SD of the sample in all the dependent and independent variables
-
-###step 1: extract all variables of interest into a new dataframe
-##NOTE: excel sheet SR_Ec.SCM SR_Ec.SSM do not match in R, in R they are defined as SR_c.SCM and SR_c.SSM - if adjusted, change in line below and code above
-variables.of.interest = data_en[, c("SR_Eg.SCM", "SR_Es.SCM", "SR_c.SCM", "SR_Eg.SSM", "SR_Es.SSM", "SR_c.SSM", "PAS", "PSS", "CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC", "P", "Es.SCM", "Es.SSM", "Eg.SCM", "Eg.SSM", "Ec.SCM", "Ec.SSM", "CERQSum", "PAS", "age")]
-
-###step 2: calculate mean/SD and put into a new dataframe
-##NOTE: SR... variables are Z-scores, mean of Z-score is always 0 and SD will be 1 -> pointless to calculate?
-Mean = as.data.frame(colMeans(variables.of.interest))
-SD = as.data.frame(apply(variables.of.interest, 2, sd))
-table.mean.sd = cbind(Mean, SD) #combine mean and SD into one table
-colnames(table.mean.sd)[1] <- "Mean" #rename header
-colnames(table.mean.sd)[2] <- "SD" #rename header
-table.mean.sd[, c(1:2)] = table.mean.sd %>% mutate_at(vars(Mean, SD), funs(round(., 2))) #round to two decimals
-
-###step 3: use formattable package to create a nice table that can be viewed in the viewer window of R
-formattable(table.mean.sd)
-
-
-######### table 3: intercorrelations of dependent and independent variables
-
-###Basic correlation matrix
-corr.matrix = as.data.frame(cor(variables.of.interest, use = "complete.obs")) #intercorrelation matrix
-corr.matrix[, c(1:25)] = corr.matrix %>% mutate_at(vars(c(1:25)), funs(round(., 2))) #round to two decimals
-formattable(corr.matrix, 
-            align = c("c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c") #center values
-)
-
-###basic cor(...) does not give p-values, so use rcorr instead (requires more than 4 cases)
-##variables.of.interest[nrow(variables.of.interest) + 1,] = 1 #testing purpose (needed more than 4 cases, ignore this line) 
-
-corr.p.matrix <- rcorr(as.matrix(variables.of.interest))
-corr.p.matrix$r #gives correlations
-corr.p.matrix$P #gives p values of correlations
-
-flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
-  ut <- upper.tri(cormat)
-  data.frame(
-    row = rownames(cormat)[row(cormat)[ut]],
-    column = rownames(cormat)[col(cormat)[ut]],
-    cor  =(cormat)[ut],
-    p = pmat[ut]
-  )
-}
-
-corr.p.matrix <- as.data.frame(flattenCorrMatrix(corr.p.matrix$r, corr.p.matrix$P))
-corr.p.matrix$Sign <- ifelse(corr.p.matrix$p < 0.05, "significant", "not significant") #threshold set at .05
-corr.p.matrix[, c(3,4)] = round(corr.p.matrix[, c(-1, -2, -5)],2) #round 2 decimals, change last value (the 2) if you want more/less decimals
-formattable(corr.p.matrix) #viewer table
-
-
-###helpful intercorrlation matrix graph 
-x = cor(variables.of.interest)
-corrplot(x, type = "lower")
-
-
+ 
+# ##################### supplementary tables #################
+# 
+# ######### table 1: sample demographics and health status 
+# # (all the initial basic variables and people‘s thinking about how the crisis is managed).
+# 
+# ''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
+# 
+# demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status", 
+#              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health", 
+#              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures", 
+#              "adherence.to.recommended.procedures" )
+# demog <- data_en[demovar]
+# age <- summary(demog$age)
+# gender <- 
+# demog.summary <- data.frame()
+# age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
+# Gender_title <- c("Gender", "")
+# Male
+# '''
+# #demog.summary <- rbind(age_descr,sex_title)
+# 
+# 
+# 
+# ######### table 2: average values + SD of the sample in all the dependent and independent variables
+# 
+# ###step 1: extract all variables of interest into a new dataframe
+# ##NOTE: excel sheet SR_Ec.SCM SR_Ec.SSM do not match in R, in R they are defined as SR_c.SCM and SR_c.SSM - if adjusted, change in line below and code above
+# variables.of.interest = data_en[, c("SR_Eg.SCM", "SR_Es.SCM", "SR_c.SCM", "SR_Eg.SSM", "SR_Es.SSM", "SR_c.SSM", "PAS", "PSS", "CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC", "P", "Es.SCM", "Es.SSM", "Eg.SCM", "Eg.SSM", "Ec.SCM", "Ec.SSM", "CERQSum", "PAS", "age")]
+# 
+# ###step 2: calculate mean/SD and put into a new dataframe
+# ##NOTE: SR... variables are Z-scores, mean of Z-score is always 0 and SD will be 1 -> pointless to calculate?
+# Mean = as.data.frame(colMeans(variables.of.interest))
+# SD = as.data.frame(apply(variables.of.interest, 2, sd))
+# table.mean.sd = cbind(Mean, SD) #combine mean and SD into one table
+# colnames(table.mean.sd)[1] <- "Mean" #rename header
+# colnames(table.mean.sd)[2] <- "SD" #rename header
+# table.mean.sd[, c(1:2)] = table.mean.sd %>% mutate_at(vars(Mean, SD), funs(round(., 2))) #round to two decimals
+# 
+# ###step 3: use formattable package to create a nice table that can be viewed in the viewer window of R
+# formattable(table.mean.sd)
+# 
+# 
+# ######### table 3: intercorrelations of dependent and independent variables
+# 
+# ###Basic correlation matrix
+# corr.matrix = as.data.frame(cor(variables.of.interest, use = "complete.obs")) #intercorrelation matrix
+# corr.matrix[, c(1:25)] = corr.matrix %>% mutate_at(vars(c(1:25)), funs(round(., 2))) #round to two decimals
+# formattable(corr.matrix, 
+#             align = c("c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c") #center values
+# )
+# 
+# ###basic cor(...) does not give p-values, so use rcorr instead (requires more than 4 cases)
+# ##variables.of.interest[nrow(variables.of.interest) + 1,] = 1 #testing purpose (needed more than 4 cases, ignore this line) 
+# 
+# corr.p.matrix <- rcorr(as.matrix(variables.of.interest))
+# corr.p.matrix$r #gives correlations
+# corr.p.matrix$P #gives p values of correlations
+# 
+# flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
+#   ut <- upper.tri(cormat)
+#   data.frame(
+#     row = rownames(cormat)[row(cormat)[ut]],
+#     column = rownames(cormat)[col(cormat)[ut]],
+#     cor  =(cormat)[ut],
+#     p = pmat[ut]
+#   )
+# }
+# 
+# corr.p.matrix <- as.data.frame(flattenCorrMatrix(corr.p.matrix$r, corr.p.matrix$P))
+# corr.p.matrix$Sign <- ifelse(corr.p.matrix$p < 0.05, "significant", "not significant") #threshold set at .05
+# corr.p.matrix[, c(3,4)] = round(corr.p.matrix[, c(-1, -2, -5)],2) #round 2 decimals, change last value (the 2) if you want more/less decimals
+# formattable(corr.p.matrix) #viewer table
+# 
+# 
+# ###helpful intercorrlation matrix graph 
+# x = cor(variables.of.interest)
+# corrplot(x, type = "lower")
+# 
+# 
