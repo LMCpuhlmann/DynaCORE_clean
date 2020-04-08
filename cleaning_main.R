@@ -30,9 +30,6 @@ numextract <- function(string){
 # load data and add column indicating the origin of the data
 # must have 171 columns!
 data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-# Lara's Path (I had to use \\ as escapes):
-data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 ####### general cleaning & first formatting
 data_en = rename(data_en) #rename variables
