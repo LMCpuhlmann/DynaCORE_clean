@@ -30,14 +30,8 @@ numextract <- function(string){
 # load data and add column indicating the origin of the data
 # must have 171 columns!
 data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-
-########## combine files from multiple languages?
-
-# data_xx = read.csv("DynaCORE_test_data_xx.csv", sep = ",", stringsAsFactors = FALSE)
-# 
-# data_xy = read.csv("DynaCORE_test_data_xx.csv", sep = ",", stringsAsFactors = FALSE)
-# data_all = rbind(data_en, data_xx, data_xy)
-
+# Lara's Path (I had to use \\ as escapes):
+#data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
 ####### general cleaning & first formatting
 data_en = rename(data_en) #rename variables
@@ -49,7 +43,10 @@ data_en = data_en[-xx,]
 
 # indicate incomplete covariates:
 length(which(data_en$infection.test.status==2 & is.na(as.numeric(data_en$symptom.severity))))
+
+# people giving incomplete location answers
 length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 |data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
 length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
 
 # format data type
@@ -86,9 +83,10 @@ dim(data_en[data_en$missings == 0,]) # should be 5000
 
 
 ## quality control: number of responses per country
-count(data_en, 'country.of.residence')
+sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
+
 # frequency table of 10 most frequent countries
-head(count(data_en, 'country.of.residence'), n = 10)
+sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 
 #################### covariates: plausibility checks & basic formatting ########################
 
@@ -101,11 +99,12 @@ data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.au
 data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
 
 ##### people.in.household as continuous ####
+data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-1 # factor 0 was recoded to 2
 data_en$people.in.household.cont = as.numeric(data_en$people.in.household)
+xx = numextract(data_en$X.28)
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 5)] = as.numeric(xx[!is.na(xx)])
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 3)] = 3.5
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 4)] = 5.5
-xx = numextract(data_en$X.28)
-data_en$people.in.household.cont[which(data_en$people.in.household.cont == 5)] = as.numeric(xx)
 
 ###### date and completion time ########
 
