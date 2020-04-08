@@ -29,7 +29,7 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
-data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
 #text data needed for quality checks and to get exact scale of income variable
 data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
