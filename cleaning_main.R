@@ -29,10 +29,7 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
-#data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
-# Lara's Path (I had to use \\ as escapes):
-#data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
 
 #text data needed for quality checks and to get exact scale of income variable
 data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
@@ -41,6 +38,7 @@ data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_t
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
+# remove row without respondent ID
 ########## quality check income issue ############
 
 i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
@@ -66,13 +64,30 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 xx = which(is.na(data_en$Respondent.ID))
 data_en = data_en[-xx,]
 
-# indicate incomplete covariates:
+# indicate any cases with missings:
+data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+
+# check for incomplete covariates:
 length(which(data_en$infection.test.status==2 & is.na(as.numeric(data_en$symptom.severity))))
 
-# people giving incomplete location answers
+# exclude anyone away from their residence and not specifying the country of their current location
 length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
-length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 |data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
+xx = which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0)
+data_en = data_en[-xx,]
+length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0))
+
 length(which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0))
+
+### current.location ##
+data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
+
+# #test - current location among those away without missing data
+# which(data_en$country.of.residence[which(data_en$current.stay.out.of.town==1 & data_en$missings ==0)] != data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)])
+# 
+# data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+# data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+# data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
 
 # format data type
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
@@ -81,15 +96,15 @@ data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,
 
 ###### select all data up to 5000 complete responses from European residents ######
 
-# indicate any cases with missings:
-data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-
 Europe = c(2, 4, 9, 11, 12, 17, 18, 23, 28, 45, 47, 48, 51, 60, 63, 64, 67, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 # the above list does not include Russia (148), Kasakhstan (92), Turkey (186) & Georgia (67), since they are trans-continental
 
-# exclude all non Europeans
-xx = which(data_en$country.of.residence %in% Europe)
+# exclude all non-European residents
+xx = which(data_en$current.location %in% Europe)
 data_en = data_en[xx,]
+# how many do not have their residence in Europe?
+length(which(!(data_en$country.of.residence %in% Europe)))
+data_en$country.of.residence[which(!(data_en$country.of.residence %in% Europe))]
 
 data_en$complete.eu = NA
 c = 0
@@ -102,9 +117,13 @@ for(i in 1:length(data_en$complete.eu)){
 
 data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
 dim(data_en[data_en$missings == 0,]) # should be 5000
+dim(data_en[data_en$missings > 0,]) # should be the remaining
 
-#data_en$country.of.residence = revalue(data_en$country.of.residence, 
-#      c("1"="Afghanistan", "2"="Albania", "3"="Algeria", ))
+data_en$country.of.residence = revalue(data_en$country.of.residence, 
+      c("1"="Afghanistan", "2"="Albania", "3"="Algeria", "68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
+
+# drop empty levels
+data_en$current.stay.out.of.town = droplevels(data_en$current.stay.out.of.town)
 
 
 ## quality control: number of responses per country
@@ -113,7 +132,16 @@ sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
 # frequency table of 10 most frequent countries
 sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 
+# frequency table of survey language
+sort( table(unlist(data_en$survey.language)),decreasing=TRUE)
+
 #################### covariates: plausibility checks & basic formatting ########################
+
+# remaining incomplete covariates among those without missings
+data_en.complete = data_en[which(data_en$missings==0),]
+length(which(data_en.complete$current.stay.out.of.town==1 & data_en.complete$current.stay.out.of.town.city==""))
+
+length(which(data_en.complete$people.in.household==0 & nchar(data_en.complete$X.28)==0))
 
 data_en$household.income = factor(data_en$household.income, order = TRUE)
 data_en$health.status = factor(data_en$health.status, order = TRUE)
@@ -123,12 +151,11 @@ data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.un
 data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.authorities.measures)
 data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
 
-
- ##### people.in.household as continuous ####
-data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-1 # factor 0 was recoded to 2
-data_en$people.in.household.cont = as.numeric(data_en$people.in.household)
-xx = numextract(data_en$X.28)
-data_en$people.in.household.cont[which(data_en$people.in.household.cont == 5)] = as.numeric(xx[!is.na(xx)])
+##### people.in.household as continuous ####
+data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-2 # factor 0 was recoded to 2
+xx = as.numeric(numextract(data_en$X.28))
+xx[which(xx==0)] = 1
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 0)] = xx[!is.na(xx)]
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 3)] = 3.5
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 4)] = 5.5
 
@@ -173,12 +200,11 @@ data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
 # data_en$completionTime[3] #returns numeric, equals time in seconds (1 minute=60 seconds)
 
 
-
 ###### date of Corona test #####
 data_en$infection.test.status.date = gsub(".", "/", data_en$infection.test.status.date, fixed=TRUE)#mm.dd.yyyy becomes mm/dd/yyyy
 data_en$infection.test.status.date[which(nchar(data_en$infection.test.status.date)<5)]=NA # set all that are not a date to NA
 #convert month-day-year to year-month-day date
-data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
+data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date, tryFormats = c("%m-%d-%Y", "%d/%m/%Y"), optional = FALSE)
 #date as POSIXlt
 data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.status.date), tz = "Europe/Berlin", format="%Y-%m-%d")
 
@@ -220,22 +246,12 @@ for(i in 1:length(data_en$Respondent.ID)){
   }
 }
 
-###### current.location ####
-## combine the variables "country.of.residence", "current.stay.out.of.town.country" and "currently.away" into a variable "current.location" 
-data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
-
-# #test
-# data_en$country.of.residence[2] #gives Algeria
-# data_en$current.stay.out.of.town.country[2] #Gives Andorra
-# data_en$current.stay.out.of.town[2] #Gives Yes, so current loc should be Andorra
-# data_en$current.location[2] #gives Andorra, hooray            
-
 #### clean up inconsistent responses ####
-# set responses for place of location to NA if away currently was answered with 0
+# set responses for place of location to NA if away currently was answered with No
 data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] <- NA
 data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)] <- NA
 
-# set cases where more/same people in household are underage than total household to NA
+# set cases where more/same as total nr of people in household are underage to NA
 xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.under.18)
 data_en$people.in.household[xx] = NA
 data_en$people.in.household.cont[xx] = NA
@@ -272,11 +288,11 @@ data_en$symptom.inconsistency = NA
 data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 == 0)] = 1
 
 # indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
-# PLEASE MAKE SURE THAT THE 'risk.group' SCALE ACTUALLY STARTS WITH A 0, such that 1 corresponds to 'yes'. if the scale starts with a 1, then 2 = yes
 data_en$risk.group.inconsistency = NA
 data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
 
-data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not happen" if participants indicated in covariates they were not in a risk group
+# maybe the following is to agressive of a change:
+# data_en$CE_04[data_en$risk.group==1]=0 # set risk group stressor to "did not happen" if participants indicated in covariates they were not in a risk group
 
 # I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
  data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
