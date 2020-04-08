@@ -31,7 +31,7 @@ numextract <- function(string){
 # must have 171 columns!
 # Lara's Path (I had to use \\ as escapes):
 data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
@@ -42,7 +42,6 @@ data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_t
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
-# remove row without respondent ID
 ########## quality check income issue ############
 
 i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
@@ -64,7 +63,7 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 #1  409 2045
 
 
-# remove rows without respondent ID
+# remove row without respondent ID
 xx = which(is.na(data_en$Respondent.ID))
 data_en = data_en[-xx,]
 
@@ -242,10 +241,16 @@ data_en$age.fulltext[which(data_en$age==0)]
 # recode this person:
 data_en$age[which(data_en$age==0)] = 41
 
-# check invalid age responses (these are excluded further down)
+# check invalid age responses 
 which(data_en$age < 18)
 which(data_en$age[which(!is.na(data_en$complete.eu))] < 18)
 which(is.na(data_en$age[which(!is.na(data_en$complete.eu))]))
+
+# exclude those resposes
+data_en$Respondent.ID[which(data_en$age < 18)]<- NA
+data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
 
 ###### education #####
 
@@ -256,6 +261,9 @@ which(is.na(data_en$age[which(!is.na(data_en$complete.eu))]))
 data_en$years.of.education.fulltext = data_en$years.of.education
 data_en$years.of.education = numextract(data_en$years.of.education) # extract the numeric component of free form years.of.education response
 data_en$years.of.education = as.numeric(data_en$years.of.education)
+
+length(which(data_en$years.of.education > data_en$age))
+length(which(data_en$years.of.education[which(!is.na(data_en$complete.eu))] > data_en$age[which(!is.na(data_en$complete.eu))]))
 
 for(i in 1:length(data_en$Respondent.ID)){
   if (!is.na(data_en$years.of.education[i])) {
@@ -275,15 +283,20 @@ data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)
 
 # set cases where more/same as total nr of people in household are underage to NA
 xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.under.18)
-data_en$people.in.household[xx] = NA
-data_en$people.in.household.cont[xx] = NA
-data_en$people.in.household.under.18[xx] = NA
+#xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+0.5<=data_en$people.in.household.under.18[which(!is.na(data_en$complete.eu))])
 
-# set cases with mismatch in occulation to NA
+#data_en$people.in.household[xx] = NA
+#data_en$people.in.household.cont[xx] = NA
+#data_en$people.in.household.under.18[xx] = NA
+
+# instead, fully exclude:
+data_en$Respondent.ID[xx] = NA
+
+### set cases with mismatch in occulation to NA
+
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
 
-### Employment
 employed = c("1", "2", "3", "4")
 not.employed = c("7", "8", "9", "10", "12") #parental leave, sick leave, unemployment w/ or w/o benefits, retired
 data_en$employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse="|"), ch))
@@ -313,8 +326,10 @@ data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 
 data_en$risk.group.inconsistency = NA
 data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
 
-# maybe the following is to agressive of a change:
-# data_en$CE_04[data_en$risk.group==1]=0 # set risk group stressor to "did not happen" if participants indicated in covariates they were not in a risk group
+# also indicate inconsistency if participants indicated in covariates they were not in a risk group, but indicated being stressed by being in a risk group in CE_04
+data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
+
+# data_en$CE_04[data_en$risk.group==1]=0 # set risk group stressor to "did not happen" 
 
 # I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
  data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
@@ -470,11 +485,7 @@ data_en$unstable.occupational.status = NA
 data_en$unstable.occupational.status[which(!is.na(index.stable.occupational.status))] = 0 # 0 = no, stable status
 data_en$unstable.occupational.status[which(is.na(index.stable.occupational.status)&!is.na(index.insecure.occupational.status))] = 1 # 1 = yes, unstable status (and no additional stable status)
 
-##################### identify subjects to exclude ##############
-
-# exclude subjects under 18
-data_en$Respondent.ID[which(data_en$age < 18)]<- NA
-data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
+##################### identify additional subjects to exclude ##############
 
 ### exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)
 var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
