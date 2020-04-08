@@ -29,9 +29,6 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
-# Lara's Path (I had to use \\ as escapes):
-data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
@@ -336,12 +333,11 @@ data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 =
  
 ################### old income coding ################################
  
+test <- data_en[c("Respondent.ID","check_ID_text","household.income", "household.income.old", "check_income_text")] #to check corresponding factors
 data_en$household.income.old = factor(data_en$household.income, order = TRUE)
 data_en$household.income.old = as.numeric(data_en$household.income.old)
-test <- data_en[c("Respondent.ID","check_ID_text","household.income","household.income.old", "check_income_text")] #to check corresponding factors
-data_en$household.income.old <- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(6,7,8,9,1,1,1,1,2,3,4,5))
+data_en$household.income.old <- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(11,12,13,14,2,3,4,5,6,7,8,9))
 data_en$household.income.old <- factor(data_en$household.income.old)
-
 ################### restructure questionnaire variables ########################
 
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
