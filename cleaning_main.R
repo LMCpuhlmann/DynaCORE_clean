@@ -15,7 +15,7 @@ require(foreign)
 require(plyr)
 require(dplyr)
 require(stringr)
-#require(BBmisc)
+require(BBmisc)
 #require(formattable)
 #require(Hmisc)
 #require(corrplot)
@@ -29,13 +29,38 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
-data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("DynaCORE_test_answer_number.csv", sep = ",", stringsAsFactors = FALSE)
 # Lara's Path (I had to use \\ as escapes):
 #data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+
+#text data needed for quality checks and to get exact scale of income variable
+data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 ####### general cleaning & first formatting
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
+
+########## quality check income issue ############
+
+i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
+data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)]
+data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)]
+test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable
+test$ID <- data_en$Respondent.ID
+isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)])
+test$income <- data_en$household.income
+table(test$income) 
+#            1       10       11       12       13       14        2        3        4        5        6        7 
+#3174      416      409      205      123       60      130      936      742      777     1273     2045     1392 
+#  8        9 Response 
+#750      422        1 
+
+table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"]) 
+#there are multiple levels coded to this response:
+#    10    6 
+#1  409 2045
+
 
 # remove rows without respondent ID
 xx = which(is.na(data_en$Respondent.ID))
@@ -98,7 +123,8 @@ data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.un
 data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.authorities.measures)
 data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
 
-##### people.in.household as continuous ####
+
+ ##### people.in.household as continuous ####
 data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-1 # factor 0 was recoded to 2
 data_en$people.in.household.cont = as.numeric(data_en$people.in.household)
 xx = numextract(data_en$X.28)
@@ -254,7 +280,14 @@ data_en$CE_04[data_en$risk.group==0]=0 # set risk group stressor to "did not hap
 
 # I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
  data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
-
+ 
+################### old income coding ################################
+ 
+test <- data_en[c("Respondent.ID","check_ID_text","household.income", "household.income.old", "check_income_text")] #to check corresponding factors
+data_en$household.income.old = factor(data_en$household.income, order = TRUE)
+data_en$household.income.old = as.numeric(data_en$household.income.old)
+data_en$household.income.old <- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(11,12,13,14,2,3,4,5,6,7,8,9))
+data_en$household.income.old <- factor(data_en$household.income.old)
 ################### restructure questionnaire variables ########################
 
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
