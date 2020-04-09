@@ -91,6 +91,41 @@ data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data
 # data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
 # data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
 
+###### date and completion time ########
+
+#split weird month-day-year date + time col into two col, one with the weird date format, one with correct time
+for(i in 1:length(data_en$Respondent.ID)){
+  start = strsplit(data_en$Start.Date[i], " ")
+  data_en$Start.Date[i] = start[[1]][1]
+  data_en$Start.Time[i] = paste(start[[1]][2], start[[1]][3])
+  
+  end = strsplit(data_en$End.Date[i], " ")
+  data_en$End.Date[i] = end[[1]][1]
+  data_en$End.Time[i] = paste(end[[1]][2], end[[1]][3])
+}
+
+#line of code that deals with different separators that occur in surveymonkey raw data for date outputs (e.g. mm/dd/yyyy vs. mm.dd.yyyy).
+data_en$Start.Date = gsub(".", "/", data_en$Start.Date, fixed=TRUE) #mm.dd.yyyy becomes mm/dd/yyyy
+
+#convert month-day-year to year-month-day date, then to POSIXlt
+data_en$Start.Date = as.Date(data_en$Start.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
+data_en$End.Date = as.Date(data_en$End.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
+data_en$Start.Date = as.POSIXlt(paste(data_en$Start.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
+data_en$End.Date = as.POSIXlt(paste(data_en$End.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
+data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
+data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
+
+# #test
+# data_en$Start.Date[4] #should give year/month/day GMT
+# data_en$End.Date[4] #should give year/month/day GMT
+# data_en$Start.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+# data_en$End.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+
+#completion time
+data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime)
+# test: data_en$completionTime[3] #gives time difference in mins
+
+data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
 
 ###### select all data up to 5000 complete responses from European residents ######
 
@@ -103,8 +138,8 @@ data_en = data_en[xx,]
 
 data_en_test = data_en
 
-# selection method 1: sort by completion data, which is reflected in the respondent ID
-data_en = data_en[order(as.numeric(data_en$Respondent.ID)),]
+# sort by completion date + time
+data_en = data_en[order(data_en$End.DateTime),]
 
 data_en$complete.eu = NA
 c = 0
@@ -118,25 +153,11 @@ data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 
 dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov),]) # should be 5000
 dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov),]) # should be the remaining
 
+max(data_en$End.DateTime)
+data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
+data_en$End.DateTime[which(data_en$complete.eu==5000)]
+data_en$End.DateTime[length(data_en$Respondent.ID)]
 
-# selection method 2: double check selection:
-data_en_test$complete.eu = NA
-c = 0
-for(i in 0:(length(data_en_test$complete.eu)-1)){
-  if (data_en_test$missings[length(data_en_test$missings)-i] == 0 && is.na(data_en_test$missing.cov[length(data_en_test$missings)-i])){
-    c = c+1
-    data_en_test$complete.eu[length(data_en_test$missings)-i] = c
-  }
-}
-
-data_en_test = data_en_test[length(data_en_test$Respondent.ID):which(data_en_test$complete.eu==5000),] # keep data up until the 5000th complete response
-dim(data_en_test[data_en_test$missings == 0 &is.na(data_en_test$missing.cov),]) # should be 5000
-dim(data_en_test[data_en_test$missings > 0|!is.na(data_en_test$missing.cov),]) # should be the remaining
-
-# compare
-xx = which(data_en$Respondent.ID == data_en_test$Respondent.ID)
-which(is.na(xx))
-# --> same result
 
 which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
 
@@ -196,46 +217,6 @@ data_en$people.in.household.cont[which(data_en$people.in.household.cont == 0)] =
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 3)] = 3.5
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 4)] = 5.5
 
-
-###### date and completion time ########
-
-#split weird month-day-year date + time col into two col, one with the weird date format, one with correct time
-for(i in 1:length(data_en$Respondent.ID)){
-  start = strsplit(data_en$Start.Date[i], " ")
-  data_en$Start.Date[i] = start[[1]][1]
-  data_en$Start.Time[i] = paste(start[[1]][2], start[[1]][3])
-  
-  end = strsplit(data_en$End.Date[i], " ")
-  data_en$End.Date[i] = end[[1]][1]
-  data_en$End.Time[i] = paste(end[[1]][2], end[[1]][3])
-}
-
-#line of code that deals with different separators that occur in surveymonkey raw data for date outputs (e.g. mm/dd/yyyy vs. mm.dd.yyyy).
-data_en$Start.Date = gsub(".", "/", data_en$Start.Date, fixed=TRUE) #mm.dd.yyyy becomes mm/dd/yyyy
-
-#convert month-day-year to year-month-day date, then to POSIXlt
-data_en$Start.Date = as.Date(data_en$Start.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
-data_en$End.Date = as.Date(data_en$End.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
-data_en$Start.Date = as.POSIXlt(paste(data_en$Start.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
-data_en$End.Date = as.POSIXlt(paste(data_en$End.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
-data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
-data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
-
-# #test
-# data_en$Start.Date[4] #should give year/month/day GMT
-# data_en$End.Date[4] #should give year/month/day GMT
-# data_en$Start.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
-# data_en$End.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
-
-#completion time
-data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime)
-# #test
-# data_en$completionTime[3] #gives time difference in mins
-
-data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
-
-# #test
-# data_en$completionTime[3] #returns numeric, equals time in seconds (1 minute=60 seconds)
 
 ###### date of Corona test #####
 data_en$infection.test.status.date = gsub(".", "/", data_en$infection.test.status.date, fixed=TRUE)#mm.dd.yyyy becomes mm/dd/yyyy
@@ -700,3 +681,24 @@ head(count(data_en, 'quarantine.status.text'), n = 10)
 # corrplot(x, type = "lower")
 # 
 # 
+# check dates of survey language
+table(data_en$survey.language)
+table(data_en$survey.language[which(!is.na(data_en$complete.eu))])
+table(data_en$survey.language[which(is.na(data_en$complete.eu))])
+
+min(data_en$Start.DateTime[which(data_en$survey.language=="cs")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="da")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="de")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="en")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="es")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="et")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="fr")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="he")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="hu")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="it")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="nl")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="no")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
+
