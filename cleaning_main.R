@@ -19,6 +19,7 @@ require(BBmisc)
 #require(formattable)
 #require(Hmisc)
 #require(corrplot)
+
 # run the functions 'rename.R', 'formatting.R', ... or source:
 # source("/.../DynaCORE_clean/rename.R")
 # source("/.../DynaCORE_clean/formatting.R")
@@ -29,6 +30,9 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
+# Lara's Path (I had to use \\ as escapes):
+data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
 #text data needed for quality checks and to get exact scale of income variable
@@ -57,7 +61,6 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 #there are multiple levels coded to this response:
 #    10    6 
 #1  409 2045
-
 
 # remove row without respondent ID
 xx = which(is.na(data_en$Respondent.ID))
@@ -98,6 +101,11 @@ Europe = c(2, 4, 11, 17, 18, 23, 28, 45, 48, 51, 60, 63, 64, 68, 70, 77, 80, 81,
 xx = which(data_en$country.of.residence %in% Europe)
 data_en = data_en[xx,]
 
+data_en_test = data_en
+
+# selection method 1: sort by completion data, which is reflected in the respondent ID
+data_en = data_en[order(as.numeric(data_en$Respondent.ID)),]
+
 data_en$complete.eu = NA
 c = 0
 for(i in 1:length(data_en$complete.eu)){
@@ -106,10 +114,28 @@ for(i in 1:length(data_en$complete.eu)){
   data_en$complete.eu[i] = c
   }
 }
-
 data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
 dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov),]) # should be 5000
 dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov),]) # should be the remaining
+
+
+# selection method 2: double check selection:
+data_en_test$complete.eu = NA
+c = 0
+for(i in 0:(length(data_en_test$complete.eu)-1)){
+  if (data_en_test$missings[length(data_en_test$missings)-i] == 0 && is.na(data_en_test$missing.cov[length(data_en_test$missings)-i])){
+    c = c+1
+    data_en_test$complete.eu[length(data_en_test$missings)-i] = c
+  }
+}
+
+data_en_test = data_en_test[length(data_en_test$Respondent.ID):which(data_en_test$complete.eu==5000),] # keep data up until the 5000th complete response
+dim(data_en_test[data_en_test$missings == 0 &is.na(data_en_test$missing.cov),]) # should be 5000
+dim(data_en_test[data_en_test$missings > 0|!is.na(data_en_test$missing.cov),]) # should be the remaining
+
+# compare
+xx = which(data_en$Respondent.ID == data_en_test$Respondent.ID)
+which(is.na(xx))
 
 which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
 
