@@ -143,8 +143,6 @@ Europe = c(2, 4, 11, 17, 18, 23, 28, 45, 48, 51, 60, 63, 64, 68, 70, 77, 80, 81,
 xx = which(data_en$country.of.residence %in% Europe)
 data_en = data_en[xx,]
 
-data_en_test = data_en
-
 # sort by completion date + time
 data_en = data_en[order(data_en$End.DateTime),]
 
@@ -165,15 +163,25 @@ data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
 data_en$End.DateTime[which(data_en$complete.eu==5000)]
 data_en$End.DateTime[length(data_en$Respondent.ID)]
 
+# index people who say they are NOT out of town, but indicate a country that is outside Europe in the optional out of town response 
+which(!(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] %in% Europe))
 
-which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
+data_en$Respondent.ID[which(!(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] %in% Europe))] <- NA
+
+which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !=""&!is.na(data_en$complete.eu))] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !=""&!is.na(data_en$complete.eu))])
+
+# set responses of other people saying they are NOT out of town, but provide an answer to the follow up questions, to NA
+length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2")] != ""))
+length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2"&!is.na(data_en$complete.eu))] != ""))
+data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2")] != "")] <- ""
 
 # format data type
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
 data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
 
+# name most frequent countries
 data_en$country.of.residence = revalue(data_en$country.of.residence, 
-      c("1"="Afghanistan", "2"="Albania", "3"="Algeria", "68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
+      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
 
 # how many are not currently in Europe?
 length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
@@ -246,7 +254,7 @@ data_en$age = gsub("o", "0", data_en$age)
 data_en$age = numextract(data_en$age)
 data_en$age = as.numeric(data_en$age)
 data_en$age[which(data_en$age > 100)] = NA
-length(which(is.na(data_en$age)))
+length(which(is.na(data_en$age))) # just the one
 
 # note that if any ages are 0, this could be due to a leading o. Check fulltext:
 data_en$age.fulltext[which(data_en$age==0)] # -> one person, who says hes 41 soon
@@ -333,26 +341,22 @@ index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.emplo
 xx = which(is.na(data_en$not.working.12))[index]
 data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] <- 16
 
-#  inconsistent corona info
+# symptom severity above 1 although saying they were not tested pos
 xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1)
-xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
+#xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
 
-data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA # set symptom severity rating to NA if they indicated they were not tested pos
+# set all symptom ratings of those not being COVID positive to NA
+data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA 
 
 # indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
 data_en$symptom.inconsistency = NA
 data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 == 0)] = 1
+length(which(!is.na(data_en$symptom.inconsistency[which(is.na(data_en$complete.eu))])))
 
 # indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
 data_en$risk.group.inconsistency = NA
 data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
 length(which(!is.na(data_en$risk.group.inconsistency[which(!is.na(data_en$complete.eu))])))
-
-# also indicate inconsistency if participants said in covariates they were not in a risk group, but indicated being stressed by being in a risk group in CE_04
-data_en$risk.group.inconsistency[which(data_en$risk.group == 2 & data_en$CE_04 > 1)] = 1
-length(which(data_en$risk.group.inconsistency[which(!is.na(data_en$complete.eu))] ==1))
-
-# data_en$CE_04[data_en$risk.group==2]=0 # set risk group stressor to "did not happen" ?
 
 ## find people who provide a stressor rating > 0 in the free answers but fail to describe the stressor
 length(which(data_en$CE_30>0 & nchar(data_en$CE_30_text) == 0))
@@ -360,12 +364,6 @@ length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0)
 
 length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
 length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
-
-# inconsistent on both stressors
-xx = (which(data_en$CE_30>0 & nchar(data_en$CE_30_text) == 0))
-xy = (which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
-
-length(which(xx %in% xy))
 
 ################### old income coding ################################
  
