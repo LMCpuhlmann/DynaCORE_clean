@@ -42,6 +42,13 @@ data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_t
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
+# variable with occupation of people with only one occupation
+data_en$occupation.if.only.one <- as.character(data_en$occupation)
+data_en$occupation.if.only.one <- as.numeric(data_en$occupation.if.only.one)
+# variable with occupational status of people with only one indicated
+data_en$occupational.status.if.only.one <- as.character(data_en$occupational.status)
+data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.status.if.only.one)
+
 ########## quality check income issue ############
 
 i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
