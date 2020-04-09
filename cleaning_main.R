@@ -29,7 +29,9 @@ numextract <- function(string){
 
 # load data and add column indicating the origin of the data
 # must have 171 columns!
-
+# Lara's Path (I had to use \\ as escapes):
+data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
 #text data needed for quality checks and to get exact scale of income variable
@@ -89,10 +91,6 @@ data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data
 # data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
 # data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
 
-# format data type
-data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
-data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
-
 
 ###### select all data up to 5000 complete responses from European residents ######
 
@@ -115,6 +113,12 @@ for(i in 1:length(data_en$complete.eu)){
 data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
 dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov),]) # should be 5000
 dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov),]) # should be the remaining
+
+which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
+
+# format data type
+data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
 
 data_en$country.of.residence = revalue(data_en$country.of.residence, 
       c("1"="Afghanistan", "2"="Albania", "3"="Algeria", "68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
@@ -274,6 +278,11 @@ for(i in 1:length(data_en$Respondent.ID)){
 }
 
 #### clean up inconsistent responses ####
+
+# people saying they are not out of town but nonetheless providing an answer
+length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] != ""))
+length(which(data_en.complete$current.stay.out.of.town.country[which(data_en.complete$current.stay.out.of.town==2)] != ""))
+
 # set responses for place of location to NA if away currently was answered with No
 data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] <- NA
 data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)] <- NA
@@ -289,7 +298,7 @@ xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.und
 # instead, fully exclude:
 data_en$Respondent.ID[xx] = NA
 
-### set cases with mismatch in occulation to NA
+### set cases with mismatch in occupation to NA
 
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
@@ -307,12 +316,15 @@ xx = which(!is.na(data_en$not.working.12))[index]
 data_en$occupation[xx] <- NA
 data_en$occupational.status[xx] <- NA
 
-# add 'not working' to occupational status to all individuals listing forms of not working in 13
+# add 'not working' to occupation of all individuals listing forms of not working in 13
 index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
 xx = which(is.na(data_en$not.working.12))[index]
-data_en$occupational.status[xx][[1]][length(data_en$occupational.status[xx][[1]])+1] <- 16
+data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] <- 16
 
 #  inconsistent corona info
+xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1)
+xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
+
 data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA # set symptom severity rating to NA if they indicated they were not tested pos
 
 # indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
@@ -322,15 +334,26 @@ data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 
 # indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
 data_en$risk.group.inconsistency = NA
 data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
+length(which(!is.na(data_en$risk.group.inconsistency[which(!is.na(data_en$complete.eu))])))
 
-# also indicate inconsistency if participants indicated in covariates they were not in a risk group, but indicated being stressed by being in a risk group in CE_04
-data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
+# also indicate inconsistency if participants said in covariates they were not in a risk group, but indicated being stressed by being in a risk group in CE_04
+data_en$risk.group.inconsistency[which(data_en$risk.group == 2 & data_en$CE_04 > 1)] = 1
 
-# data_en$CE_04[data_en$risk.group==1]=0 # set risk group stressor to "did not happen" 
+# data_en$CE_04[data_en$risk.group==2]=0 # set risk group stressor to "did not happen" ?
 
-# I think mental health is wrongly coded as 0 = yes, 1 = no, so recode ONCE ONLY:
- data_en$diagnosed.mental.health = revalue(data_en$diagnosed.mental.health, c("0"="1", "1"="0"))
- 
+## find people who provide a stressor rating > 0 in the free answers but fail to describe the stressor
+length(which(data_en$CE_30>0 & nchar(data_en$CE_30_text) == 0))
+length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0))
+
+length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
+length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
+
+# inconsistent on both stressors
+xx = (which(data_en$CE_30>0 & nchar(data_en$CE_30_text) == 0))
+xy = (which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
+
+length(which(xx %in% xy))
+
 ################### old income coding ################################
  
 test <- data_en[c("Respondent.ID","check_ID_text","household.income", "household.income.old", "check_income_text")] #to check corresponding factors
