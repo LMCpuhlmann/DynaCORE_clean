@@ -196,6 +196,12 @@ sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 # frequency table of survey language
 sort( table(unlist(data_en$survey.language)),decreasing=TRUE)
 
+mental.health = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)],
+                              diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==0)],
+                           complete = data_en$complete.eu[which(data_en$diagnosed.mental.health==0)])
+
+mental.health$complete[!is.na(mental.health$complete)] <- 1
+write.csv(mental.health, "mental.health.csv")
 #################### covariates: plausibility checks & basic formatting ########################
 
 # remaining incomplete covariates among those without missings - should all be 0
@@ -307,9 +313,9 @@ length(which(data_en.complete$current.stay.out.of.town.country[which(data_en.com
 data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] <- NA
 data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)] <- NA
 
-# set cases where more/same as total nr of people in household are underage to NA
+# indicate cases where more/same as total nr of people in household are underage
 xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.under.18)
-#xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+0.5<=data_en$people.in.household.under.18[which(!is.na(data_en$complete.eu))])
+xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+0.5<=data_en$people.in.household.under.18[which(!is.na(data_en$complete.eu))])
 
 #data_en$people.in.household[xx] = NA
 #data_en$people.in.household.cont[xx] = NA
