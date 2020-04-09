@@ -136,6 +136,7 @@ dim(data_en_test[data_en_test$missings > 0|!is.na(data_en_test$missing.cov),]) #
 # compare
 xx = which(data_en$Respondent.ID == data_en_test$Respondent.ID)
 which(is.na(xx))
+# --> same result
 
 which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
 
@@ -260,7 +261,7 @@ data_en$age[which(data_en$age > 100)] = NA
 length(which(is.na(data_en$age)))
 
 # note that if any ages are 0, this could be due to a leading o. Check fulltext:
-data_en$age.fulltext[which(data_en$age==0)]
+data_en$age.fulltext[which(data_en$age==0)] # -> one person, who says hes 41 soon
 
 # recode this person:
 data_en$age[which(data_en$age==0)] = 41
@@ -361,6 +362,7 @@ length(which(!is.na(data_en$risk.group.inconsistency[which(!is.na(data_en$comple
 
 # also indicate inconsistency if participants said in covariates they were not in a risk group, but indicated being stressed by being in a risk group in CE_04
 data_en$risk.group.inconsistency[which(data_en$risk.group == 2 & data_en$CE_04 > 1)] = 1
+length(which(data_en$risk.group.inconsistency[which(!is.na(data_en$complete.eu))] ==1))
 
 # data_en$CE_04[data_en$risk.group==2]=0 # set risk group stressor to "did not happen" ?
 
