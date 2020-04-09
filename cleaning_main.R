@@ -368,10 +368,9 @@ length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0)
 ################### old income coding ################################
  
  data_en$household.income.old = factor(data_en$household.income, order = TRUE)
- data_en$household.income.old = as.numeric(data_en$household.income.old)
  test <- data_en[c("Respondent.ID","check_ID_text","household.income","household.income.old", "check_income_text")] #to check corresponding factors
- data_en$household.income.old <- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(6,7,8,9,1,1,1,1,2,3,4,5))
- data_en$household.income.old <- factor(data_en$household.income.old)
+ data_en$household.income.old <- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
+ 
  
 ################### restructure questionnaire variables ########################
 
