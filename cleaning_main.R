@@ -196,12 +196,6 @@ sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 # frequency table of survey language
 sort( table(unlist(data_en$survey.language)),decreasing=TRUE)
 
-mental.health = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)],
-                              diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==0)],
-                           complete = data_en$complete.eu[which(data_en$diagnosed.mental.health==0)])
-
-mental.health$complete[!is.na(mental.health$complete)] <- 1
-write.csv(mental.health, "mental.health.csv")
 #################### covariates: plausibility checks & basic formatting ########################
 
 # remaining incomplete covariates among those without missings - should all be 0
