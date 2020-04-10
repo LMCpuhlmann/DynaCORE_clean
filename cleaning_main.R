@@ -80,11 +80,11 @@ data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
 ## examine missing data in covariates
 data_en$missing.cov = NA
 
-# exclude anyone away from their residence and not specifying the country or city of their current location
+# count as missing cov: anyone away from their residence and not specifying the country or city of their current location
 xx  = which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 | data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0)
 data_en$missing.cov[xx] = 1
 
-# missing symptom specification
+#  count as missing cov: missing symptom specification
 xx = which(data_en$infection.test.status=="0" & is.na(as.numeric(data_en$symptom.severity)))
 data_en$missing.cov[xx] = 1
 
@@ -163,17 +163,18 @@ data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
 data_en$End.DateTime[which(data_en$complete.eu==5000)]
 data_en$End.DateTime[length(data_en$Respondent.ID)]
 
-# index people who say they are NOT out of town, but indicate a country that is outside Europe in the optional out of town response 
-which(!(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] %in% Europe))
+# clean "out of town" response #
 
-data_en$Respondent.ID[which(!(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] %in% Europe))] <- NA
+# set "out of town" response of people naming a different country than their country of residence to yes
+xx = which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
 
-which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !=""&!is.na(data_en$complete.eu))] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !=""&!is.na(data_en$complete.eu))])
+data_en$current.stay.out.of.town[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")][xx] = "1"
 
-# set responses of other people saying they are NOT out of town, but provide an answer to the follow up questions, to NA
+# set responses of people not out of town and naming the same as their country of residence to empty
 length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2")] != ""))
 length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2"&!is.na(data_en$complete.eu))] != ""))
-data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2")] != "")] <- ""
+
+data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country != "")] <- ""
 
 # format data type
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
@@ -200,7 +201,7 @@ sort( table(unlist(data_en$survey.language)),decreasing=TRUE)
 
 # remaining incomplete covariates among those without missings - should all be 0
 data_en.complete = data_en[which(!is.na(data_en$complete.eu)),]
-length(which(data_en.complete$current.stay.out.of.town==1 & data_en.complete$current.stay.out.of.town.city==""))
+#length(which(data_en.complete$current.stay.out.of.town==1 & data_en.complete$current.stay.out.of.town.city==""))
 length(which(data_en.complete$people.in.household==0 & nchar(data_en.complete$X.28)==0))
 length(which(data_en.complete$infection.test.status==0 & is.na(as.numeric(data_en.complete$symptom.severity))))
 
@@ -211,7 +212,6 @@ data_en$symptom.severity = factor(data_en$symptom.severity, order = TRUE)
 data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.under.18)
 data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.authorities.measures)
 data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
-
 
 # drop empty levels
 data_en$gender = droplevels(data_en$gender)
@@ -299,27 +299,11 @@ for(i in 1:length(data_en$Respondent.ID)){
 
 #### clean up inconsistent responses ####
 
-# people saying they are not out of town but nonetheless providing an answer
-length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] != ""))
-length(which(data_en.complete$current.stay.out.of.town.country[which(data_en.complete$current.stay.out.of.town==2)] != ""))
-
-# set responses for place of location to NA if away currently was answered with No
-data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==2)] <- NA
-data_en$current.stay.out.of.town.city[which(data_en$current.stay.out.of.town==2)] <- NA
-
-# indicate cases where more/same as total nr of people in household are underage
+# count cases where more/same as total nr of people in household are underage
 xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.under.18)
 xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+0.5<=data_en$people.in.household.under.18[which(!is.na(data_en$complete.eu))])
 
-#data_en$people.in.household[xx] = NA
-#data_en$people.in.household.cont[xx] = NA
-#data_en$people.in.household.under.18[xx] = NA
-
-# instead, fully exclude:
-data_en$Respondent.ID[xx] = NA
-
 ### set cases with mismatch in occupation to NA
-
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
 
@@ -341,17 +325,16 @@ index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.emplo
 xx = which(is.na(data_en$not.working.12))[index]
 data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] <- 16
 
-# symptom severity above 1 although saying they were not tested pos
-xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1)
+# set symptom ratings of those not being COVID positive to NA # 
+xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1) # symptom severity above 1 although saying they were not tested pos
 #xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
-
-# set all symptom ratings of those not being COVID positive to NA
 data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA 
 
 # indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
 data_en$symptom.inconsistency = NA
 data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 == 0)] = 1
 length(which(!is.na(data_en$symptom.inconsistency[which(is.na(data_en$complete.eu))])))
+# -> none
 
 # indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
 data_en$risk.group.inconsistency = NA
@@ -597,13 +580,9 @@ sum(data_en$risk.group.inconsistency, na.rm = T)
 
 # among people listing 'being in an occupation with enhanced risk of infection' what are the most frequent occupations?
 
-# frequency table of 10 most frequent mental health conditions
-head(count(data_en, 'mental.health.details'), n = 10)
+save(data_en, file = "data_en.RData")
 
-# frequency table of 10 most frequent other quarantine situations
-head(count(data_en, 'quarantine.status.text'), n = 10)
-
-# financial insecurity by profession
+load("data_en.RData")
 
 ########### check incomplete datasets #######
  
