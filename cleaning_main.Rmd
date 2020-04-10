@@ -1,17 +1,17 @@
+---
+title: "Extracting + cleaning data for interim analysis of Dyna-CORE study"
+authors: 
+"Lara Puhlmann (lara.puhlmann@lir-mainz.de)" 
+"Matthias Zerban (matthias.zerban@unimedizin-mainz.de)"  
+"Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be)"
+"Haakon Engen"
 
-#' ---
-#' title: "Extracting + cleaning data for interim analysis of Dyna-CORE study"
-#' authors: 
-#' "Lara Puhlmann (lara.puhlmann@lir-mainz.de)" 
-#' "Matthias Zerban (matthias.zerban@unimedizin-mainz.de)"  
-#' "Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be)"
-#' Haakon Engen
-#' 
-#' date: "APril 10th, 2020"
-#' ---
-#' 
+date: "APril 10th, 2020"
+---
+
+
+```{r setup, include=FALSE}
 #  - this version includes data sanity checks -
-
 
 # definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
 
@@ -19,8 +19,7 @@
 # WARNING: Only run once! 
 #
 
-
-rm(list = ls())
+library(knitr)
 require(foreign)
 require(plyr)
 require(dplyr)
@@ -35,29 +34,38 @@ source("formatting.R") #groups occupation and occupational status in lists
 
 numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")} # extracts numeric part free response
 
+```
+
+```{r Read and format data}
 # load data - currently set up to work with owncloud
 # the data must have 171 columns!
-# Lara's Path (I had to use \\ as escapes):
+# Lara's Path 
 data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 
-#text data needed for quality checks and to get exact scale of income variable
-data_text = read.csv("C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-
-####### general cleaning & first formatting
+data_en <- read_csv("DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE, skip = 1)
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
-# variable with occupation of people with only one occupation
-data_en$occupation.if.only.one <- as.character(data_en$occupation)
-data_en$occupation.if.only.one <- as.numeric(data_en$occupation.if.only.one)
-# variable with occupational status of people with only one indicated
-data_en$occupational.status.if.only.one <- as.character(data_en$occupational.status)
-data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.status.if.only.one)
+data_en = data_en[which(!is.na(data_en$Respondent.ID)),] # remove row without respondent ID
 
-########## quality check income issue ############
+# indicate any cases with missings:
+data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
 
+## indicate missing data in covariates
+data_en$missing.cov = NA
+
+# 1) anyone away from their residence and not specifying the country or city of their current location
+xx  = which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 | data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0)
+data_en$missing.cov[xx] = 1
+
+# 2): missing symptom specification
+xx = which(data_en$infection.test.status=="0" & is.na(as.numeric(data_en$symptom.severity)))
+data_en$missing.cov[xx] = 1
+
+```
+
+```{r quality check income}
 i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
 data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)]
 data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)]
@@ -76,38 +84,13 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 #    10    6 
 #1  409 2045
 
-# remove row without respondent ID
-xx = which(is.na(data_en$Respondent.ID))
-data_en = data_en[-xx,]
+```
 
-# indicate any cases with missings:
-data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
-data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
-
-## examine missing data in covariates
-data_en$missing.cov = NA
-
-# count as missing cov: anyone away from their residence and not specifying the country or city of their current location
-xx  = which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 | data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0)
-data_en$missing.cov[xx] = 1
-
-#  count as missing cov: missing symptom specification
-xx = which(data_en$infection.test.status=="0" & is.na(as.numeric(data_en$symptom.severity)))
-data_en$missing.cov[xx] = 1
-
-### current.location ##
-data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
-
-# #test - current location among those away without missing data
-# which(data_en$country.of.residence[which(data_en$current.stay.out.of.town==1 & data_en$missings ==0)] != data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)])
-# 
-# data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
-# data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
-# data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
+```{r}
 
 ###### date and completion time ########
 
-#split weird month-day-year date + time col into two col, one with the weird date format, one with correct time
+#split month-day-year date + time col into two col, one with the date format, one with correct time
 for(i in 1:length(data_en$Respondent.ID)){
   start = strsplit(data_en$Start.Date[i], " ")
   data_en$Start.Date[i] = start[[1]][1]
@@ -169,6 +152,26 @@ max(data_en$End.DateTime)
 data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
 data_en$End.DateTime[which(data_en$complete.eu==5000)]
 data_en$End.DateTime[length(data_en$Respondent.ID)]
+```
+
+```{r current location}
+### current.location ##
+data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
+
+# #test - current location among those away without missing data
+# which(data_en$country.of.residence[which(data_en$current.stay.out.of.town==1 & data_en$missings ==0)] != data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)])
+# 
+# data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+# data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+# data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
+
+
+# variable with occupation of people with only one occupation
+data_en$occupation.if.only.one <- as.character(data_en$occupation)
+data_en$occupation.if.only.one <- as.numeric(data_en$occupation.if.only.one)
+# variable with occupational status of people with only one indicated
+data_en$occupational.status.if.only.one <- as.character(data_en$occupational.status)
+data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.status.if.only.one)
 
 # clean "out of town" response #
 
@@ -451,7 +454,8 @@ data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
 # test
 which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")]))
-#--> should be 0
+```
+```{r -> should be 0}
 
 ##################### SR Score ###################
 
@@ -693,4 +697,5 @@ min(data_en$Start.DateTime[which(data_en$survey.language=="no")])
 min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
 min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
 min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
+```
 

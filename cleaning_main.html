@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+<title>general cleaning &amp; first formatting</title>
+
+<script type="text/javascript">
+window.onload = function() {
+  var imgs = document.getElementsByTagName('img'), i, img;
+  for (i = 0; i < imgs.length; i++) {
+    img = imgs[i];
+    // center an image if it is the only element of its parent
+    if (img.parentElement.childElementCount === 1)
+      img.parentElement.style.textAlign = 'center';
+  }
+};
+</script>
+
+<!-- Styles for R syntax highlighter -->
+<style type="text/css">
+   pre .operator,
+   pre .paren {
+     color: rgb(104, 118, 135)
+   }
+
+   pre .literal {
+     color: #990073
+   }
+
+   pre .number {
+     color: #099;
+   }
+
+   pre .comment {
+     color: #998;
+     font-style: italic
+   }
+
+   pre .keyword {
+     color: #900;
+     font-weight: bold
+   }
+
+   pre .identifier {
+     color: rgb(0, 0, 0);
+   }
+
+   pre .string {
+     color: #d14;
+   }
+</style>
+
+<!-- R syntax highlighter -->
+<script type="text/javascript">
+var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
+hljs.initHighlightingOnLoad();
+</script>
+
+
+
+<style type="text/css">
+body, td {
+   font-family: sans-serif;
+   background-color: white;
+   font-size: 13px;
+}
+
+body {
+  max-width: 800px;
+  margin: auto;
+  padding: 1em;
+  line-height: 20px;
+}
+
+tt, code, pre {
+   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+}
+
+h1 {
+   font-size:2.2em;
+}
+
+h2 {
+   font-size:1.8em;
+}
+
+h3 {
+   font-size:1.4em;
+}
+
+h4 {
+   font-size:1.0em;
+}
+
+h5 {
+   font-size:0.9em;
+}
+
+h6 {
+   font-size:0.8em;
+}
+
+a:visited {
+   color: rgb(50%, 0%, 50%);
+}
+
+pre, img {
+  max-width: 100%;
+}
+pre {
+  overflow-x: auto;
+}
+pre code {
+   display: block; padding: 0.5em;
+}
+
+code {
+  font-size: 92%;
+  border: 1px solid #ccc;
+}
+
+code[class] {
+  background-color: #F8F8F8;
+}
+
+table, td, th {
+  border: none;
+}
+
+blockquote {
+   color:#666666;
+   margin:0;
+   padding-left: 1em;
+   border-left: 0.5em #EEE solid;
+}
+
+hr {
+   height: 0px;
+   border-bottom: none;
+   border-top-width: thin;
+   border-top-style: dotted;
+   border-top-color: #999999;
+}
+
+@media print {
+   * {
+      background: transparent !important;
+      color: black !important;
+      filter:none !important;
+      -ms-filter: none !important;
+   }
+
+   body {
+      font-size:12pt;
+      max-width:100%;
+   }
+
+   a, a:visited {
+      text-decoration: underline;
+   }
+
+   hr {
+      visibility: hidden;
+      page-break-before: always;
+   }
+
+   pre, blockquote {
+      padding-right: 1em;
+      page-break-inside: avoid;
+   }
+
+   tr, img {
+      page-break-inside: avoid;
+   }
+
+   img {
+      max-width: 100% !important;
+   }
+
+   @page :left {
+      margin: 15mm 20mm 15mm 10mm;
+   }
+
+   @page :right {
+      margin: 15mm 10mm 15mm 20mm;
+   }
+
+   p, h2, h3 {
+      orphans: 3; widows: 3;
+   }
+
+   h2, h3 {
+      page-break-after: avoid;
+   }
+}
+</style>
+
+
+
+</head>
+
+<body>
+<p>&#39; &mdash;
+&#39; title: &ldquo;Extracting + cleaning data for interim analysis of Dyna-CORE study&rdquo;
+&#39; authors: 
+&#39; &ldquo;Lara Puhlmann (<a href="mailto:lara.puhlmann@lir-mainz.de">lara.puhlmann@lir-mainz.de</a>)&rdquo; 
+&#39; &ldquo;Matthias Zerban (<a href="mailto:matthias.zerban@unimedizin-mainz.de">matthias.zerban@unimedizin-mainz.de</a>)&rdquo;<br/>
+&#39; &ldquo;Jeroen Weermeijer (<a href="mailto:jeroen.weermeijer@kuleuven.be">jeroen.weermeijer@kuleuven.be</a>)&rdquo;
+&#39; Haakon Engen
+&#39; 
+&#39; date: &ldquo;APril 10th, 2020&rdquo;
+&#39; &mdash;
+&#39; </p>
+
+<ul>
+<li><p>this version includes data sanity checks -
+definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.</p>
+
+<p>WARNING: Only run once! </p></li>
+</ul>
+
+<pre><code class="r">rm(list = ls())
+require(foreign)
+require(plyr)
+require(dplyr)
+require(stringr)
+require(BBmisc)
+</code></pre>
+
+<p>require(formattable)
+require(Hmisc)
+require(corrplot)
+source(&ldquo;rename.R&rdquo;) renames variables
+source(&ldquo;formatting.R&rdquo;) groups occupation and occupational status in lists
+numextract &lt;- function(string){str_extract(string, &ldquo;-<em>\d+.</em>\d*&rdquo;)}  extracts numeric part free response
+ load data - currently set up to work with owncloud
+ the data must have 171 columns!
+ Lara&#39;s Path (I had to use \ as escapes):</p>
+
+<pre><code class="r">data_en = read.csv(&quot;C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv&quot;, sep = &quot;,&quot;, stringsAsFactors = FALSE)
+data_text = read.csv(&quot;C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv&quot;, sep = &quot;,&quot;, stringsAsFactors = FALSE)
+data_en = read.csv(&quot;C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv&quot;, sep = &quot;,&quot;, stringsAsFactors = FALSE)
+</code></pre>
+
+<pre><code>## Warning in file(file, &quot;rt&quot;): kann Datei &#39;C:\Users\Matze\ownCloud\data\DynaCORE_C\DynaCORE - the DynaMORE study on
+## psychological responses to the Corona.csv&#39; nicht öffnen: No such file or directory
+</code></pre>
+
+<pre><code>## Error in file(file, &quot;rt&quot;): kann Verbindung nicht öffnen
+</code></pre>
+
+<p>text data needed for quality checks and to get exact scale of income variable</p>
+
+<pre><code class="r">data_text = read.csv(&quot;C:\\Users\\Matze\\ownCloud\\data\\DynaCORE_C\\DynaCORE-C_text_answers.csv&quot;, sep = &quot;,&quot;, stringsAsFactors = FALSE)
+</code></pre>
+
+<pre><code>## Warning in file(file, &quot;rt&quot;): kann Datei &#39;C:\Users\Matze\ownCloud\data\DynaCORE_C\DynaCORE-C_text_answers.csv&#39; nicht
+## öffnen: No such file or directory
+</code></pre>
+
+<pre><code>## Error in file(file, &quot;rt&quot;): kann Verbindung nicht öffnen
+</code></pre>
+
+<h6>general cleaning &amp; first formatting</h6>
+
+<p>data_en = rename(data_en) rename variables
+data_en = formatting(data_en) group occupation + status in lists
+ variable with occupation of people with only one occupation</p>
+
+<pre><code class="r">data_en$occupation.if.only.one &lt;- as.character(data_en$occupation)
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, occupation.if.only.one, value = character(0)): replacement has 0 rows, data has 12855
+</code></pre>
+
+<pre><code class="r">data_en$occupation.if.only.one &lt;- as.numeric(data_en$occupation.if.only.one)
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, occupation.if.only.one, value = numeric(0)): replacement has 0 rows, data has 12855
+</code></pre>
+
+<p>variable with occupational status of people with only one indicated</p>
+
+<pre><code class="r">data_en$occupational.status.if.only.one &lt;- as.character(data_en$occupational.status)
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, occupational.status.if.only.one, value = character(0)): replacement has 0 rows, data has 12855
+</code></pre>
+
+<pre><code class="r">data_en$occupational.status.if.only.one &lt;- as.numeric(data_en$occupational.status.if.only.one)
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, occupational.status.if.only.one, value = numeric(0)): replacement has 0 rows, data has 12855
+</code></pre>
+
+<p>######### quality check income issue ############</p>
+
+<pre><code class="r">i &lt;- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
+data_en$check_ID_text &lt;- data_text$Respondent.ID[i:nrow(data_text)]
+data_en$check_income_text &lt;- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)]
+</code></pre>
+
+<p>test &lt;- data_en[,c(ncol(data_en)-1, ncol(data_en))] subset to check income variable</p>
+
+<pre><code class="r">test$ID &lt;- data_en$Respondent.ID
+</code></pre>
+
+<pre><code>## Error in test$ID &lt;- data_en$Respondent.ID: Objekt &#39;test&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)])
+</code></pre>
+
+<pre><code>## Error in isTRUE(test$check_ID_text[nrow(test)] == test$ID[nrow(test)]): Objekt &#39;test&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">test$income &lt;- data_en$household.income
+</code></pre>
+
+<pre><code>## Error in test$income &lt;- data_en$household.income: Objekt &#39;test&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">table(test$income) 
+</code></pre>
+
+<pre><code>## Error in table(test$income): Objekt &#39;test&#39; nicht gefunden
+</code></pre>
+
+<pre><code>        1       10       11       12       13       14        2        3        4        5        6        7 
+</code></pre>
+
+<p>3174      416      409      205      123       60      130      936      742      777     1273     2045     1392 
+  8        9 Response 
+750      422        1 </p>
+
+<pre><code class="r">table(test$income[test$check_income_text==&quot;â‚¬25,000-â‚¬49,999&quot;]) 
+</code></pre>
+
+<pre><code>## Error in table(test$income[test$check_income_text == &quot;â‚¬25,000-â‚¬49,999&quot;]): Objekt &#39;test&#39; nicht gefunden
+</code></pre>
+
+<p>there are multiple levels coded to this response:
+    10    6 
+1  409 2045
+ remove row without respondent ID</p>
+
+<pre><code class="r">xx = which(is.na(data_en$Respondent.ID))
+data_en = data_en[-xx,]
+</code></pre>
+
+<p>indicate any cases with missings:
+data_en[,c(68:154,156:167)] &lt;- lapply(data_en[,c(68:154,156:167)], as.numeric)  questionnaires</p>
+
+<pre><code class="r">data_en$missings &lt;- rowSums(is.na(data_en[,c(68:154,156:167)]))
+</code></pre>
+
+<h1>examine missing data in covariates</h1>
+
+<pre><code class="r">data_en$missing.cov = NA
+</code></pre>
+
+<p>count as missing cov: anyone away from their residence and not specifying the country or city of their current location</p>
+
+<pre><code class="r">xx  = which(data_en$current.stay.out.of.town==1 &amp; nchar(data_en$current.stay.out.of.town.country)==0 | data_en$current.stay.out.of.town==1 &amp; nchar(data_en$current.stay.out.of.town.city)==0)
+data_en$missing.cov[xx] = 1
+</code></pre>
+
+<p>count as missing cov: missing symptom specification</p>
+
+<pre><code class="r">xx = which(data_en$infection.test.status==&quot;0&quot; &amp; is.na(as.numeric(data_en$symptom.severity)))
+data_en$missing.cov[xx] = 1
+</code></pre>
+
+<h2>current.location</h2>
+
+<pre><code class="r">data_en$current.location &lt;- ifelse(data_en$current.stay.out.of.town == &#39;1&#39;, data_en$current.stay.out.of.town.country, data_en$country.of.residence)
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, current.location, value = logical(0)): replacement has 0 rows, data has 12854
+</code></pre>
+
+<p>#test - current location among those away without missing data
+ which(data_en$country.of.residence[which(data_en$current.stay.out.of.town==1 &amp; data_en$missings ==0)] != data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1&amp; data_en$missings ==0)])</p>
+
+<p>data_en$country.of.residence[which(data_en$current.stay.out.of.town==1&amp; data_en$missings ==0)][17] 
+ data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1&amp; data_en$missings ==0)][17] 
+ data_en$current.location[which(data_en$current.stay.out.of.town==1&amp; data_en$missings ==0)][17]</p>
+
+<h5>date and completion time</h5>
+
+<p>split weird month-day-year date + time col into two col, one with the weird date format, one with correct time</p>
+
+<pre><code class="r">for(i in 1:length(data_en$Respondent.ID)){
+  start = strsplit(data_en$Start.Date[i], &quot; &quot;)
+  data_en$Start.Date[i] = start[[1]][1]
+  data_en$Start.Time[i] = paste(start[[1]][2], start[[1]][3])
+
+  end = strsplit(data_en$End.Date[i], &quot; &quot;)
+  data_en$End.Date[i] = end[[1]][1]
+  data_en$End.Time[i] = paste(end[[1]][2], end[[1]][3])
+}
+</code></pre>
+
+<p>line of code that deals with different separators that occur in surveymonkey raw data for date outputs (e.g. mm/dd/yyyy vs. mm.dd.yyyy).
+data_en$Start.Date = gsub(&ldquo;.&rdquo;, &ldquo;/&rdquo;, data_en$Start.Date, fixed=TRUE) mm.dd.yyyy becomes mm/dd/yyyy
+convert month-day-year to year-month-day date, then to POSIXlt</p>
+
+<pre><code class="r">data_en$Start.Date = as.Date(data_en$Start.Date, tryFormats = c(&quot;%m-%d-%Y&quot;, &quot;%m/%d/%Y&quot;), optional = FALSE)
+data_en$End.Date = as.Date(data_en$End.Date, tryFormats = c(&quot;%m-%d-%Y&quot;, &quot;%m/%d/%Y&quot;), optional = FALSE)
+data_en$Start.Date = as.POSIXlt(paste(data_en$Start.Date), tz = &quot;Europe/Berlin&quot;, format=&quot;%Y-%m-%d&quot;)
+data_en$End.Date = as.POSIXlt(paste(data_en$End.Date), tz = &quot;Europe/Berlin&quot;, format=&quot;%Y-%m-%d&quot;)
+data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = &quot;Europe/Berlin&quot;, format=&quot;%Y-%m-%d %H:%M:%S %p&quot;)
+data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = &quot;Europe/Berlin&quot;, format=&quot;%Y-%m-%d %H:%M:%S %p&quot;)
+</code></pre>
+
+<p>#test
+ data_en$Start.Date[4] #should give year/month/day GMT
+ data_en$End.Date[4] #should give year/month/day GMT
+ data_en$Start.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+ data_en$End.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+completion time</p>
+
+<pre><code class="r">data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime)
+</code></pre>
+
+<p>test: data_en$completionTime[3] #gives time difference in mins</p>
+
+<pre><code class="r">data_en$completionTime &lt;- as.numeric(data_en$completionTime, units=&quot;secs&quot;)
+</code></pre>
+
+<h5>select all data up to 5000 complete responses from European residents</h5>
+
+<pre><code class="r">Europe = c(2, 4, 11, 17, 18, 23, 28, 45, 48, 51, 60, 63, 64, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 148, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
+</code></pre>
+
+<p>based on the UN definition
+ exclude all non-European residents</p>
+
+<pre><code class="r">xx = which(data_en$country.of.residence %in% Europe)
+data_en = data_en[xx,]
+</code></pre>
+
+<p>sort by completion date + time</p>
+
+<pre><code class="r">data_en = data_en[order(data_en$End.DateTime),]
+
+data_en$complete.eu = NA
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, complete.eu, value = NA): replacement has 1 row, data has 0
+</code></pre>
+
+<pre><code class="r">c = 0
+for(i in 1:length(data_en$complete.eu)){
+  if (data_en$missings[i] == 0 &amp;&amp; is.na(data_en$missing.cov[i])){
+  c = c+1
+  data_en$complete.eu[i] = c
+  }
+}
+</code></pre>
+
+<pre><code>## Error in if (data_en$missings[i] == 0 &amp;&amp; is.na(data_en$missing.cov[i])) {: Fehlender Wert, wo TRUE/FALSE nötig ist
+</code></pre>
+
+<p>data_en = data_en[1:which(data_en$complete.eu==5000),]  keep data up until the 5000th complete response
+dim(data_en[data_en$missings == 0 &amp;is.na(data_en$missing.cov),])  should be 5000
+dim(data_en[data_en$missings &gt; 0|!is.na(data_en$missing.cov),])  should be the remaining</p>
+
+<pre><code class="r">max(data_en$End.DateTime)
+</code></pre>
+
+<pre><code>## Warning in max.default(structure(numeric(0), class = c(&quot;POSIXct&quot;, &quot;POSIXt&quot;: kein nicht-fehlendes Argument für max;
+## gebe -Inf zurück
+</code></pre>
+
+<pre><code>## [1] NA
+</code></pre>
+
+<pre><code class="r">data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
+</code></pre>
+
+<pre><code>## Warning in max.default(structure(numeric(0), class = c(&quot;POSIXct&quot;, &quot;POSIXt&quot;: kein nicht-fehlendes Argument für max;
+## gebe -Inf zurück
+</code></pre>
+
+<pre><code>## NULL
+</code></pre>
+
+<pre><code class="r">data_en$End.DateTime[which(data_en$complete.eu==5000)]
+</code></pre>
+
+<pre><code>## POSIXlt of length 0
+</code></pre>
+
+<pre><code class="r">data_en$End.DateTime[length(data_en$Respondent.ID)]
+</code></pre>
+
+<pre><code>## POSIXlt of length 0
+</code></pre>
+
+<p>clean &ldquo;out of town&rdquo; response #
+ set &ldquo;out of town&rdquo; response of people naming a different country than their country of residence to yes</p>
+
+<pre><code class="r">xx = which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==&quot;2&quot; &amp; data_en$current.stay.out.of.town.country !=&quot;&quot;)] != data_en$country.of.residence[which(data_en$current.stay.out.of.town==&quot;2&quot; &amp; data_en$current.stay.out.of.town.country !=&quot;&quot;)])
+
+data_en$current.stay.out.of.town[which(data_en$current.stay.out.of.town==&quot;2&quot; &amp; data_en$current.stay.out.of.town.country !=&quot;&quot;)][xx] = &quot;1&quot;
+</code></pre>
+
+<p>set responses of people not out of town and naming the same as their country of residence to empty</p>
+
+<pre><code class="r">length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==&quot;2&quot;)] != &quot;&quot;))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==&quot;2&quot;&amp;!is.na(data_en$complete.eu))] != &quot;&quot;))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==&quot;2&quot; &amp; data_en$current.stay.out.of.town.country != &quot;&quot;)] &lt;- &quot;&quot;
+</code></pre>
+
+<p>format data type
+data_en[,c(68:154,156:167)] &lt;- lapply(data_en[,c(68:154,156:167)], as.numeric)  questionnaires
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] &lt;- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor) covariates
+ name most frequent countries</p>
+
+<pre><code class="r">data_en$country.of.residence = revalue(data_en$country.of.residence, 
+      c(&quot;68&quot; = &quot;Germany&quot;, &quot;142&quot; = &quot;Poland&quot;, &quot;18&quot; = &quot;Belgium&quot;, &quot;88&quot; = &quot;Italy&quot;, &quot;64&quot; = &quot;France&quot;, &quot;11&quot; = &quot;Austria&quot;, &quot;127&quot; = &quot;Netherlands&quot;, &quot;158&quot; = &quot;Serbia&quot;, &quot;80&quot; = &quot;Hungary&quot;, &quot;175&quot; = &quot;Switzerland&quot;))
+</code></pre>
+
+<pre><code>## The following `from` values were not present in `x`: 68, 142, 18, 88, 64, 11, 127, 158, 80, 175
+</code></pre>
+
+<p>how many are not currently in Europe?</p>
+
+<pre><code class="r">length(which(!(data_en$current.stay.out.of.town.country %in% Europe) &amp; data_en$current.stay.out.of.town.country !=&quot;&quot;))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) &amp; data_en$current.stay.out.of.town.country !=&quot;&quot;)]
+</code></pre>
+
+<pre><code>## character(0)
+</code></pre>
+
+<h1>quality control: number of responses per country</h1>
+
+<pre><code class="r">sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
+</code></pre>
+
+<pre><code>## integer(0)
+</code></pre>
+
+<p>frequency table of 10 most frequent countries</p>
+
+<pre><code class="r">sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
+</code></pre>
+
+<pre><code>##  [1] NA NA NA NA NA NA NA NA NA NA
+</code></pre>
+
+<p>frequency table of survey language</p>
+
+<pre><code class="r">sort( table(unlist(data_en$survey.language)),decreasing=TRUE)
+</code></pre>
+
+<pre><code>## integer(0)
+</code></pre>
+
+<p>################### covariates: plausibility checks &amp; basic formatting ########################
+ remaining incomplete covariates among those without missings - should all be 0</p>
+
+<pre><code class="r">data_en.complete = data_en[which(!is.na(data_en$complete.eu)),]
+</code></pre>
+
+<p>length(which(data_en.complete$current.stay.out.of.town==1 &amp; data_en.complete$current.stay.out.of.town.city==&ldquo;&rdquo;))</p>
+
+<pre><code class="r">length(which(data_en.complete$people.in.household==0 &amp; nchar(data_en.complete$X.28)==0))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en.complete$infection.test.status==0 &amp; is.na(as.numeric(data_en.complete$symptom.severity))))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">data_en$household.income = factor(data_en$household.income, order = TRUE)
+data_en$health.status = factor(data_en$health.status, order = TRUE)
+data_en$symptom.severity = factor(data_en$symptom.severity, order = TRUE)
+
+data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.under.18)
+data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.authorities.measures)
+data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
+</code></pre>
+
+<p>drop empty levels</p>
+
+<pre><code class="r">data_en$gender = droplevels(data_en$gender)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$nationality = droplevels(data_en$nationality)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$country.of.residence = droplevels(data_en$country.of.residence)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$current.stay.out.of.town = droplevels(data_en$current.stay.out.of.town)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;character&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$current.stay.out.of.town.country = droplevels(data_en$current.stay.out.of.town.country)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;character&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$infection.test.status = droplevels(data_en$infection.test.status)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$survey.language = droplevels(data_en$survey.language)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$relationship.status = droplevels(data_en$relationship.status)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;NULL&quot; angewendet
+</code></pre>
+
+<pre><code class="r">data_en$people.in.household = droplevels(data_en$people.in.household)
+</code></pre>
+
+<pre><code>## Error in UseMethod(&quot;droplevels&quot;): nicht anwendbare Methode für &#39;droplevels&#39; auf Objekt der Klasse &quot;c(&#39;double&#39;, &#39;numeric&#39;)&quot; angewendet
+</code></pre>
+
+<h4>people.in.household as continuous</h4>
+
+<p>data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-1  factor 0, meaning more than 6, was recoded to 1</p>
+
+<pre><code class="r">xx = as.numeric(numextract(data_en$X.28))
+</code></pre>
+
+<pre><code>## Error in numextract(data_en$X.28): konnte Funktion &quot;numextract&quot; nicht finden
+</code></pre>
+
+<pre><code class="r">xx[which(xx==0)] = 1
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 0)] = xx[!is.na(xx)]
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 3)] = 3.5
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 4)] = 5.5
+</code></pre>
+
+<h5>date of Corona test</h5>
+
+<p>data_en$infection.test.status.date = gsub(&ldquo;.&rdquo;, &ldquo;/&rdquo;, data_en$infection.test.status.date, fixed=TRUE)mm.dd.yyyy becomes mm/dd/yyyy
+data_en$infection.test.status.date[which(nchar(data_en$infection.test.status.date)&lt;5)]=NA  set all that are not a date to NA
+convert month-day-year to year-month-day date</p>
+
+<pre><code class="r">data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date, tryFormats = c(&quot;%m-%d-%Y&quot;, &quot;%d/%m/%Y&quot;), optional = FALSE)
+</code></pre>
+
+<pre><code>## Error in as.Date.default(data_en$infection.test.status.date, tryFormats = c(&quot;%m-%d-%Y&quot;, : do not know how to convert &#39;data_en$infection.test.status.date&#39; to class &quot;Date&quot;
+</code></pre>
+
+<p>date as POSIXlt</p>
+
+<pre><code class="r">data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.status.date), tz = &quot;Europe/Berlin&quot;, format=&quot;%Y-%m-%d&quot;)
+</code></pre>
+
+<h5>age</h5>
+
+<p># test
+ data_en$age[2] = &ldquo;2o&rdquo;
+ data_en$age[4] = &ldquo;I am 711 years old&rdquo;</p>
+
+<pre><code class="r">data_en$age.fulltext = data_en$age
+data_en$age = gsub(&quot;o&quot;, &quot;0&quot;, data_en$age)
+</code></pre>
+
+<p>extract the numeric component from age response</p>
+
+<pre><code class="r">data_en$age = numextract(data_en$age)
+</code></pre>
+
+<pre><code>## Error in numextract(data_en$age): konnte Funktion &quot;numextract&quot; nicht finden
+</code></pre>
+
+<pre><code class="r">data_en$age = as.numeric(data_en$age)
+data_en$age[which(data_en$age &gt; 100)] = NA
+</code></pre>
+
+<p>length(which(is.na(data_en$age)))  just the one
+ note that if any ages are 0, this could be due to a leading o. Check fulltext:
+data_en$age.fulltext[which(data_en$age==0)]  -&gt; one person, who says hes 41 soon
+ recode this person:</p>
+
+<pre><code class="r">data_en$age[which(data_en$age==0)] = 41
+</code></pre>
+
+<p>check invalid age responses </p>
+
+<pre><code class="r">which(data_en$age &lt; 18)
+</code></pre>
+
+<pre><code>## integer(0)
+</code></pre>
+
+<pre><code class="r">which(data_en$age[which(!is.na(data_en$complete.eu))] &lt; 18)
+</code></pre>
+
+<pre><code>## integer(0)
+</code></pre>
+
+<pre><code class="r">which(is.na(data_en$age[which(!is.na(data_en$complete.eu))]))
+</code></pre>
+
+<pre><code>## integer(0)
+</code></pre>
+
+<p>exclude those resposes</p>
+
+<pre><code class="r">data_en$Respondent.ID[which(data_en$age &lt; 18)]&lt;- NA
+data_en$Respondent.ID[which(is.na(data_en$age))]&lt;- NA
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)&gt;0){data_en = data_en[-xx,]}
+</code></pre>
+
+<h5>education</h5>
+
+<p># test
+ data_en$years.of.education[2] = &ldquo;22 years&rdquo;
+ data_en$years.of.education[4] = &ldquo;5 primary school 10 highschool&rdquo;</p>
+
+<pre><code class="r">data_en$years.of.education.fulltext = data_en$years.of.education
+</code></pre>
+
+<p>data_en$years.of.education = numextract(data_en$years.of.education)  extract the numeric component of free form years.of.education response</p>
+
+<pre><code class="r">data_en$years.of.education = as.numeric(data_en$years.of.education)
+
+length(which(data_en$years.of.education &gt; data_en$age))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en$years.of.education[which(!is.na(data_en$complete.eu))] &gt; data_en$age[which(!is.na(data_en$complete.eu))]))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">for(i in 1:length(data_en$Respondent.ID)){
+  if (!is.na(data_en$years.of.education[i])) {
+    if(data_en$years.of.education[i] &gt; data_en$age[i]){
+      data_en$years.of.education[i] = NA
+    }
+    if(!is.na(data_en$years.of.education[i]) &amp;&amp; data_en$years.of.education[i] &gt; 10){
+      data_en$years.of.education.fulltext[i] = NA
+    }
+  }
+}
+</code></pre>
+
+<pre><code>## Error in if (!is.na(data_en$years.of.education[i])) {: Argument hat Länge 0
+</code></pre>
+
+<h3>clean up inconsistent responses</h3>
+
+<p>count cases where more/same as total nr of people in household are underage</p>
+
+<pre><code class="r">xx = which(data_en$people.in.household.cont+0.5&lt;=data_en$people.in.household.under.18)
+xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+0.5&lt;=data_en$people.in.household.under.18[which(!is.na(data_en$complete.eu))])
+</code></pre>
+
+<h2>set cases with mismatch in occupation to NA</h2>
+
+<pre><code class="r">data_en$not.working.12 &lt;- lapply(data_en$occupation, function(ch) grep(&quot;16&quot;, ch))
+data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] &lt;- NA
+</code></pre>
+
+<pre><code>## Error in data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x) == : ungültiger Indextyp &#39;list&#39;
+</code></pre>
+
+<pre><code class="r">employed = c(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;, &quot;4&quot;)
+</code></pre>
+
+<p>not.employed = c(&ldquo;7&rdquo;, &ldquo;8&rdquo;, &ldquo;9&rdquo;, &ldquo;10&rdquo;, &ldquo;12&rdquo;) parental leave, sick leave, unemployment w/ or w/o benefits, retired</p>
+
+<pre><code class="r">data_en$employed.13 &lt;- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse=&quot;|&quot;), ch))
+data_en$not.employed.13 &lt;- lapply(data_en$occupational.status, function(ch) grep(paste(not.employed, collapse=&quot;|&quot;), ch))
+data_en$employed.13[sapply(data_en$employed.13, function(x) length(x)==0)] &lt;- NA
+</code></pre>
+
+<pre><code>## Error in data_en$employed.13[sapply(data_en$employed.13, function(x) length(x) == : ungültiger Indextyp &#39;list&#39;
+</code></pre>
+
+<pre><code class="r">data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x)==0)] &lt;- NA
+</code></pre>
+
+<pre><code>## Error in data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x) == : ungültiger Indextyp &#39;list&#39;
+</code></pre>
+
+<p>find people that are unemployed in 12 but working in 13</p>
+
+<pre><code class="r">index = which(!is.na(data_en$not.working.12)) %in% which(!is.na(data_en$employed.13))
+xx = which(!is.na(data_en$not.working.12))[index]
+data_en$occupation[xx] &lt;- NA
+data_en$occupational.status[xx] &lt;- NA
+</code></pre>
+
+<p>add &#39;not working&#39; to occupation of all individuals listing forms of not working in 13</p>
+
+<pre><code class="r">index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
+xx = which(is.na(data_en$not.working.12))[index]
+data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] &lt;- 16
+</code></pre>
+
+<pre><code>## Error in `*tmp*`[[1]]: Indizierung außerhalb der Grenzen
+</code></pre>
+
+<p>set symptom ratings of those not being COVID positive to NA # 
+xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] &gt; 1)  symptom severity above 1 although saying they were not tested pos
+xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] &gt; 1)</p>
+
+<pre><code class="r">data_en$symptom.severity[which(data_en$infection.test.status==1)] &lt;- NA 
+</code></pre>
+
+<p>indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen</p>
+
+<pre><code class="r">data_en$symptom.inconsistency = NA
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, symptom.inconsistency, value = NA): replacement has 1 row, data has 0
+</code></pre>
+
+<pre><code class="r">data_en$symptom.inconsistency[which(data_en$symptom.severity &gt;0 &amp; data_en$CE_01 == 0)] = 1
+length(which(!is.na(data_en$symptom.inconsistency[which(is.na(data_en$complete.eu))])))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<p>-&gt; none
+ indicate individuals who report being in a risk group but in stressor exposure said to risk group &ldquo;this situation did not happen&rdquo;</p>
+
+<pre><code class="r">data_en$risk.group.inconsistency = NA
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, risk.group.inconsistency, value = NA): replacement has 1 row, data has 0
+</code></pre>
+
+<pre><code class="r">data_en$risk.group.inconsistency[which(data_en$risk.group == 1 &amp; data_en$CE_04 == 0)] = 1
+length(which(!is.na(data_en$risk.group.inconsistency[which(!is.na(data_en$complete.eu))])))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<h1>find people who provide a stressor rating &gt; 0 in the free answers but fail to describe the stressor</h1>
+
+<pre><code class="r">length(which(data_en$CE_30&gt;0 &amp; nchar(data_en$CE_30_text) == 0))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en.complete$CE_30&gt;0 &amp; nchar(data_en.complete$CE_30_text) == 0))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en$GE_12&gt;0 &amp; nchar(data_en$GE_12_text) == 0))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<pre><code class="r">length(which(data_en.complete$GE_12&gt;0 &amp; nchar(data_en.complete$GE_12_text) == 0))
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<p>################## old income coding ################################</p>
+
+<pre><code class="r"> data_en$household.income.old = factor(data_en$household.income, order = TRUE)
+ test &lt;- data_en[c(&quot;Respondent.ID&quot;,&quot;check_ID_text&quot;,&quot;household.income&quot;,&quot;household.income.old&quot;, &quot;check_income_text&quot;)] #to check corresponding factors
+ data_en$household.income.old &lt;- mapvalues(data_en$household.income.old,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
+</code></pre>
+
+<pre><code>## The following `from` values were not present in `x`: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+</code></pre>
+
+<p>################## restructure questionnaire variables ########################</p>
+
+<pre><code class="r">data_en[,c(68:154,156:167)] &lt;- lapply(data_en[,c(68:154,156:167)], as.numeric)
+</code></pre>
+
+<p>data_en &lt;- data_en[data_en$missings == 0,] # remove any cases with missings
+Mental Health Problems &#39;P&#39;: </p>
+
+<pre><code class="r">data_en$CM_07 &lt;- 5 - data_en$CM_07
+term &lt;- &quot;CM&quot;
+GHQ &lt;- grep(term, names(data_en))
+GHQrecode &lt;- function(x){recode(x, &#39;1&#39;=0L, &#39;2&#39;=1L, &#39;3&#39;=2L, &#39;4&#39;=3L)}
+data_en[GHQ] &lt;- lapply(data_en[GHQ], GHQrecode)
+GHQ &lt;- GHQ[1:12]
+data_en$P &lt;- rowSums(data_en[GHQ])
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, GHQ): undefined columns selected
+</code></pre>
+
+<p>PSS (percieved social support):</p>
+
+<pre><code class="r">term &lt;- &quot;H2_&quot;
+PSSindex &lt;- grep(term, names(data_en))
+PSSindex &lt;- PSSindex[1:7]
+data_en$PSS &lt;- rowSums(data_en[PSSindex])
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, PSSindex): undefined columns selected
+</code></pre>
+
+<p>Optimism:</p>
+
+<pre><code class="r">data_en$OPT &lt;- as.numeric(data_en$H3_01)
+</code></pre>
+
+<p>Perceived general self efficacy:</p>
+
+<pre><code class="r">term &lt;-&quot;H4_&quot;
+GSEindex &lt;- grep(term, names(data_en))
+data_en$GSE &lt;- rowSums(data_en[GSEindex])
+</code></pre>
+
+<p>self-percieved reslience (BRS):</p>
+
+<pre><code class="r">term &lt;- &quot;H5_&quot;
+BRS &lt;- grep(term, names(data_en))
+BRSrec &lt;- c(&quot;H5_02&quot;, &quot;H5_04&quot;, &quot;H5_06&quot;)
+data_en[,BRSrec] &lt;- 6 - data_en[,BRSrec]
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, , BRSrec): undefined columns selected
+</code></pre>
+
+<pre><code class="r">data_en$REC &lt;- rowMeans(data_en[BRS])
+</code></pre>
+
+<p>BFI Neuroticism:</p>
+
+<pre><code class="r">data_en$H6_01 &lt;- 6 - data_en$H6_01
+term &lt;- &quot;H6_&quot;
+BFI &lt;- grep(term, names(data_en))
+BFIrecode &lt;- function(x){recode(x, &#39;1&#39;=-2L, &#39;2&#39;=-1L, &#39;3&#39;=0L, &#39;4&#39;=1L,&#39;5&#39;=2L)}
+data_en[BFI] &lt;- lapply(data_en[BFI], BFIrecode)
+data_en$NEU &lt;- rowSums(data_en[BFI])
+</code></pre>
+
+<p>Behavioral Coping style</p>
+
+<pre><code class="r">term &lt;- &quot;COPE&quot;
+COPE &lt;- grep(term, names(data_en))
+COPE &lt;- COPE[c(1:5,7:9)]
+data_en$BCS &lt;- rowSums(data_en[COPE])
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, COPE): undefined columns selected
+</code></pre>
+
+<p>CERQ</p>
+
+<pre><code class="r">term &lt;- &quot;CERQ&quot;
+CERQ &lt;- grep(term, names(data_en))
+data_en$CERQSum &lt;- rowSums(data_en[CERQ])
+</code></pre>
+
+<p>Positive Appraisal Style:</p>
+
+<pre><code class="r">PAS &lt;- data_en[,c(CERQ, 106, 110 )]
+</code></pre>
+
+<p>PAS[,c(&ldquo;H1_COPE_18&rdquo;,&ldquo;H1_COPE_28&rdquo;)] &lt;- PAS[,c(&ldquo;H1_COPE_18&rdquo;,&ldquo;H1_COPE_28&rdquo;)]*5/4 rescale</p>
+
+<pre><code class="r">data_en$PAS &lt;- rowMeans(PAS)
+</code></pre>
+
+<p>CORONA specific appraisal:</p>
+
+<pre><code class="r">term &lt;- &quot;H1_Cor_&quot;
+PAC &lt;- grep(term, names(data_en))
+data_en$PAC &lt;- rowSums(data_en[PAC])
+</code></pre>
+
+<h3>calculation of stressors</h3>
+
+<p>SCM = stressor count method
+ SSM = stressor severity method
+Corona pandmeic related stressors:</p>
+
+<pre><code class="r">term &lt;- &quot;CE_&quot;
+CE &lt;- grep(term, names(data_en))
+CE &lt;- CE[1:30]
+</code></pre>
+
+<p>data_en$Es.SCM &lt;- rowSums(data_en[CE] &gt;0) stressor count
+data_en$Es.SSM &lt;- rowSums(data_en[CE])/5 weighted
+general stressors:</p>
+
+<pre><code class="r">term &lt;- &quot;GE_&quot;
+GE &lt;- grep(term, names(data_en))
+GE &lt;- GE[1:12]
+</code></pre>
+
+<p>data_en$Eg.SCM &lt;- rowSums(data_en[GE] &gt;0) stressor count
+data_en$Eg.SSM &lt;- rowSums(data_en[GE])/5 weighted
+combined:</p>
+
+<pre><code class="r">Eall &lt;- c(grep(&quot;GE_&quot;, names(data_en))[1:12], grep(&quot;CE_&quot;, names(data_en))[1:30])
+</code></pre>
+
+<p>data_en$Ec.SCM &lt;- rowSums(data_en[Eall] &gt;0) stressor count
+data_en$Ec.SSM &lt;- rowSums(data_en[Eall])/5 weighted
+ test</p>
+
+<pre><code class="r">which(data_en$Ec.SCM!=rowSums(data_en[ , c(&quot;Eg.SCM&quot; ,&quot;Es.SCM&quot;)]))
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, , c(&quot;Eg.SCM&quot;, &quot;Es.SCM&quot;)): undefined columns selected
+</code></pre>
+
+<p>&ndash;&gt; should be 0
+#################### SR Score ###################
+adapted from Haakon&#39;s script</p>
+
+<pre><code class="r">m1 &lt;- summary(lm(scale(P)~scale(Eg.SCM),data= data_en[!is.na(data_en$Eg.SCM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_Eg.SCM[!is.na(data_en$Eg.SCM)] &lt;-as.numeric(scale(resid(m1)))
+</code></pre>
+
+<pre><code>## Error in resid(m1): Objekt &#39;m1&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">m2 &lt;- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_Es.SCM[!is.na(data_en$Es.SCM)] &lt;-as.numeric(scale(resid(m2)))
+</code></pre>
+
+<pre><code>## Error in resid(m2): Objekt &#39;m2&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">m3 &lt;- summary(lm(scale(P)~scale(Ec.SCM),data= data_en[!is.na(data_en$Ec.SCM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_c.SCM[!is.na(data_en$Ec.SCM)] &lt;-as.numeric(scale(resid(m3)))
+</code></pre>
+
+<pre><code>## Error in resid(m3): Objekt &#39;m3&#39; nicht gefunden
+</code></pre>
+
+<h1>do the same with severity ratings</h1>
+
+<pre><code class="r">m4 &lt;- summary(lm(scale(P)~scale(Eg.SSM),data= data_en[!is.na(data_en$Eg.SSM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_Eg.SSM[!is.na(data_en$Eg.SSM)] &lt;-as.numeric(scale(resid(m4)))
+</code></pre>
+
+<pre><code>## Error in resid(m4): Objekt &#39;m4&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">m5 &lt;- summary(lm(scale(P)~scale(Es.SSM),data= data_en[!is.na(data_en$Es.SSM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_Es.SSM[!is.na(data_en$Es.SSM)] &lt;-as.numeric(scale(resid(m5)))
+</code></pre>
+
+<pre><code>## Error in resid(m5): Objekt &#39;m5&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">m6 &lt;- summary(lm(scale(P)~scale(Ec.SSM),data= data_en[!is.na(data_en$Ec.SSM),]))
+</code></pre>
+
+<pre><code>## Error in scale(P): Objekt &#39;P&#39; nicht gefunden
+</code></pre>
+
+<pre><code class="r">data_en$SR_c.SSM[!is.na(data_en$Ec.SSM)] &lt;-as.numeric(scale(resid(m6)))
+</code></pre>
+
+<pre><code>## Error in resid(m6): Objekt &#39;m6&#39; nicht gefunden
+</code></pre>
+
+<p>####################### subgroup selection ######################## </p>
+
+<h1>indicate subjects from Europe</h1>
+
+<pre><code class="r">xx = which(data_en$country.of.residence %in% Europe)
+data_en$from.eu = 0
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, from.eu, value = 0): replacement has 1 row, data has 0
+</code></pre>
+
+<pre><code class="r">data_en$from.eu[xx] = 1
+data_en$from.eu = as.factor(data_en$from.eu)
+</code></pre>
+
+<h4>select subjects IN Europe</h4>
+
+<pre><code class="r">xx = which(data_en$current.location %in% Europe)
+data_en$in.eu = 0
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, in.eu, value = 0): replacement has 1 row, data has 0
+</code></pre>
+
+<pre><code class="r">data_en$in.eu[xx] = 1
+data_en$in.eu = as.factor(data_en$in.eu)
+</code></pre>
+
+<p>example of subgroup indices:
+ index people with potentially precarious job conditions: freelancer, self-employed, temp contract, unemployed, by excluding everyone with a stable status</p>
+
+<pre><code class="r">stable.occupational.status = c(&quot;1&quot;, &quot;3&quot;, &quot;7&quot;, &quot;8&quot;, &quot;11&quot;, &quot;12&quot;)
+insecure.occulational.status = c(&quot;2&quot;, &quot;4&quot;, &quot;5&quot;, &quot;6&quot;, &quot;9&quot;, &quot;10&quot;)
+
+index.stable.occupational.status &lt;- lapply(data_en$occupational.status, function(ch) grep(paste(stable.occupational.status, collapse=&quot;|&quot;), ch))
+index.stable.occupational.status[sapply(index.stable.occupational.status, function(x) length(x)==0)] &lt;- NA
+</code></pre>
+
+<pre><code>## Error in index.stable.occupational.status[sapply(index.stable.occupational.status, : ungültiger Indextyp &#39;list&#39;
+</code></pre>
+
+<pre><code class="r">index.insecure.occupational.status &lt;- lapply(data_en$occupational.status, function(ch) grep(paste(insecure.occulational.status, collapse=&quot;|&quot;), ch))
+index.insecure.occupational.status[sapply(index.insecure.occupational.status, function(x) length(x)==0)] &lt;- NA
+</code></pre>
+
+<pre><code>## Error in index.insecure.occupational.status[sapply(index.insecure.occupational.status, : ungültiger Indextyp &#39;list&#39;
+</code></pre>
+
+<pre><code class="r">data_en$unstable.occupational.status = NA 
+</code></pre>
+
+<pre><code>## Error in `$&lt;-.data.frame`(`*tmp*`, unstable.occupational.status, value = NA): replacement has 1 row, data has 0
+</code></pre>
+
+<p>data_en$unstable.occupational.status[which(!is.na(index.stable.occupational.status))] = 0  0 = no, stable status
+data_en$unstable.occupational.status[which(is.na(index.stable.occupational.status)&amp;!is.na(index.insecure.occupational.status))] = 1  1 = yes, unstable status (and no additional stable status)
+#################### identify additional subjects to exclude ##############</p>
+
+<h2>exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)</h2>
+
+<pre><code class="r">var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
+for (i in 1:nrow(data_en)){ 
+  var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
+  var[i,2] = (var(as.vector(as.matrix(data_en[i, PSSindex])))) 
+  var[i,3] = (var(as.vector(as.matrix(data_en[i, GSEindex])))) #object asku not found
+  var[i,4] = (var(as.vector(as.matrix(data_en[i, BRS])))) 
+  var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
+  var[i,6] = (var(as.vector(as.matrix(data_en[i, CERQ])))) 
+  var[i,7] = (var(as.vector(as.matrix(data_en[i, CE])))) 
+  var[i,8] = (var(as.vector(as.matrix(data_en[i, GE])))) 
+}
+</code></pre>
+
+<pre><code>## Error in `[.data.frame`(data_en, i, GHQ): undefined columns selected
+</code></pre>
+
+<pre><code class="r">data_en$response_variance = rowSums(var)
+</code></pre>
+
+<p>add variance as an additional column in the data frame
+data_en$variance_Q1 &lt;- apply(data_en,1,function(row) var(as.vector(row[5:10]))) #change 5:10 </p>
+
+<pre><code class="r">data_en$Respondent.ID[which(data_en$response_variance == 0)]&lt;- NA
+</code></pre>
+
+<h3>exclude all subjects that were set to NA:</h3>
+
+<pre><code class="r">xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)&gt;0){data_en = data_en[-xx,]}
+</code></pre>
+
+<h6>outliers</h6>
+
+<p>distribution of response variance</p>
+
+<pre><code class="r">hist(data_en$response_variance)
+</code></pre>
+
+<pre><code>## Error in hist.default(data_en$response_variance): invalid number of &#39;breaks&#39;
+</code></pre>
+
+<p>consider excluding subjects with unusually little response variance
+ v = threshold variance
+ data_en$Respondent.ID[which(data_en$response_variance &lt; v)]&lt;- NA
+ distribution of completion time</p>
+
+<pre><code class="r">hist(data_en$completionTime)
+</code></pre>
+
+<pre><code>## Error in hist.default(data_en$completionTime): invalid number of &#39;breaks&#39;
+</code></pre>
+
+<p>consider excluding subjects with unusually short completion time
+t = threshold completion time
+ data_en$Respondent.ID[which(data_en$completionTime &lt; t)]&lt;- NA
+ distribution of age</p>
+
+<pre><code class="r">hist(data_en$age)
+</code></pre>
+
+<pre><code>## Error in hist.default(data_en$age): invalid number of &#39;breaks&#39;
+</code></pre>
+
+<h3>exclude all subjects that were set to NA:</h3>
+
+<pre><code class="r">xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)&gt;0){data_en = data_en[-xx,]}
+</code></pre>
+
+<p>######## remove unnecessary columns </p>
+
+<pre><code class="r">xx = grep(&quot;X&quot;, colnames(data_en))
+data_en = data_en[-xx]
+</code></pre>
+
+<p>note that in the real data, the above step will also exclude the column IP address</p>
+
+<pre><code class="r">data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
+</code></pre>
+
+<h4>quality control</h4>
+
+<p>&ldquo;years.of.education.fulltext&rdquo; includes the full answer for years.of.education for anyone with less than 10 years
+ check these answers to make sure this was not due to typos or nor summing the total years of 
+ number of subjects that were inconsistent in whether they had COVID related symptoms or not:</p>
+
+<pre><code class="r">sum(data_en$symptom.inconsistency, na.rm = T)
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<p>number of subjects that were inconsistent in whether they belong to a risk group:</p>
+
+<pre><code class="r">sum(data_en$risk.group.inconsistency, na.rm = T)
+</code></pre>
+
+<pre><code>## [1] 0
+</code></pre>
+
+<p>depending on the question addressed, these may be excluded:
+ xx = which(data_en$symptom.inconsistency==1) # COVID test
+ xx = which(data_en$risk.group.inconsistency==1) # risk group
+ if(length(xx)&gt;0){data_en = data_eu[-xx,]}</p>
+
+<h2>ideas for quality control:</h2>
+
+<p>of people listing &#39;full-time studying&quot; in 13, how many indicate undergoing education in 12? 
+ among people listing &#39;being in an occupation with enhanced risk of infection&#39; what are the most frequent occupations?</p>
+
+<pre><code class="r">save(data_en, file = &quot;data_en.RData&quot;)
+
+load(&quot;data_en.RData&quot;)
+</code></pre>
+
+<p>########## check incomplete datasets #######
+ ##################### supplementary tables #################</p>
+
+<p>######### table 1: sample demographics and health status 
+ # (all the initial basic variables and people‘s thinking about how the crisis is managed).</p>
+
+<p>&#39;&#39;&#39; very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz</p>
+
+<p>demovar &lt;- c(&ldquo;age&rdquo;, &ldquo;gender&rdquo;, &ldquo;current.stay.out.of.town&rdquo;, &ldquo;years.of.education&rdquo;, &ldquo;occupational.status&rdquo;, 
+              &ldquo;household.income&rdquo;, &ldquo;relationship.status&rdquo;, &ldquo;people.in.household&rdquo;, &ldquo;diagnosed.mental.health&rdquo;, 
+              &ldquo;risk.group&rdquo;, &ldquo;infection.test.status&rdquo;, &ldquo;quarantine.status&rdquo;, &ldquo;opinion.about.authorities.measures&rdquo;, 
+              &ldquo;adherence.to.recommended.procedures&rdquo; )
+ demog &lt;- data_en[demovar]
+ age &lt;- summary(demog$age)
+ gender &lt;- 
+ demog.summary &lt;- data.frame()
+ age_descr &lt;- c(&ldquo;Median age (range)&rdquo;, str_glue(&ldquo;{age[3]}&rdquo;,&ldquo;({age[1]}-{age[6]})&rdquo;))
+ Gender_title &lt;- c(&ldquo;Gender&rdquo;, &ldquo;&rdquo;)
+ Male
+ &#39;&#39;&#39;
+ #demog.summary &lt;- rbind(age_descr,sex_title)</p>
+
+<p>######### table 2: average values + SD of the sample in all the dependent and independent variables</p>
+
+<p>###step 1: extract all variables of interest into a new dataframe
+ ##NOTE: excel sheet SR_Ec.SCM SR_Ec.SSM do not match in R, in R they are defined as SR_c.SCM and SR_c.SSM - if adjusted, change in line below and code above
+ variables.of.interest = data_en[, c(&ldquo;SR_Eg.SCM&rdquo;, &ldquo;SR_Es.SCM&rdquo;, &ldquo;SR_c.SCM&rdquo;, &ldquo;SR_Eg.SSM&rdquo;, &ldquo;SR_Es.SSM&rdquo;, &ldquo;SR_c.SSM&rdquo;, &ldquo;PAS&rdquo;, &ldquo;PSS&rdquo;, &ldquo;CSS&rdquo;, &ldquo;OPT&rdquo;, &ldquo;GSE&rdquo;, &ldquo;REC&rdquo;, &ldquo;NEU&rdquo;, &ldquo;BCS&rdquo;, &ldquo;PAC&rdquo;, &ldquo;P&rdquo;, &ldquo;Es.SCM&rdquo;, &ldquo;Es.SSM&rdquo;, &ldquo;Eg.SCM&rdquo;, &ldquo;Eg.SSM&rdquo;, &ldquo;Ec.SCM&rdquo;, &ldquo;Ec.SSM&rdquo;, &ldquo;CERQSum&rdquo;, &ldquo;PAS&rdquo;, &ldquo;age&rdquo;)]</p>
+
+<p>###step 2: calculate mean/SD and put into a new dataframe
+ ##NOTE: SR&hellip; variables are Z-scores, mean of Z-score is always 0 and SD will be 1 -&gt; pointless to calculate?
+ Mean = as.data.frame(colMeans(variables.of.interest))
+ SD = as.data.frame(apply(variables.of.interest, 2, sd))
+ table.mean.sd = cbind(Mean, SD) #combine mean and SD into one table
+ colnames(table.mean.sd)[1] &lt;- &ldquo;Mean&rdquo; #rename header
+ colnames(table.mean.sd)[2] &lt;- &ldquo;SD&rdquo; #rename header
+ table.mean.sd[, c(1:2)] = table.mean.sd %&gt;% mutate_at(vars(Mean, SD), funs(round(., 2))) #round to two decimals</p>
+
+<p>###step 3: use formattable package to create a nice table that can be viewed in the viewer window of R
+ formattable(table.mean.sd)</p>
+
+<p>######### table 3: intercorrelations of dependent and independent variables</p>
+
+<p>###Basic correlation matrix
+ corr.matrix = as.data.frame(cor(variables.of.interest, use = &ldquo;complete.obs&rdquo;)) #intercorrelation matrix
+ corr.matrix[, c(1:25)] = corr.matrix %&gt;% mutate_at(vars(c(1:25)), funs(round(., 2))) #round to two decimals
+ formattable(corr.matrix, 
+             align = c(&ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;, &ldquo;c&rdquo;) #center values
+ )</p>
+
+<p>###basic cor(&hellip;) does not give p-values, so use rcorr instead (requires more than 4 cases)
+ ##variables.of.interest[nrow(variables.of.interest) + 1,] = 1 #testing purpose (needed more than 4 cases, ignore this line) </p>
+
+<p>corr.p.matrix &lt;- rcorr(as.matrix(variables.of.interest))
+ corr.p.matrix$r #gives correlations
+ corr.p.matrix$P #gives p values of correlations</p>
+
+<p>flattenCorrMatrix &lt;- function(cormat, pmat) { #function to put r and p value into one table
+   ut &lt;- upper.tri(cormat)
+   data.frame(
+     row = rownames(cormat)[row(cormat)[ut]],
+     column = rownames(cormat)[col(cormat)[ut]],
+     cor  =(cormat)[ut],
+     p = pmat[ut]
+   )
+ }</p>
+
+<p>corr.p.matrix &lt;- as.data.frame(flattenCorrMatrix(corr.p.matrix$r, corr.p.matrix$P))
+ corr.p.matrix$Sign &lt;- ifelse(corr.p.matrix$p &lt; 0.05, &ldquo;significant&rdquo;, &ldquo;not significant&rdquo;) #threshold set at .05
+ corr.p.matrix[, c(3,4)] = round(corr.p.matrix[, c(-1, -2, -5)],2) #round 2 decimals, change last value (the 2) if you want more/less decimals
+ formattable(corr.p.matrix) #viewer table</p>
+
+<p>###helpful intercorrlation matrix graph 
+ x = cor(variables.of.interest)
+ corrplot(x, type = &ldquo;lower&rdquo;)</p>
+
+<p>#
+ check dates of survey language</p>
+
+<pre><code class="r">table(data_en$survey.language)
+</code></pre>
+
+<pre><code>## &lt; table of extent 0 &gt;
+</code></pre>
+
+<pre><code class="r">table(data_en$survey.language[which(!is.na(data_en$complete.eu))])
+</code></pre>
+
+<pre><code>## &lt; table of extent 0 &gt;
+</code></pre>
+
+<pre><code class="r">table(data_en$survey.language[which(is.na(data_en$complete.eu))])
+</code></pre>
+
+<pre><code>## &lt; table of extent 0 &gt;
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;cs&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;cs&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;da&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;da&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;de&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;de&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;en&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;en&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;es&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;es&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;et&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;et&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;fr&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;fr&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;he&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;he&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;hu&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;hu&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;it&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;it&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;nl&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;nl&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;no&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;no&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;pl&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;pl&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;sk&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;sk&quot;)]): kein nicht-fehlendes Argument für min;
+## gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+<pre><code class="r">min(data_en$Start.DateTime[which(data_en$survey.language==&quot;zh_Hant&quot;)])
+</code></pre>
+
+<pre><code>## Warning in min(data_en$Start.DateTime[which(data_en$survey.language == &quot;zh_Hant&quot;)]): kein nicht-fehlendes Argument für
+## min; gebe Inf zurück
+</code></pre>
+
+<pre><code>## [1] Inf
+</code></pre>
+
+</body>
+
+</html>
