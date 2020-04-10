@@ -28,8 +28,7 @@ numextract <- function(string){
   str_extract(string, "\\-*\\d+\\.*\\d*")
 } 
 
-# load data and add column indicating the origin of the data
-# must have 171 columns!
+# load data - must have 171 columns!
 # Lara's Path (I had to use \\ as escapes):
 data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
@@ -665,24 +664,24 @@ load("data_en.RData")
 # corrplot(x, type = "lower")
 # 
 # #
-# # check dates of survey language
-# table(data_en$survey.language)
-# table(data_en$survey.language[which(!is.na(data_en$complete.eu))])
-# table(data_en$survey.language[which(is.na(data_en$complete.eu))])
-# 
-# min(data_en$Start.DateTime[which(data_en$survey.language=="cs")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="da")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="de")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="en")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="es")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="et")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="fr")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="he")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="hu")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="it")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="nl")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="no")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
-# min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
+# check dates of survey language
+table(data_en$survey.language)
+table(data_en$survey.language[which(!is.na(data_en$complete.eu))])
+table(data_en$survey.language[which(is.na(data_en$complete.eu))])
+
+min(data_en$Start.DateTime[which(data_en$survey.language=="cs")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="da")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="de")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="en")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="es")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="et")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="fr")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="he")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="hu")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="it")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="nl")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="no")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
+min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
 
