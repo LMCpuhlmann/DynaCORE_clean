@@ -10,11 +10,7 @@ date: "APril 10th, 2020"
 ---
 
 ```{r setup, include=FALSE}
-#  - this version includes data sanity checks -
-
-# NOTE REMAINING ISSUES: 
-# - completion time is negative sometimes
-# - current location variables does not work <= fixed?
+#  - includes plausibility checks -
 
 # definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
 
@@ -227,20 +223,22 @@ data_en$age = gsub("o", "0", data_en$age) #account for people accidently typing 
 # extract the numeric component from age response
 data_en$age = numextract(data_en$age)
 data_en$age = as.numeric(data_en$age)
-data_en$age[which(data_en$age > 100)] = NA
-length(which(is.na(data_en$age))) # just the one
+data_en$age[which(data_en$age > 100)] # 111 seems possible, so keep
+length(which(is.na(data_en$age))) # none
 
 # if any ages are 0, this could be due to a leading o that was substituted above. Check fulltext:
 data_en$age.fulltext[which(data_en$age==0)] # -> one person, who says to be 41 soon
 data_en$age[which(data_en$age==0)] = 41 # recode this person:
 
 # check invalid age responses 
-which(data_en$age < 18)
+which(data_en$age < 18) # four
 which(data_en$age[which(!is.na(data_en$complete.eu))] < 18)
-which(is.na(data_en$age[which(!is.na(data_en$complete.eu))]))
+
+which(is.na(data_en$age[which(!is.na(data_en$complete.eu))])) # none
 
 # exclude those resposes
 data_en$Respondent.ID[which(data_en$age < 18)]<- NA
+
 data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
 xx = which(is.na(data_en$Respondent.ID))
 if(length(xx)>0){data_en = data_en[-xx,]}
@@ -278,7 +276,8 @@ xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.eu))]+
 # set symptom ratings of those not being COVID positive to NA
 xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1) # symptom severity above 1 although saying they were not tested pos
 #xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
-data_en$symptom.severity[which(data_en$infection.test.status==1)] <- NA 
+length(which(data_en$symptom.severity[which(data_en$infection.test.status==1)] != ""))
+data_en$symptom.severity[which(data_en$infection.test.status==1)] <- ""
 
 
 ### occupation
@@ -294,12 +293,13 @@ data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.statu
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
 
-employed = c("1", "2", "3", "4")
-not.employed = c("7", "8", "9", "10", "12") #parental leave, sick leave, unemployment w/ or w/o benefits, retired
+employed = c("1", "2", "3", "4") # Note that this also grabs 10, 11, 12
+not.employed = c("7", "8", "9", "10", "11", "12") #parental leave, studying, sick leave, unemployment w/ or w/o benefits, retired
 data_en$employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse="|"), ch))
 data_en$not.employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(not.employed, collapse="|"), ch))
 data_en$employed.13[sapply(data_en$employed.13, function(x) length(x)==0)] <- NA
 data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x)==0)] <- NA
+data_en$employed.13[which(!is.na(data_en$not.employed.13))] <- NA # also set to NA if there is 
 
 # find people that are unemployed in 12 but working in 13
 index = which(!is.na(data_en$not.working.12)) %in% which(!is.na(data_en$employed.13))
@@ -307,10 +307,10 @@ xx = which(!is.na(data_en$not.working.12))[index]
 data_en$occupation[xx] <- NA
 data_en$occupational.status[xx] <- NA
 
-# add 'not working' to occupation of all individuals listing forms of not working in 13
-index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
-xx = which(is.na(data_en$not.working.12))[index]
-data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] <- 16
+# # add 'not working' to occupation of all individuals listing forms of not working in 13
+# index = which(is.na(data_en$not.working.12)) %in% which(!is.na(data_en$not.employed.13))
+# xx = which(is.na(data_en$not.working.12))[index]
+# data_en$occupation[xx][[1]][length(data_en$occupation[xx][[1]])+1] <- 16
 
 # drop empty levels
 data_en$gender = droplevels(data_en$gender)
@@ -548,14 +548,14 @@ data_en = data_en[-xx]
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
 
-save(data_en, file = "data_en.RData")
+#save(data_en, file = "data_en.RData")
 ```
 ```{r first analysis of data - perhaps move to analysis script?}
 require(stargazer)
 
 # correlations of stressors
-res <- cor(my_data)
-round(res, 2)
+correlation.matrix <- cor(data_en[,c("Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs")
+stargazer(correlation.matrix, title="Correlation Matrix", type = "text", out="table1.txt")
 
 # compare model fits
 
@@ -567,7 +567,7 @@ m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
 m3 <- lm(scale(P)~scale(Ec.SCM),data= data_en[xx,])
 
 anova(m1)
-anova(m1, m2, m3, test="F")
+anova(m1, m2, m3, test="F") # only for examination - non-nested models cannot be compared
 
 # stressor severity method
 xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
@@ -584,14 +584,11 @@ summary(m5)$r.squared
 summary(m6)$r.squared
 
 anova(m6)
-anova(m4, m5, m6, test="F")
-
+anova(m4, m5, m6)
 anova(m1, m2, m3, m4, m5, m6)
 
-correlation.matrix <- cor(attitude[,c("rating","complaints","privileges")])stargazer(correlation.matrix, title="Correlation Matrix")
-
-# correlations of stressor residuals
-
+var(data_en$Es.SCM, na.rm =T)
+var(data_en$Eg.SCM, na.rm =T)
 
 ```
 
