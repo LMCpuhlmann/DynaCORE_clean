@@ -451,6 +451,29 @@ data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
 # test
 which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
+
+
+# compare model fits
+
+# stressor count method
+xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+
+m1 <- lm(scale(P)~scale(Eg.SCM),data= data_en[xx,])
+m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
+m3 <- lm(scale(P)~scale(Ec.SCM),data= data_en[xx,])
+
+anova(m1)
+anova(m1, m2, m3, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+m4 <- lm(scale(P)~scale(Eg.SSM),data= data_en[xx,])
+m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
+m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
+
+anova(m6)
+anova(m4, m5, m6, test="F")
 ```
 
 ```{r calculate SR Scores}
@@ -474,6 +497,7 @@ data_en$SR_Es.SSM[!is.na(data_en$Es.SSM)] <-as.numeric(scale(resid(m5)))
 
 m6 <- summary(lm(scale(P)~scale(Ec.SSM),data= data_en[!is.na(data_en$Ec.SSM),]))
 data_en$SR_c.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
+
 ```
 
 ```{r generate subgroups . remove?}
