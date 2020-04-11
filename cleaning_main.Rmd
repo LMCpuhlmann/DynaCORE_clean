@@ -560,7 +560,8 @@ stargazer(correlation.matrix, title="Correlation Matrix", type = "text", out="ta
 # compare model fits
 
 # stressor count method
-xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+xx = !is.na(data_en$complete.eu)# match sample size
+# for full sample, use xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM)
 
 m1 <- lm(scale(P)~scale(Eg.SCM),data= data_en[xx,])
 m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
@@ -570,7 +571,9 @@ anova(m1)
 anova(m1, m2, m3, test="F") # only for examination - non-nested models cannot be compared
 
 # stressor severity method
-xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+xx =  !is.na(data_en$complete.eu)# match sample size
+# for full sample, use xx = !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) 
+  
 m4 <- lm(scale(P)~scale(Eg.SSM),data= data_en[xx,])
 m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
 m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
