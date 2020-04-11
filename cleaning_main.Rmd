@@ -12,6 +12,10 @@ date: "APril 10th, 2020"
 ```{r setup, include=FALSE}
 #  - this version includes data sanity checks -
 
+# NOTE REMAINING ISSUES: 
+# - completion time is negative sometimes
+# - current location variables does not work
+
 # definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
 
 #
@@ -516,7 +520,11 @@ data_en$Respondent.ID[which(data_en$response_variance == 0)] # none
 # distributions
 hist(data_en$response_variance) # distribution of response variance
 hist(data_en$age) # distribution of age
-hist(data_en$completionTime) # distribution of completion time
+hist(data_en$completionTime/60) # distribution of completion time
+length(which(data_en$completionTime/60>1440)) # longer than 1 day
+length(which(data_en$completionTime[which(!is.na(data_en$complete.eu))]/60>1440))
+length(which(data_en$completionTime/60>2880)) # longer than 2 days
+length(which(data_en$completionTime[which(!is.na(data_en$complete.eu))]/60>2880))
 
 # consider excluding subjects with unusually short completion time
 #t = threshold completion time
