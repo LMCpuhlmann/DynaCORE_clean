@@ -166,6 +166,17 @@ length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay
 length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2"&!is.na(data_en$complete.eu))] != ""))
 
 data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country != "")] <- ""
+
+data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
+ 
+# test
+data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
+
+# how many are not currently in Europe?
+length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
+data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
 ```
 
 ```{r  format covariates}
@@ -333,16 +344,6 @@ length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0)
 length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
 length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
 # 
-# data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
-# 
-# # test
-#  data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
-#  data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
-#  data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
-
-# how many are not currently in Europe?
-length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
-data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
 
 # number of responses per country
 sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
