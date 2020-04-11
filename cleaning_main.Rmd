@@ -42,12 +42,13 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")} # extrac
 ```{r Read and format data}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
-# Lara's Path 
-data_en = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:\\Users\\Nutzer\\Documents\\Documents\\KalischLab\\DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-
 #data_en <- read_csv("DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
 #data_text <- read_csv("DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE) # text version 
+
+# user-specific path [change accordingly]:
+data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+
 data_en = rename(data_en) #rename variables
 data_en = formatting(data_en) #group occupation + status in lists
 
