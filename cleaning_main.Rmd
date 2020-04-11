@@ -453,30 +453,6 @@ data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 # test
 which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
 
-
-# compare model fits
-
-# stressor count method
-xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
-
-m1 <- lm(scale(P)~scale(Eg.SCM),data= data_en[xx,])
-m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
-m3 <- lm(scale(P)~scale(Ec.SCM),data= data_en[xx,])
-
-anova(m1)
-anova(m1, m2, m3, test="F")
-
-# stressor severity method
-xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
-
-m4 <- lm(scale(P)~scale(Eg.SSM),data= data_en[xx,])
-m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
-m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
-
-anova(m6)
-anova(m4, m5, m6, test="F")
-
-anova(m1, m2, m3, m4, m5, m6)
 ```
 
 ```{r calculate SR Scores}
@@ -549,6 +525,8 @@ data_en$Respondent.ID[which(data_en$response_variance == 0)] # none
 hist(data_en$response_variance) # distribution of response variance
 hist(data_en$age) # distribution of age
 hist(data_en$completionTime/60) # distribution of completion time
+hist(data_en$completionTime[which(data_en$completionTime/60<1440)]/60) # distribution of completion time under 1 day
+
 length(which(data_en$completionTime/60>1440)) # longer than 1 day
 length(which(data_en$completionTime[which(!is.na(data_en$complete.eu))]/60>1440))
 length(which(data_en$completionTime/60>2880)) # longer than 2 days
@@ -571,6 +549,50 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
 
 save(data_en, file = "data_en.RData")
+```
+```{r first analysis of data - perhaps move to analysis script?}
+require(stargazer)
+
+# correlations of stressors
+res <- cor(my_data)
+round(res, 2)
+
+# compare model fits
+
+# stressor count method
+xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+
+m1 <- lm(scale(P)~scale(Eg.SCM),data= data_en[xx,])
+m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
+m3 <- lm(scale(P)~scale(Ec.SCM),data= data_en[xx,])
+
+anova(m1)
+anova(m1, m2, m3, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+m4 <- lm(scale(P)~scale(Eg.SSM),data= data_en[xx,])
+m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
+m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
+
+# examine explained variance
+summary(m1)$r.squared
+summary(m2)$r.squared
+summary(m3)$r.squared
+summary(m4)$r.squared
+summary(m5)$r.squared
+summary(m6)$r.squared
+
+anova(m6)
+anova(m4, m5, m6, test="F")
+
+anova(m1, m2, m3, m4, m5, m6)
+
+correlation.matrix <- cor(attitude[,c("rating","complaints","privileges")])stargazer(correlation.matrix, title="Correlation Matrix")
+
+# correlations of stressor residuals
+
+
 ```
 
 ```{r old table code - remove?}
