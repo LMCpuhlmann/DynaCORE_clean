@@ -14,7 +14,7 @@ date: "APril 10th, 2020"
 
 # NOTE REMAINING ISSUES: 
 # - completion time is negative sometimes
-# - current location variables does not work
+# - current location variables does not work <= fixed?
 
 # definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
 
@@ -113,8 +113,8 @@ data_en$Start.Date = as.Date(data_en$Start.Date, tryFormats = c("%m-%d-%Y", "%m/
 data_en$End.Date = as.Date(data_en$End.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
 data_en$Start.Date = as.POSIXlt(paste(data_en$Start.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
 data_en$End.Date = as.POSIXlt(paste(data_en$End.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
-data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
-data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = "Europe/Berlin", format="%Y-%m-%d %H:%M:%S %p")
+data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = "Europe/Berlin", format="%Y-%m-%d %I:%M:%S %p")
+data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = "Europe/Berlin", format="%Y-%m-%d %I:%M:%S %p")
 
 # #test
 # data_en$Start.Date[4] #should give year/month/day GMT
