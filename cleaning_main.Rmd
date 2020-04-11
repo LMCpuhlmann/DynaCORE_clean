@@ -474,6 +474,8 @@ m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
 
 anova(m6)
 anova(m4, m5, m6, test="F")
+
+anova(m1, m2, m3, m4, m5, m6)
 ```
 
 ```{r calculate SR Scores}
