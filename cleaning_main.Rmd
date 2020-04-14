@@ -9,14 +9,14 @@ authors:
 date: "APril 10th, 2020"
 ---
 
+Formats data for interim analysis and includes plausibility checks
+
+WARNING: Only run once! 
+
+definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
+
+
 ```{r setup, include=FALSE}
-#  - includes plausibility checks -
-
-# definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
-
-#
-# WARNING: Only run once! 
-#
 
 library(knitr)
 require(foreign)
@@ -28,10 +28,12 @@ require(BBmisc)
 #require(Hmisc)
 #require(corrplot)
 
-source("rename.R") #renames variables
-source("formatting.R") #groups occupation and occupational status in lists
+# source functions to renames variables and occupation and occupational status in lists
+source("rename.R") 
+source("formatting.R")
 
-numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")} # extracts numeric part free response
+# function to extract numeric part free response
+numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")} 
 
 ```
 
@@ -129,24 +131,43 @@ data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
 
 Europe = c(2, 4, 11, 17, 18, 23, 28, 45, 48, 51, 60, 63, 64, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 148, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
 
-data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
 data_en = data_en[order(data_en$End.DateTime),] # sort by completion date + time
 
 data_en$complete.eu = NA #count of complete responses from European residents
+data_en$complete.all = NA #count of complete responses overall
 c = 0
+c2 = 0
 for(i in 1:length(data_en$complete.eu)){
-  if (data_en$missings[i] == 0 && is.na(data_en$missing.cov[i])){
+  if (data_en$missings[i] == 0 && is.na(data_en$missing.cov[i]) && data_en$country.of.residence[i] %in% Europe){
   c = c+1
   data_en$complete.eu[i] = c
+  } 
+  if(data_en$missings[i] == 0 && is.na(data_en$missing.cov[i])) {
+  c2 = c2+1
+  data_en$complete.all[i] = c2
   }
 }
 data_en = data_en[1:which(data_en$complete.eu==5000),] # keep data up until the 5000th complete response
-dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov),]) # should be 5000
-dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov),]) # should be the remaining
+dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov)&data_en$country.of.residence %in% Europe,]) # should be 5000
+dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov)|!(data_en$country.of.residence %in% Europe),]) # should be the remaining
+
+data_eu = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
+data_ex = data_en[which(!(data_en$country.of.residence %in% Europe)),] # exclude all non-European residents
+
+#incomplete responses:
+dim(data_eu[data_eu$missings > 0|!is.na(data_eu$missing.cov),])
+dim(data_ex[data_ex$missings > 0|!is.na(data_ex$missing.cov),])
+dim(data_eu[data_eu$missings == 0&is.na(data_eu$missing.cov),])
+dim(data_ex[data_ex$missings == 0&is.na(data_ex$missing.cov),])
+dim(data_ex[data_ex$missings > 0,]) # very high n of incomplete resp
+write.csv(data_ex[,c(1:21, 52:179)], "data_outside_eu.csv") # truly, loads are incomplete
 
 max(data_en$End.DateTime)
 data_en$complete.eu[which(data_en$End.DateTime == max(data_en$End.DateTime))]
 data_en$End.DateTime[length(data_en$Respondent.ID)] # pull date
+
+data_all = data_en # all data up to 'pull date'
+# data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
 
 ```
 
@@ -180,8 +201,8 @@ data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.tow
 data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
 
 # name most frequent countries
-data_en$country.of.residence = revalue(data_en$country.of.residence, 
-      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
+# data_en$country.of.residence = revalue(data_en$country.of.residence, 
+#       c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
 
 data_en$household.income = factor(data_en$household.income, order = TRUE)
 data_en$health.status = factor(data_en$health.status, order = TRUE)
@@ -289,6 +310,8 @@ data_en$occupation.if.only.one <- as.numeric(data_en$occupation.if.only.one)
 data_en$occupational.status.if.only.one <- as.character(data_en$occupational.status)
 data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.status.if.only.one)
 
+#data_en$occupational.status[sapply(data_en$occupational.status, function(x)  "1" %in% x)]
+
 ### set cases with mismatch in occupation to NA
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
@@ -343,7 +366,6 @@ length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0)
 
 length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
 length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
-# 
 
 # number of responses per country
 sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
@@ -424,6 +446,27 @@ term <- "H1_Cor_"
 PAC <- grep(term, names(data_en))
 data_en$PAC <- rowSums(data_en[PAC])
 
+# summarise GHQ
+length(data_en$P[which(!is.na(data_en$complete.all))])
+mean(data_en$P[which(!is.na(data_en$complete.all))])
+sd(data_en$P[which(!is.na(data_en$complete.all))])
+
+length(data_en$P[which(is.na(data_en$complete.all))])
+length(data_en$P[which(is.na(data_en$complete.all)&!is.na(data_en$P))])
+mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+sd(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+
+data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
+
+length(data_en$P[which(is.na(data_en$complete.eu))])
+length(data_en$P[which(is.na(data_en$complete.eu)&!is.na(data_en$P))])
+mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+sd(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+
+length(data_en$P[which(!is.na(data_en$complete.eu))])
+mean(data_en$P[which(!is.na(data_en$complete.eu))])
+sd(data_en$P[which(!is.na(data_en$complete.eu))])
+
 ```
 
 ```{r calculation of stressors}
@@ -479,7 +522,7 @@ data_en$SR_c.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
 ```
 
-```{r generate subgroups . remove?}
+```{r generate subgroupe, include = False}
 
 # subjects in Europe
 xx = which(data_en$current.location %in% Europe)
@@ -500,9 +543,28 @@ index.insecure.occupational.status[sapply(index.insecure.occupational.status, fu
 data_en$unstable.occupational.status = NA 
 data_en$unstable.occupational.status[which(!is.na(index.stable.occupational.status))] = 0 # 0 = no, stable status
 data_en$unstable.occupational.status[which(is.na(index.stable.occupational.status)&!is.na(index.insecure.occupational.status))] = 1 # 1 = yes, unstable status (and no additional stable status)
+
+# index people in academia
+data_en$academia = 0
+academia = c("1", "2")
+index.academia <- sapply(data_en$occupation, function(ch) academia %in% ch)
+#data_en$occupational.status[which(index.academia[1,] > 0 |index.academia[2,] > 0)]
+data_en$academia[which(index.academia[1,] > 0 |index.academia[2,] > 0)]=1
+# test
+data_en$occupation[which(data_en$academia==1)][1000:1100]
+data_en$occupation[which(data_en$academia==0)][1000:1100]
+length(data_en$occupation[which(data_en$academia== 0& !is.na(data_en$complete.eu))])
+length(data_en$occupation[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
+
+# GHQ in academia
+mean(data_en$P[which(data_en$academia== 0& !is.na(data_en$complete.eu))])
+sd(data_en$P[which(data_en$academia== 0& !is.na(data_en$complete.eu))])
+mean(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
+sd(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
+
 ```
 
-```{r response variance and completion time}
+```{r response variance and completion time, include = False}
 
 # exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)
 var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
@@ -522,43 +584,65 @@ data_en$response_variance = rowSums(var)
 data_en$Respondent.ID[which(data_en$response_variance == 0)] # none
 
 # distributions
-hist(data_en$response_variance) # distribution of response variance
+hist(data_en$response_variance) # distribution of response variance - looks good
 hist(data_en$age) # distribution of age
 hist(data_en$completionTime/60) # distribution of completion time
 hist(data_en$completionTime[which(data_en$completionTime/60<1440)]/60) # distribution of completion time under 1 day
+hist(data_en$completionTime[which(data_en$completionTime/60<60)]/60) # distribution of completion time under 1 hour
+
+# very short completion time
+which(is.na(data_en$completionTime[which(!is.na(data_en$complete.eu))]))
+min(data_en$completionTime[which(!is.na(data_en$complete.eu))], na.rm = T)
+# in complete sample at least 5.75 min, which is plausible
 
 length(which(data_en$completionTime/60>1440)) # longer than 1 day
-length(which(data_en$completionTime[which(!is.na(data_en$complete.eu))]/60>1440))
 length(which(data_en$completionTime/60>2880)) # longer than 2 days
-length(which(data_en$completionTime[which(!is.na(data_en$complete.eu))]/60>2880))
 
-# consider excluding subjects with unusually short completion time
-#t = threshold completion time
-# data_en$Respondent.ID[which(data_en$completionTime < t)]<- NA
-
-#### exclude all subjects that were set to NA:
-xx = which(is.na(data_en$Respondent.ID))
-if(length(xx)>0){data_en = data_en[-xx,]}
-
-# remove unnecessary columns 
-xx = grep("X", colnames(data_en))
-data_en = data_en[-xx]
-# note that in the real data, the above step will also exclude the column IP address
-
-data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
-
-
-#save(data_en, file = "data_en.RData")
 ```
-```{r first analysis of data - perhaps move to analysis script?}
+
+```{r first tables - perhaps move to analysis script?}
 require(stargazer)
+require(tableone)
+require(kableExtra)
+require(pander)
 
-# correlations of stressors
-correlation.matrix <- cor(data_en[,c("Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs")
-stargazer(correlation.matrix, title="Correlation Matrix", type = "text", out="table1.txt")
+# full sample
 
-# compare model fits
+# correlation of stressors
+correlation.stressors <- cor(data_en[,c("Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs", method = "pearson")
+correlation.P <- cor(data_en[,c("P", "Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs", method = "pearson")
 
+stargazer(correlation.P[,1], title="Correlations of 'P' with stressors", type = "text", out="cor_P_stressors.txt")
+#writeLines(capture.output(stargazer(correlation.P[,1], title="Correlations of 'P' with stressors", type = "text", out="correlation.P.txt")), "cor_P_stressors.txt")
+
+stargazer(correlation.stressors, title="Correlation among stressors (Pearson r)", type = "text", out="correlation.stressors.txt")
+#writeLines(capture.output(stargazer(correlation.stressors, title="Correlation among stressors", type = "html", out="correlation.P.html")), "cor_stressors.html")
+
+# count stressor frequency in complete sample
+data_en.complete = data_en[which(!is.na(data_en$complete.eu)),]
+stressors.df = data.frame(names = c("a", "b", "c"),
+                          stressors = c(colSums(data_en.complete[CE] >0), colSums(data_en.complete[GE] >0)))
+
+# subsample
+stressors.df = data.frame(Category = c("a", "b", "c"),
+                          Count = c(colSums(data_en.complete[CE] >0), colSums(data_en.complete[GE] >0)),
+                          Frequency = c(round(colSums(data_en.complete[CE] >0)/length(data_en.complete$CE_01)*100,2), round(colSums(data_en.complete[GE] >0)/length(data_en.complete$CE_01)*100,2)),
+                          severity = c(round(apply(data_en.complete[CE],2,mean),2), round(apply(data_en.complete[GE],2,mean),2))
+                          )
+write.csv(stressors.df, "stressor_prevalence.csv")
+
+
+# table one
+
+# Section for the supplement on the treatment of incomplete European data sets
+
+# Table S1 on sample characteristics of the first 5000 complete Europeans
+
+# Table S6 of intercorrelations between included covariates (not all) and the hypothesized resilience factors (can also be a correlation matrix) in the cleaned complete Europeans
+
+```
+
+```{r compare model fits}
 # stressor count method
 xx = !is.na(data_en$complete.eu)# match sample size
 # for full sample, use xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM)
@@ -579,12 +663,19 @@ m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
 m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
 
 # examine explained variance
-summary(m1)$r.squared
-summary(m2)$r.squared
-summary(m3)$r.squared
-summary(m4)$r.squared
-summary(m5)$r.squared
-summary(m6)$r.squared
+modelfits = matrix(c(summary(m1)$r.squared, summary(m2)$r.squared, summary(m3)$r.squared, summary(m4)$r.squared, summary(m5)$r.squared, summary(m6)$r.squared), ncol = 1)
+rownames(modelfits)  <-  c("Eg.SCM", "Es.SCM", "Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")
+colnames(modelfits) <- c("Rsq")
+#stargazer(modelfits, title="R squared for 'P'", type = "text", out="correlation.P.txt")
+
+modelfits.df = data.frame(category = c("Eg.SCM", "Es.SCM", "Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM"),
+                          Rsq.adj = c(summary(m1)$adj.r.squared, summary(m2)$adj.r.squared, summary(m3)$adj.r.squared, summary(m4)$adj.r.squared, summary(m5)$adj.r.squared, summary(m6)$adj.r.squared),
+                          model = c(as.character(summary(m1)$call)[2], as.character(summary(m2)$call)[2], as.character(summary(m3)$call)[2], as.character(summary(m4)$call)[2], as.character(summary(m5)$call)[2],as.character(summary(m6)$call)[2]))
+
+names(modelfits.df)[2] <- "adj. R-sq."
+
+pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, "test")
+writeLines(capture.output(pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, 'Explained variance by stressor category')), "modelfits.txt")
 
 anova(m6)
 anova(m4, m5, m6)
@@ -592,8 +683,24 @@ anova(m1, m2, m3, m4, m5, m6)
 
 var(data_en$Es.SCM, na.rm =T)
 var(data_en$Eg.SCM, na.rm =T)
-
 ```
+
+```{r final cleaning}
+#### exclude all subjects that were set to NA:
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
+
+# remove unnecessary columns 
+xx = grep("X", colnames(data_en))
+data_en = data_en[-xx]
+# note that in the real data, the above step will also exclude the column IP address
+
+data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
+
+
+#save(data_en, file = "data_en.RData")
+```
+
 
 ```{r old table code - remove?}
 # 
