@@ -590,23 +590,22 @@ for (i in 1:nrow(data_en)){
 }
 
 data_en$response_variance = rowSums(var)
-# exclude subject with 0 average response variance
+# exclude subject with 0 response variance
 data_en$Respondent.ID[which(data_en$response_variance == 0)] # none
 
 # distributions
 hist(data_en$response_variance) # distribution of response variance - looks good
 hist(data_en$age) # distribution of age
-hist(data_en$completionTime/60) # distribution of completion time
+hist(data_en$completionTime/60) # distribution of completion time - some outliers
 hist(data_en$completionTime[which(data_en$completionTime/60<1440)]/60) # distribution of completion time under 1 day
 hist(data_en$completionTime[which(data_en$completionTime/60<60)]/60) # distribution of completion time under 1 hour
+length(which(data_en$completionTime/60>1440)) # longer than 1 day
+length(which(data_en$completionTime/60>2880)) # longer than 2 days
 
 # very short completion time
 which(is.na(data_en$completionTime[which(!is.na(data_en$complete.eu))]))
 min(data_en$completionTime[which(!is.na(data_en$complete.eu))], na.rm = T)
 # in complete sample at least 5.75 min, which is plausible
-
-length(which(data_en$completionTime/60>1440)) # longer than 1 day
-length(which(data_en$completionTime/60>2880)) # longer than 2 days
 
 ```
 
@@ -642,7 +641,7 @@ stressors.df = data.frame(Category = c("a", "b", "c"),
 write.csv(stressors.df, "stressor_prevalence.csv")
 
 
-# table one
+# table one / table 1
 
 # Section for the supplement on the treatment of incomplete European data sets
 
