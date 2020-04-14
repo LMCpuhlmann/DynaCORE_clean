@@ -198,7 +198,7 @@ data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.tow
 
 ```{r  format covariates}
 #data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
-data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
 
 # name most frequent countries
 # data_en$country.of.residence = revalue(data_en$country.of.residence, 
@@ -563,14 +563,44 @@ mean(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
 
 # psychiatric diagnoses
-ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
+#ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
+ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
 names(ID.diagnosed)[1] <- "ID"
 data_en$psychiatric.diagnose <- NA
+data_en$psychiatric.diagnose[which(ID.diagnosed$ID %in% data_en$Respondent.ID)] <- 1
 data_en$psychiatric.diagnose[which(data_en$Respondent.ID %in% ID.diagnosed$ID)] <- 1
+
+# newly included people with mental health conditions
+mental.health = data.frame(ID = data_en$Respondent.ID[which(nchar(data_en$mental.health.details)>0)],
+                           diagnosed.condition = data_en$mental.health.details[which(nchar(data_en$mental.health.details)>0)],
+                           complete = data_en$complete.eu[which(nchar(data_en$mental.health.details)>0)]
+)
+mental.health$complete[which(!is.na(mental.health$complete))] = 1
+
+mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
+mental.health$new = 0
+mental.health$new[which(!(mental.health$ID %in% mental.health.old$ID))] = 1
+sum(mental.health$new)
+write.csv(mental.health, "mental.health.new.csv")
+
+mental.health.old$ID[which(!(mental.health.old$ID %in% mental.health$ID))]
+
 mean(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
 mean(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
+#test
+which(!(ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))
+ID.diagnosed$ID[which(!(ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))]
+ID.diagnosed$ID[which(!(ID.diagnosed$ID %in% data_en$Respondent.ID))]
+
+which((ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))
+
+mean(data_en$P[which(data_en$diagnosed.mental.health==0& !is.na(data_en$complete.eu))])
+sd(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
+
+mean(data_en$P[which(data_en$diagnosed.mental.health==1& !is.na(data_en$complete.eu))])
+
 
 ```
 
@@ -642,6 +672,24 @@ write.csv(stressors.df, "stressor_prevalence.csv")
 
 
 # table one / table 1
+
+demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
+             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
+             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
+             "adherence.to.recommended.procedures" )
+demog <- data_en.complete[demovar]
+
+label(dat$age)   <- "Age"
+label(dat$sex)   <- "Sex"
+label(dat$wt)    <- "Weight"
+label(dat$treat) <- "Treatment Group"
+
+units(dat$age)   <- "years"
+units(dat$wt)    <- "kg"
+
+t1 = table1(~ age + current.stay.out.of.town + years.of.education | gender, data=demog)
+
+#tab3 <- CreateTableOne(vars = myVars, strata = "trt" , data = pbc, factorVars = catVars)
 
 # Section for the supplement on the treatment of incomplete European data sets
 
@@ -718,12 +766,21 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 # 
 # ''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
 # 
-# demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status", 
-#              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health", 
-#              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures", 
-#              "adherence.to.recommended.procedures" )
-# demog <- data_en[demovar]
-# age <- summary(demog$age)
+demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
+             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
+             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
+             "adherence.to.recommended.procedures" )
+demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
+
+t1 = table1(~ age + current.stay.out.of.town + years.of.education | gender, data=demog)
+t1
+
+writeLines(capture.output(t1), "t1.html")
+
+tab3 <- CreateTableOne(vars = myVars, strata = "trt" , data = pbc, factorVars = catVars)
+
+age <- summary(demog$age)
+
 # gender <- 
 # demog.summary <- data.frame()
 # age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
