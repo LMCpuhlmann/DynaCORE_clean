@@ -942,6 +942,63 @@ var(data_en$Es.SCM, na.rm =T)
 var(data_en$Eg.SCM, na.rm =T)
 ```
 
+```{r prepare covariates for Göran, include = FALSE}
+names(data_en)[names(data_en) == "X.0"] <- "occupation1"
+names(data_en)[names(data_en) == "X"] <- "occupation2"
+names(data_en)[names(data_en) == "X.1"] <- "occupation3"
+names(data_en)[names(data_en) == "X.2"] <- "occupation4"
+names(data_en)[names(data_en) == "X.3"] <- "occupation5"
+names(data_en)[names(data_en) == "X.4"] <- "occupation6"
+names(data_en)[names(data_en) == "X.5"] <- "occupation7"
+names(data_en)[names(data_en) == "X.6"] <- "occupation8"
+names(data_en)[names(data_en) == "X.7"] <- "occupation9"
+names(data_en)[names(data_en) == "X.8"] <- "occupation10"
+names(data_en)[names(data_en) == "X.9"] <- "occupation11"
+names(data_en)[names(data_en) == "X.10"] <- "occupation12"
+names(data_en)[names(data_en) == "X.11"] <- "occupation13"
+names(data_en)[names(data_en) == "X.12"] <- "occupation14"
+names(data_en)[names(data_en) == "X.13"] <- "occupation15"
+names(data_en)[names(data_en) == "X.14"] <- "occupation16"
+names(data_en)[names(data_en) == "X.15"] <- "occupation17"
+
+names(data_en)[names(data_en) == "X.00"] <- "occupational.status1"
+names(data_en)[names(data_en) == "X.16"] <- "occupational.status2"
+names(data_en)[names(data_en) == "X.17"] <- "occupational.status3"
+names(data_en)[names(data_en) == "X.18"] <- "occupational.status4"
+names(data_en)[names(data_en) == "X.19"] <- "occupational.status5"
+names(data_en)[names(data_en) == "X.20"] <- "occupational.status6"
+names(data_en)[names(data_en) == "X.21"] <- "occupational.status7"
+names(data_en)[names(data_en) == "X.22"] <- "occupational.status8"
+names(data_en)[names(data_en) == "X.23"] <- "occupational.status9"
+names(data_en)[names(data_en) == "X.24"] <- "occupational.status10"
+names(data_en)[names(data_en) == "X.25"] <- "occupational.status11"
+names(data_en)[names(data_en) == "X.26"] <- "occupational.status12"
+names(data_en)[names(data_en) == "X.27"] <- "occupational.status13"
+
+which(names(data_en)=="occupation17")
+which(names(data_en)=="occupational.status13")
+
+data_en$occupation17[which(nchar(data_en$occupation17)>0)] = "17"
+data_en$occupational.status13[which(nchar(data_en$occupational.status13)>0)] = "13"
+#test
+length(which(data_en$occupation17[which(!is.na(data_en$complete.eu))]=="17"))
+length(which(data_en$occupation13[which(!is.na(data_en$complete.eu))]=="13"))
+length(which(data_en$occupational.status13[which(!is.na(data_en$complete.eu))]=="13"))
+length(which(data_en$occupational.status11[which(!is.na(data_en$complete.eu))]=="11"))
+
+data_en[,c(172:173, 23:38, 40:51)] <- lapply(data_en[,c(172:173, 23:38, 40:51)], as.factor)# convert to factor
+
+data_en$health.status = factor(data_en$health.status, order = TRUE)
+data_en$survey.language = revalue(data_en$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
+data_en$survey.language = droplevels(data_en$survey.language)
+
+covariates = c("age", "gender", "household.income.old","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "risk.group", "infection.test.status", "quarantine.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education", "nationality", "Country.of.residence","Survey.language","current.stay.out.of.town", "occupation1", "occupation2", "occupation3", "occupation4", "occupation5", "occupation6", "occupation7", "occupation8", "occupation9", "occupation10", "occupation11", "occupation12", "occupation13", "occupation14", "occupation15", "occupation16", "occupation17", "occupational.status1", "occupational.status2", "occupational.status3", "occupational.status4", "occupational.status5", "occupational.status6", "occupational.status7", "occupational.status8", "occupational.status9", "occupational.status10", "occupational.status11", "occupational.status12", "occupational.status13")
+
+covariates = which(names(data_en) %in% covariates)
+data_en_cov = data_en[, which(names(data_en) %in% covariates)]
+
+```
+
 ```{r final cleaning}
 #### exclude all subjects that were set to NA:
 xx = which(is.na(data_en$Respondent.ID))
@@ -954,7 +1011,6 @@ data_en = data_en[-xx]
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
-data_en2 = data_en
 #save(data_en, file = "data_en.RData")
 ```
 
