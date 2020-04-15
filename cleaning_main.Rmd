@@ -593,9 +593,9 @@ mental.health.old$old[which(!(mental.health.old$ID %in% mental.health$ID))] = 1
 write.csv(mental.health.old, "mental.health.old.csv")
 
 #answered yes to whether diagnosed but didn't specify:
-diagnosed.no.details = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)],
-                           diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)],
-                           complete = data_en$complete.eu[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)]
+diagnosed.no.details = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)],
+                           diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)],
+                           complete = data_en$complete.eu[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)]
 )
 diagnosed.no.details$complete[which(nchar(diagnosed.no.details$complete)>0)] <- 1
 
@@ -1025,6 +1025,35 @@ age <- summary(demog$age)
 # corrplot(x, type = "lower")
 # 
 # #
+
+df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.eu))],
+                     PSS=data_en$PSS[which(!is.na(data_en$complete.eu))],
+                     CSS=data_en$CSS[which(!is.na(data_en$complete.eu))],
+                     OPT=data_en$OPT[which(!is.na(data_en$complete.eu))], 
+                     GSE=data_en$GSE[which(!is.na(data_en$complete.eu))], 
+                     REC=data_en$REC[which(!is.na(data_en$complete.eu))], 
+                     NEU=data_en$NEU[which(!is.na(data_en$complete.eu))], 
+                     BCS=data_en$BCS[which(!is.na(data_en$complete.eu))], 
+                     PAC=data_en$PAC[which(!is.na(data_en$complete.eu))],
+                     R.SSM.C=(data_en$SR_c.SSM[which(!is.na(data_en$complete.eu))])*-1)
+matrix.cor <- rcorr(as.matrix(df.cor))
+
+ flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
+   ut <- upper.tri(cormat)
+   data.frame(
+     row = rownames(cormat)[row(cormat)[ut]],
+     column = rownames(cormat)[col(cormat)[ut]],
+     cor  =(cormat)[ut],
+     p = pmat[ut]
+   )
+ }
+corr.p.matrix <- as.data.frame(flattenCorrMatrix(matrix.cor$r, matrix.cor$P))
+
+formattable(matrix.cor$r)
+
+df <- as.data.frame(matrix.cor$r)
+df <- round(df, 2)
+
 ```
 
 ```{r check used languages, include=FALSE}

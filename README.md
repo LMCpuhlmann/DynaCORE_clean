@@ -1,6 +1,6 @@
 # DynaCORE_clean
-Set up pipeline to clean survey data from DynaCORE
+Pipeline to clean survey data from DynaCORE for interim analysis
 
-contributers: Kenneth Yuen, Lara Puhlmann, Matthias Zerban
+contributers: Lara Puhlmann, Matthias Zerban, Jeroen Weermeijer, Haakon Engen
 
-For the variable manual please see XXX 
+For INTERNALS: For the variable manual please see https://onedrive.live.com/edit.aspx?resid=69ED07BCB9CDEEC2!468&ithint=file%2cxlsx&authkey=!ACOpiIAQhB3Lt_E
