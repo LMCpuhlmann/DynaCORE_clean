@@ -48,6 +48,8 @@ data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE 
 data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
+data_en$X.0 = data_en$occupation
+data_en$X.00 = data_en$occupational.status
 data_en = formatting(data_en) #group occupation + status in lists
 
 data_en = data_en[which(!is.na(data_en$Respondent.ID)),] # remove row without respondent ID
@@ -198,14 +200,10 @@ data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.tow
 
 ```{r  format covariates}
 #data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
-data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58:59, 60:61,64)], as.factor)# covariates
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)], as.factor)# covariates
 
-# name most frequent countries
-# data_en$country.of.residence = revalue(data_en$country.of.residence, 
-#       c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "64" = "France", "11" = "Austria", "127" = "Netherlands", "158" = "Serbia", "80" = "Hungary", "175" = "Switzerland"))
-
+data_en$health.status = as.numeric(data_en$health.status)
 data_en$household.income = factor(data_en$household.income, order = TRUE)
-data_en$health.status = factor(data_en$health.status, order = TRUE)
 data_en$symptom.severity = factor(data_en$symptom.severity, order = TRUE)
 
 data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.under.18)
@@ -345,7 +343,9 @@ data_en$infection.test.status = droplevels(data_en$infection.test.status)
 data_en$survey.language = droplevels(data_en$survey.language)
 data_en$relationship.status = droplevels(data_en$relationship.status)
 data_en$people.in.household = droplevels(data_en$people.in.household)
-
+data_en$risk.group = droplevels(data_en$risk.group)
+data_en$quarantine.status = droplevels(data_en$quarantine.status)
+data_en$household.income = droplevels(data_en$household.income)
 ```
 
 ```{r data checks, include=FALSE}
@@ -550,9 +550,9 @@ academia = c("1", "2")
 index.academia <- sapply(data_en$occupation, function(ch) academia %in% ch)
 #data_en$occupational.status[which(index.academia[1,] > 0 |index.academia[2,] > 0)]
 data_en$academia[which(index.academia[1,] > 0 |index.academia[2,] > 0)]=1
-# test
-data_en$occupation[which(data_en$academia==1)][1000:1100]
-data_en$occupation[which(data_en$academia==0)][1000:1100]
+# #test
+# data_en$occupation[which(data_en$academia==1)][1000:1100]
+# data_en$occupation[which(data_en$academia==0)][1000:1100]
 length(data_en$occupation[which(data_en$academia== 0& !is.na(data_en$complete.eu))])
 length(data_en$occupation[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
 
@@ -673,29 +673,186 @@ write.csv(stressors.df, "stressor_prevalence.csv")
 
 # table one / table 1
 
-demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
-             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
+demovar <- c("age", "gender", "nationality","country.of.residence", "current.stay.out.of.town",   "years.of.education", "occupational.status",
+             "household.income.old", "relationship.status", "people.in.household", "diagnosed.mental.health",
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
-             "adherence.to.recommended.procedures" )
-demog <- data_en.complete[demovar]
+             "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27")
+demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
 
-label(dat$age)   <- "Age"
-label(dat$sex)   <- "Sex"
-label(dat$wt)    <- "Weight"
-label(dat$treat) <- "Treatment Group"
+# only incude common countries of residence
 
-units(dat$age)   <- "years"
-units(dat$wt)    <- "kg"
+sort( table(unlist(demog$country.of.residence)),decreasing=TRUE)
+# countries of res with N > 10:  68   88   18  142  127   80  175  168  193   64   60   11  174   51  132  143   63
 
-t1 = table1(~ age + current.stay.out.of.town + years.of.education | gender, data=demog)
+#name most frequent countries
+demog$country.of.residence = revalue(demog$country.of.residence,
+      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "174" = "Sweden", "51" = "Denmark", "132" = "Norway", "63" = "Finland"))
 
-#tab3 <- CreateTableOne(vars = myVars, strata = "trt" , data = pbc, factorVars = catVars)
+frequent.countries = c("Germany", "Poland", "Belgium", "Italy", "France", "Austria", "Netherlands", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Sweden","Denmark", "Norway", "Finland")
+
+levels(demog$country.of.residence) = c(levels(demog$country.of.residence), "Other")
+demog$country.of.residence[which(!(demog$country.of.residence %in% frequent.countries))] <- "Other"
+
+# frequent nationalities
+sort( table(unlist(demog$nationality)),decreasing=TRUE)
+
+demog$nationality = revalue(demog$nationality,
+      c("68" = "Germany", "88" = "Italy", "142" = "Poland", "18" = "Belgium", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "132" = "Norway", "143" ="Portugal", "63" = "Finland", "195" = "United States of America", "82" = "India", "186" = "Turkey", "70" = "Greece"))
+
+frequent.nationalities = c("Germany", "Poland", "Belgium", "Italy", "Austria", "Netherlands", "Serbia", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Norway", "Portugal", "Finland", "United States of America", "India", "Turkey", "Greece")
+
+#68   88  142   18  127   80  168  175   64   60  193   11  195   82  132  147   63  143  186  148   70 
+# 174
+levels(demog$nationality) = c(levels(demog$nationality), "Other")
+demog$nationality[which(!(demog$nationality %in% frequent.nationalities))] <- "Other"
+
+demog$nationality = droplevels(demog$nationality)
+demog$country.of.residence = droplevels(demog$country.of.residence)
+
+demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
+demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
+demog$household.income.old <- factor(demog$household.income.old, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"))
+
+# revalue levels for table
+demog$gender = revalue(demog$gender, c("1" = "male", "2" = "female", "3" = "diverse"))
+demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
+demog$risk.group = revalue(demog$risk.group, c("1" = "yes", "2" = "no", "3" = "unsure"))
+demog$infection.test.status = revalue(demog$infection.test.status, c("0" = "yes", "1" = "no"))
+demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
+demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" = "at home", "3" = "in the hospital", "4" = "abroad", "0" = "other"))
+demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
+demog$people.in.household = revalue(demog$people.in.household, c("1" = "1", "2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
+demog$household.income.old = revalue(demog$household.income.old, c("1" = "0-24.999", "2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
+
+demog$diagnosed.mental.health = revalue(demog$diagnosed.mental.health, c("0" = "yes", "1" = "no"))
+levels(demog$diagnosed.mental.health) = c(levels(demog$diagnosed.mental.health), "not specified")
+demog$diagnosed.mental.health[which(demog$diagnosed.mental.health=="")] <- "not specified"
+demog$diagnosed.mental.health = droplevels(demog$diagnosed.mental.health)
+
+demog$household.income.old = droplevels(demog$household.income.old)
+
+# occupation
+demog$X.0 = if_else(demog$X.0=="1", "Undergoing Education", "")
+demog$X = if_else(demog$X=="2", "Education or research", "")
+demog$X.1 = if_else(demog$X.1=="3", "Arts, entertainment, sports and media", "")
+demog$X.2 = if_else(demog$X.2=="4", "Healthcare", "")
+demog$X.3 = if_else(demog$X.3=="5", "First responder (paramedic/firefighter/police)", "")
+demog$X.4 = if_else(demog$X.4!="", "Military", "")
+demog$X.5 = if_else(demog$X.5!="", "Civil services, politics", "")
+demog$X.6 = if_else(demog$X.6!="", "Finance and economy", "")
+demog$X.7 = if_else(demog$X.7!="", "Industry", "")
+demog$X.8 = if_else(demog$X.8!="", "Sales and services (incl. restaurants and bars)", "")
+demog$X.9 = if_else(demog$X.9!="", "Transport (goods and people)", "")
+demog$X.10 = if_else(demog$X.10!="", "Installation, maintenance, cleaning, and repairs", "")
+demog$X.11 = if_else(demog$X.11!="", "Construction", "")
+demog$X.12 = if_else(demog$X.12!="", "Farming, fishing, and forestry", "")
+demog$X.13 = if_else(demog$X.13!="", "Office and administrative suppor", "")
+demog$X.14 = if_else(demog$X.14!="", "Not currently working", "")
+demog$X.15 = if_else(demog$X.15!="", "Other", "")
+
+# occupational status
+demog$X.00 = if_else(demog$X.00=="1", "Permanent contract, full-time, ", "")
+demog$X.16 = if_else(demog$X.16=="2", "Temporary contract, full-time", "")
+demog$X.17 = if_else(demog$X.17=="3", "Permanent contract, part-time", "")
+demog$X.18 = if_else(demog$X.18=="4", "Temporary contract, part-time", "")
+demog$X.19 = if_else(demog$X.19=="5", "Self-employed", "")
+demog$X.20 = if_else(demog$X.20!="", "Working as a freelancer", "")
+demog$X.21 = if_else(demog$X.21!="", "On parental leave", "")
+demog$X.22 = if_else(demog$X.22!="", "On sick leave (long term)", "")
+demog$X.23 = if_else(demog$X.23!="", "Unemployed on social benefit", "")
+demog$X.24 = if_else(demog$X.24!="", "Unemployed without social benefit", "")
+demog$X.25 = if_else(demog$X.25!="", "Full-time studying", "")
+demog$X.26 = if_else(demog$X.26!="", "Retired", "")
+demog$X.27 = if_else(demog$X.27!="", "Other", "")
+
+
+# group people underage as yes / no
+demog$people.in.household.under.18 = if_else(demog$people.in.household.under.18>0, "yes", "no", "missing")
+demog$people.in.household.under.18 = as.factor(demog$people.in.household.under.18)
+
+label(demog$age)   <- "Age"
+label(demog$gender)   <- "Gender"
+label(demog$nationality) <- "Nationality"
+label(demog$country.of.residence) <- "Country of residence"
+label(demog$risk.group) <- "Belong to a risk group"
+label(demog$quarantine.status) <- "Quarantine"
+label(demog$infection.test.status) <- "Tested positive for COVID-19"
+label(demog$relationship.status) <- "Relationship status"
+label(demog$people.in.household) <- "People in household"
+label(demog$people.in.household.under.18)   <- "People underage in household"
+label(demog$opinion.about.authorities.measures) <- "Agreement with authorities' measures" # Agreement with authorities' measures to curtail spread of the Corona virus
+label(demog$adherence.to.recommended.procedures) <- "Following recommended procedures" #Following recommended procedures to limit the spread of the Corona virus
+label(demog$current.stay.out.of.town)    <- "Currently out of town"
+label(demog$years.of.education) <- "Education"
+label(demog$household.income) <- "Household income"
+label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
+label(demog$health.status) <- "Good general health"
+
+label(demog$X.0) <- "Occupation"
+label(demog$X) <- ""
+label(demog$X.1) <- ""
+label(demog$X.2) <- ""
+label(demog$X.3) <- ""
+label(demog$X.4) <- ""
+label(demog$X.5) <- ""
+label(demog$X.6) <- ""
+label(demog$X.7) <- ""
+label(demog$X.8) <- ""
+label(demog$X.9) <- ""
+label(demog$X.10) <- ""
+label(demog$X.11) <- ""
+label(demog$X.12) <- ""
+label(demog$X.13) <- ""
+label(demog$X.14) <- ""
+label(demog$X.15) <- ""
+
+label(demog$X.00) <- "Occupational status"
+label(demog$X.16) <- ""
+label(demog$X.17) <- ""
+label(demog$X.18) <- ""
+label(demog$X.19) <- ""
+label(demog$X.20) <- ""
+label(demog$X.21) <- ""
+label(demog$X.22) <- ""
+label(demog$X.23) <- ""
+label(demog$X.24) <- ""
+label(demog$X.25) <- ""
+label(demog$X.26) <- ""
+label(demog$X.27) <- ""
+
+label(demog$years.of.education) <- "Education"
+label(demog$household.income) <- "Household income"
+label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
+label(demog$health.status) <- "Good general health"
+
+units(demog$age)   <- "years"
+units(demog$risk.group)   <- "N"
+units(demog$infection.test.status)   <- "N"
+units(demog$quarantine.status)   <- "N"
+units(demog$relationship.status)   <- "N"
+units(demog$years.of.education)    <- "years"
+units(demog$people.in.household)   <- "N"
+units(demog$people.in.household.under.18)   <- "N"
+units(demog$household.income)   <- "€"
+units(demog$nationality)   <- "N"
+units(demog$country.of.residence)   <- "N"
+units(demog$current.stay.out.of.town)   <- "N"
+units(demog$health.status)   <- "self-report, 1-5"
+
+my.render.cont <- function(x) {
+    with(stats.apply.rounding(stats.default(x), digits=2), c("",
+        "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
+}
+
+t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income.old + country.of.residence + current.stay.out.of.town + nationality + 
+              X.0 + X + X.1 + X.2 + X.3 + X.4 + X.5 + X.6 + X.7 + X.8 + X.9 + X.10 + X.11 + X.12 + X.13 + X.14 + X.15 + X.16 + X.00 + X.17 + X.18 + X.19 + X.20 + X.21 + X.22 + X.23 + X.24 + X.25 + X.26 +X.27| gender, data=demog, render.continuous=my.render.cont)
+
+t1
+
 
 # Section for the supplement on the treatment of incomplete European data sets
 
-# Table S1 on sample characteristics of the first 5000 complete Europeans
-
-# Table S6 of intercorrelations between included covariates (not all) and the hypothesized resilience factors (can also be a correlation matrix) in the cleaned complete Europeans
+#Confirmation of the sentence: “In case of a significant effect, a test was repeated in those two thirds of the subjects with the highest overall stressor exposure E, and only if the result of such secondary analysis went in the same direction as the result of the primary analysis, was the result considered valid and reported in the main text”
 
 ```
 
