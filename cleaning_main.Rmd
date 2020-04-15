@@ -6,7 +6,7 @@ authors:
 "Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be)"
 "Haakon Engen"
 
-date: "APril 10th, 2020"
+date: "April 10th, 2020"
 ---
 
 Formats data for interim analysis and includes plausibility checks
@@ -763,7 +763,7 @@ demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" =
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
 demog$people.in.household = revalue(demog$people.in.household, c("1" = "1", "2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
 demog$household.income.old = revalue(demog$household.income.old, c("1" = "0-24.999", "2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
-demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zt_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "english"))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
 
 demog$survey.language = droplevels(demog$survey.language)
 
@@ -954,7 +954,7 @@ data_en = data_en[-xx]
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
-
+data_en2 = data_en
 #save(data_en, file = "data_en.RData")
 ```
 
@@ -965,22 +965,13 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 # # (all the initial basic variables and people‘s thinking about how the crisis is managed).
 # 
 # ''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
+# # 
+# demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
+#              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
+#              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
+#              "adherence.to.recommended.procedures" )
+# demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
 # 
-demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
-             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
-             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
-             "adherence.to.recommended.procedures" )
-demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
-
-t1 = table1(~ age + current.stay.out.of.town + years.of.education | gender, data=demog)
-t1
-
-writeLines(capture.output(t1), "t1.html")
-
-tab3 <- CreateTableOne(vars = myVars, strata = "trt" , data = pbc, factorVars = catVars)
-
-age <- summary(demog$age)
-
 # gender <- 
 # demog.summary <- data.frame()
 # age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
@@ -1075,7 +1066,7 @@ formattable(matrix.cor$r)
 
 df <- as.data.frame(matrix.cor$r)
 df <- round(df, 2)
-
+data
 ```
 
 ```{r check used languages, include=FALSE}
