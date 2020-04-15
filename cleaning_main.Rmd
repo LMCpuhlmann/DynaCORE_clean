@@ -44,8 +44,10 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 #data_text <- read_csv("DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE) # text version 
 
 # user-specific path [change accordingly]:
-data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+#data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_en$X.0 = data_en$occupation
@@ -563,11 +565,11 @@ mean(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(data_en$academia== 1& !is.na(data_en$complete.eu))])
 
 # psychiatric diagnoses
-#ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
-ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
+ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
+#ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
 names(ID.diagnosed)[1] <- "ID"
 data_en$psychiatric.diagnose <- NA
-data_en$psychiatric.diagnose[which(ID.diagnosed$ID %in% data_en$Respondent.ID)] <- 1
+#data_en$psychiatric.diagnose[which(ID.diagnosed$ID %in% data_en$Respondent.ID)] <- 1
 data_en$psychiatric.diagnose[which(data_en$Respondent.ID %in% ID.diagnosed$ID)] <- 1
 
 # newly included people with mental health conditions
@@ -577,13 +579,29 @@ mental.health = data.frame(ID = data_en$Respondent.ID[which(nchar(data_en$mental
 )
 mental.health$complete[which(!is.na(mental.health$complete))] = 1
 
-mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
+mental.health.old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/mental.health.csv")
+#mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
 mental.health$new = 0
 mental.health$new[which(!(mental.health$ID %in% mental.health.old$ID))] = 1
 sum(mental.health$new)
 write.csv(mental.health, "mental.health.new.csv")
-
 mental.health.old$ID[which(!(mental.health.old$ID %in% mental.health$ID))]
+
+# not included anymore
+mental.health.old$old = 0
+mental.health.old$old[which(!(mental.health.old$ID %in% mental.health$ID))] = 1
+write.csv(mental.health.old, "mental.health.old.csv")
+
+#answered yes to whether diagnosed but didn't specify:
+diagnosed.no.details = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)],
+                           diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)],
+                           complete = data_en$complete.eu[which(data_en$diagnosed.mental.health==1 & nchar(data_en$mental.health.details)==0)]
+)
+diagnosed.no.details$complete[which(nchar(diagnosed.no.details$complete)>0)] <- 1
+
+write.csv(diagnosed.no.details, "diagnosed.but.no.details.csv")
+
+
 
 mean(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.eu))])
