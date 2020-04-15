@@ -694,7 +694,7 @@ write.csv(stressors.df, "stressor_prevalence.csv")
 demovar <- c("age", "gender", "nationality","country.of.residence", "current.stay.out.of.town",   "years.of.education", "occupational.status",
              "household.income.old", "relationship.status", "people.in.household", "diagnosed.mental.health",
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
-             "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27")
+             "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27", "survey.language")
 demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
 
 # only incude common countries of residence
@@ -741,6 +741,9 @@ demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" =
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
 demog$people.in.household = revalue(demog$people.in.household, c("1" = "1", "2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
 demog$household.income.old = revalue(demog$household.income.old, c("1" = "0-24.999", "2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zt_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "english"))
+
+demog$survey.language = droplevels(demog$survey.language)
 
 demog$diagnosed.mental.health = revalue(demog$diagnosed.mental.health, c("0" = "yes", "1" = "no"))
 levels(demog$diagnosed.mental.health) = c(levels(demog$diagnosed.mental.health), "not specified")
@@ -764,12 +767,12 @@ demog$X.9 = if_else(demog$X.9!="", "Transport (goods and people)", "")
 demog$X.10 = if_else(demog$X.10!="", "Installation, maintenance, cleaning, and repairs", "")
 demog$X.11 = if_else(demog$X.11!="", "Construction", "")
 demog$X.12 = if_else(demog$X.12!="", "Farming, fishing, and forestry", "")
-demog$X.13 = if_else(demog$X.13!="", "Office and administrative suppor", "")
-demog$X.14 = if_else(demog$X.14!="", "Not currently working", "")
+demog$X.13 = if_else(demog$X.13!="", "Office and administrative support", "")
+demog$X.14 = if_else(demog$X.14!="", "(Currently) not working", "")
 demog$X.15 = if_else(demog$X.15!="", "Other", "")
 
 # occupational status
-demog$X.00 = if_else(demog$X.00=="1", "Permanent contract, full-time, ", "")
+demog$X.00 = if_else(demog$X.00=="1", "Permanent contract, full-time", "")
 demog$X.16 = if_else(demog$X.16=="2", "Temporary contract, full-time", "")
 demog$X.17 = if_else(demog$X.17=="3", "Permanent contract, part-time", "")
 demog$X.18 = if_else(demog$X.18=="4", "Temporary contract, part-time", "")
@@ -782,7 +785,6 @@ demog$X.24 = if_else(demog$X.24!="", "Unemployed without social benefit", "")
 demog$X.25 = if_else(demog$X.25!="", "Full-time studying", "")
 demog$X.26 = if_else(demog$X.26!="", "Retired", "")
 demog$X.27 = if_else(demog$X.27!="", "Other", "")
-
 
 # group people underage as yes / no
 demog$people.in.household.under.18 = if_else(demog$people.in.household.under.18>0, "yes", "no", "missing")
@@ -805,6 +807,7 @@ label(demog$years.of.education) <- "Education"
 label(demog$household.income) <- "Household income"
 label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
 label(demog$health.status) <- "Good general health"
+label(demog$survey.language) <- "Response language"
 
 label(demog$X.0) <- "Occupation"
 label(demog$X) <- ""
@@ -839,7 +842,7 @@ label(demog$X.26) <- ""
 label(demog$X.27) <- ""
 
 label(demog$years.of.education) <- "Education"
-label(demog$household.income) <- "Household income"
+label(demog$household.income.old) <- "Household income"
 label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
 label(demog$health.status) <- "Good general health"
 
@@ -862,8 +865,8 @@ my.render.cont <- function(x) {
         "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
 }
 
-t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income.old + country.of.residence + current.stay.out.of.town + nationality + 
-              X.0 + X + X.1 + X.2 + X.3 + X.4 + X.5 + X.6 + X.7 + X.8 + X.9 + X.10 + X.11 + X.12 + X.13 + X.14 + X.15 + X.16 + X.00 + X.17 + X.18 + X.19 + X.20 + X.21 + X.22 + X.23 + X.24 + X.25 + X.26 +X.27| gender, data=demog, render.continuous=my.render.cont)
+t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income.old + country.of.residence + current.stay.out.of.town + nationality + survey.language +
+              X.0 + X + X.1 + X.2 + X.3 + X.4 + X.5 + X.6 + X.7 + X.8 + X.9 + X.10 + X.11 + X.12 + X.13 + X.14 + X.15 + X.16 + X.00 + X.17 + X.18 + X.19 + X.20 + X.21 + X.22 + X.23 + X.24 + X.25 + X.26 +X.27| gender, data=demog) #, render.continuous=my.render.cont
 
 t1
 
