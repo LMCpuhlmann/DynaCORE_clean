@@ -865,6 +865,32 @@ age <- summary(demog$age)
 # corrplot(x, type = "lower")
 # 
 # #
+
+df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.eu))],
+                     PSS=data_en$PSS[which(!is.na(data_en$complete.eu))],
+                     CSS=data_en$CSS[which(!is.na(data_en$complete.eu))],
+                     OPT=data_en$OPT[which(!is.na(data_en$complete.eu))], 
+                     GSE=data_en$GSE[which(!is.na(data_en$complete.eu))], 
+                     REC=data_en$REC[which(!is.na(data_en$complete.eu))], 
+                     NEU=data_en$NEU[which(!is.na(data_en$complete.eu))], 
+                     BCS=data_en$BCS[which(!is.na(data_en$complete.eu))], 
+                     PAC=data_en$PAC[which(!is.na(data_en$complete.eu))],
+                     R.SSM.C=(data_en$SR_c.SSM[which(!is.na(data_en$complete.eu))])*-1)
+matrix.cor <- rcorr(as.matrix(df.cor))
+
+ flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
+   ut <- upper.tri(cormat)
+   data.frame(
+     row = rownames(cormat)[row(cormat)[ut]],
+     column = rownames(cormat)[col(cormat)[ut]],
+     cor  =(cormat)[ut],
+     p = pmat[ut]
+   )
+ }
+corr.p.matrix <- as.data.frame(flattenCorrMatrix(matrix.cor$r, matrix.cor$P))
+
+formattable(matrix.cor$r)
+
 ```
 
 ```{r check used languages, include=FALSE}
