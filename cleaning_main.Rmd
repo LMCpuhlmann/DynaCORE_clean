@@ -24,7 +24,7 @@ require(plyr)
 require(dplyr)
 require(stringr)
 require(BBmisc)
-#require(formattable)
+require(formattable)
 #require(Hmisc)
 #require(corrplot)
 
@@ -44,10 +44,10 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 #data_text <- read_csv("DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE) # text version 
 
 # user-specific path [change accordingly]:
-# data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-#data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+#data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_en$X.0 = data_en$occupation
@@ -1153,6 +1153,60 @@ formattable(matrix.cor$r)
 df <- as.data.frame(matrix.cor$r)
 df <- round(df, 2)
 data
+
+#means for diagnosed and non diagnosed cases:
+
+complete.diagnosed <- read.csv("Complete_psych_diagnosis_N1039.csv", header=F)
+names(complete.diagnosed)[1] <- "ID"
+incomplete.diagnosed <- read.csv("Incomplete_psych_diagnosis_N162.csv", header=F)
+names(incomplete.diagnosed)[1] <- "ID"
+length(which(data_en$Respondent.ID %in% complete.diagnosed$ID))
+#[1] 1039
+length(which(!(data_en$Respondent.ID %in% complete.diagnosed$ID)))
+#[1] 4826
+length(which(data_en$Respondent.ID %in% complete.diagnosed$ID))+length(which(!(data_en$Respondent.ID %in% complete.diagnosed$ID)))
+#[1] 5865
+length(which(!(data_en$Respondent.ID[data_en$diagnosed.mental.health==""] %in% complete.diagnosed$ID)))
+#[1] 589
+length(which(data_en$Respondent.ID %in% incomplete.diagnosed$ID))
+#[1] 162
+length(which(!(data_en$Respondent.ID %in% incomplete.diagnosed$ID)))
+#[1] 5703
+length(which(data_en$Respondent.ID %in% incomplete.diagnosed$ID))+length(which(!(data_en$Respondent.ID %in% incomplete.diagnosed$ID)))
+#[1] 5865
+length(which(!(data_en$Respondent.ID[data_en$diagnosed.mental.health==""] %in% incomplete.diagnosed$ID)))
+#[1] 589
+data_d <- data_en[!data_en$diagnosed.mental.health=="",]
+data_d <- data_d[!is.na(data_d$complete.eu),]
+mean(data_d$P) #14.9592
+mean(data_d$P[which(data_d$Respondent.ID %in% complete.diagnosed$ID)]) # 16.70356
+mean(data_d$P[which(!(data_d$Respondent.ID %in% complete.diagnosed$ID))]) #14.43326
+
+sd(data_d$P) #5.729393
+sd(data_d$P[which(data_d$Respondent.ID %in% complete.diagnosed$ID)]) # 6.409042
+sd(data_d$P[which(!(data_d$Respondent.ID %in% complete.diagnosed$ID))]) #5.399569
+
+data_d_inc <- data_en[!data_en$diagnosed.mental.health=="",]
+data_d_inc <- data_d_inc[is.na(data_d_inc$complete.eu),]
+mean(data_d_inc$P, na.rm=T) #15.94652
+mean(data_d_inc$P[which(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID)], na.rm=T) #6.73065
+mean(data_d_inc$P[which(!(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID))], na.rm=T) #5.419887
+
+sd(data_d_inc$P, na.rm=T) #5.894808
+sd(data_d_inc$P[which(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID)], na.rm=T) #6.73065
+sd(data_d_inc$P[which(!(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID))], na.rm=T) #5.419887
+
+#table diagnoses:
+
+table.comp <- read.csv("Complete_diagnosis_table.csv", header=F, sep=";", encoding = "UTF-8")
+table.incomp <- read.csv("Incomplete_diagnosis_table.csv", header=F, sep=";", encoding="UTF-8")
+table.diagnoses <- data.frame(diagnose=table.comp$V1, "complete respondents (N=4485)"=table.comp$V2,"percentage complete"=round(table.comp$V2/4485*100,2), "incomplete respondents (N=791)"=table.incomp$V2, "percentage incomplete"=round(table.incomp$V2/4485*100, 2))
+table.diagnoses$diagnose <- as.character(table.diagnoses$diagnose)
+
+table.diagnoses <- rbind(table.diagnoses, c("total", sum(table.diagnoses$complete.respondents..N.4485.), "",sum(table.diagnoses$incomplete.respondents..N.791.),""))
+
+format_table(table.diagnoses)                                        
+
 ```
 
 ```{r check used languages, include=FALSE}
