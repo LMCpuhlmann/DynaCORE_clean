@@ -677,6 +677,7 @@ which(is.na(data_en$completionTime[which(!is.na(data_en$complete.eu))]))
 min(data_en$completionTime[which(!is.na(data_en$complete.eu))], na.rm = T)
 # in complete sample at least 5.75 min, which is plausible
 
+
 ```
 
 ```{r first tables - perhaps move to analysis script?}
@@ -717,7 +718,8 @@ demovar <- c("age", "gender", "nationality","country.of.residence", "current.sta
              "household.income.old", "relationship.status", "people.in.household", "diagnosed.mental.health",
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
              "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27", "survey.language")
-demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
+demog2 <- data_en[which(!is.na(data_en$complete.eu)), demovar]
+demog <- data_en[which(is.na(data_en$complete.eu)), demovar]
 
 # only incude common countries of residence
 
@@ -892,10 +894,17 @@ t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opi
 
 t1
 
+# describe incomplete cases
+data_incomplete = data_en[which(is.na(data_en$complete.eu)),]
+length(which(is.na(data_incomplete$Es.SCM)))
+length(which(is.na(data_incomplete$Eg.SCM)))
+length(which(is.na(data_incomplete$Ec.SCM)))
+length(which(is.na(data_incomplete$Es.SSM)))
+length(which(is.na(data_incomplete$Eg.SSM)))
+length(which(is.na(data_incomplete$Ec.SSM)))
 
-# Section for the supplement on the treatment of incomplete European data sets
-
-#Confirmation of the sentence: “In case of a significant effect, a test was repeated in those two thirds of the subjects with the highest overall stressor exposure E, and only if the result of such secondary analysis went in the same direction as the result of the primary analysis, was the result considered valid and reported in the main text”
+length(which(data_incomplete$missings>0))
+length(which(data_incomplete$missings==0&data_incomplete$missing.cov>0))
 
 ```
 
