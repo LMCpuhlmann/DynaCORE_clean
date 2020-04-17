@@ -44,10 +44,10 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 #data_text <- read_csv("DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE) # text version 
 
 # user-specific path [change accordingly]:
-data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-#data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+#data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_en$X.0 = data_en$occupation
@@ -510,7 +510,7 @@ m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM),]))
 data_en$SR_Es.SCM[!is.na(data_en$Es.SCM)] <-as.numeric(scale(resid(m2)))
 
 m3 <- summary(lm(scale(P)~scale(Ec.SCM),data= data_en[!is.na(data_en$Ec.SCM),]))
-data_en$SR_c.SCM[!is.na(data_en$Ec.SCM)] <-as.numeric(scale(resid(m3)))
+data_en$SR_Ec.SCM[!is.na(data_en$Ec.SCM)] <-as.numeric(scale(resid(m3)))
 
 # stressor severity method
 m4 <- summary(lm(scale(P)~scale(Eg.SSM),data= data_en[!is.na(data_en$Eg.SSM),]))
@@ -520,8 +520,60 @@ m5 <- summary(lm(scale(P)~scale(Es.SSM),data= data_en[!is.na(data_en$Es.SSM),]))
 data_en$SR_Es.SSM[!is.na(data_en$Es.SSM)] <-as.numeric(scale(resid(m5)))
 
 m6 <- summary(lm(scale(P)~scale(Ec.SSM),data= data_en[!is.na(data_en$Ec.SSM),]))
-data_en$SR_c.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
+data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
+```
+
+Göran's code for stressor exposure:
+```{r stress-exposure-analysis, include=FALSE}
+# code adapted from Lara
+
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+#Corona pandmeic Specific related stressors:
+Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
+data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
+data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
+
+# General stressors:
+Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
+data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
+data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
+
+# Combined:
+Eall <- c(grep("CE_[0-2]", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
+data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
+data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
+
+# test
+which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
+
+
+# stressor count method
+xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+
+summary(m1_scm <- lm(P ~ poly(Eg.SCM,2), data= data_en[xx,]))
+summary(m2_scm <- lm(P ~ poly(Es.SCM,2), data= data_en[xx,]))
+summary(m3_scm <- lm(P ~ poly(Ec.SCM,2), data= data_en[xx,]))
+summary(m4_scm <- lm(P ~ poly(Es.SCM,2)  + poly(Eg.SCM,2),data= data_en[xx,])) 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+summary(m1_ssm <- lm(P~poly(Eg.SSM,2),data= data_en[xx,]))
+summary(m2_ssm <- lm(P~poly(Es.SSM,2),data= data_en[xx,]))
+summary(m3_ssm <- lm(P~poly(Ec.SSM,2),data= data_en[xx,]))
+summary(m4_ssm <- lm(P~poly(Es.SSM,2) + poly(Eg.SSM,2),data= data_en[xx,]))
+anova(m1_ssm, m2_ssm, m3_ssm, m4_ssm, test="F")
+
+# overall anova 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm)
 ```
 
 ```{r generate subgroupe, include = False}
@@ -706,6 +758,7 @@ require(stargazer)
 require(tableone)
 require(kableExtra)
 require(pander)
+require(table1)
 
 # full sample
 
@@ -1036,12 +1089,12 @@ if(length(xx)>0){data_en = data_en[-xx,]}
 
 # remove unnecessary columns 
 xx = grep("X", colnames(data_en))
-data_en = data_en[-xx]
+if(length(xx)>0){data_en = data_en[-xx]}
 # note that in the real data, the above step will also exclude the column IP address
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
-#save(data_en, file = "data_en.RData")
+#save(data_en, file = "data_en_16.04.RData")
 ```
 
 
