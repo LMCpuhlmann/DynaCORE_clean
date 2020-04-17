@@ -524,6 +524,58 @@ data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
 ```
 
+Göran's code for stressor exposure:
+```{r stress-exposure-analysis, include=FALSE}
+# code adapted from Lara
+
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+#Corona pandmeic Specific related stressors:
+Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
+data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
+data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
+
+# General stressors:
+Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
+data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
+data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
+
+# Combined:
+Eall <- c(grep("CE_[0-2]", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
+data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
+data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
+
+# test
+which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
+
+
+# stressor count method
+xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+
+summary(m1_scm <- lm(P ~ poly(Eg.SCM,2), data= data_en[xx,]))
+summary(m2_scm <- lm(P ~ poly(Es.SCM,2), data= data_en[xx,]))
+summary(m3_scm <- lm(P ~ poly(Ec.SCM,2), data= data_en[xx,]))
+summary(m4_scm <- lm(P ~ poly(Es.SCM,2)  + poly(Eg.SCM,2),data= data_en[xx,])) 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+summary(m1_ssm <- lm(P~poly(Eg.SSM,2),data= data_en[xx,]))
+summary(m2_ssm <- lm(P~poly(Es.SSM,2),data= data_en[xx,]))
+summary(m3_ssm <- lm(P~poly(Ec.SSM,2),data= data_en[xx,]))
+summary(m4_ssm <- lm(P~poly(Es.SSM,2) + poly(Eg.SSM,2),data= data_en[xx,]))
+anova(m1_ssm, m2_ssm, m3_ssm, m4_ssm, test="F")
+
+# overall anova 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm)
+```
+
 ```{r generate subgroupe, include = False}
 
 # subjects in Europe
