@@ -536,7 +536,10 @@ Göran's code for stressor exposure:
 # P = menatal health problems
 
 #Corona pandmeic Specific related stressors:
+# GÖRANS SELECTION
 Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
+# CHANGED TO INCLUDE ITEM 30:
+Es <- grep("CE_[0-3][0-9]$", names(data_en), value = TRUE)
 data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
 data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
 
