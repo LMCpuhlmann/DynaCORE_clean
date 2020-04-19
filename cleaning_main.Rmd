@@ -535,12 +535,14 @@ Göran's code for stressor exposure:
 # SSM = stressor severity method
 # P = menatal health problems
 
+#Corona pandmeic Specific related stressors:
+# GÖRANS SELECTION
+# Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
+# # CHANGED TO INCLUDE ITEM 30:
+# Es <- grep("CE_[0-3][0-9]$", names(data_en), value = TRUE)
+# data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
+# data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
 
-##Corona pandmeic Specific related stressors:
-#Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
-#data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
-#data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least #an "overall-rated weighted where the severity is assessed for all respondents
-#
 ## General stressors:
 #Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
 #data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
@@ -1027,6 +1029,38 @@ var(data_en$Eg.SCM, na.rm =T)
 ```
 
 ```{r prepare covariates for Göran, include = FALSE}
+data_en$gender.m = if_else(data_en$gender == "1", "1", "0")
+data_en$gender.f = if_else(data_en$gender == "2", "1", "0")
+data_en$gender.d = if_else(data_en$gender == "3", "1", "0")
+
+data_en$relationship.married = if_else(data_en$relationship.status == "1", "1", "0")
+data_en$relationship.widowed = if_else(data_en$relationship.status == "2", "1", "0")
+data_en$relationship.divorced = if_else(data_en$relationship.status == "3", "1", "0")
+data_en$relationship.separated = if_else(data_en$relationship.status == "4", "1", "0")
+data_en$relationship.domestic.partnership = if_else(data_en$relationship.status == "5", "1", "0")
+data_en$relationship.steady.together = if_else(data_en$relationship.status == "6", "1", "0")
+data_en$relationship.steady.apart = if_else(data_en$relationship.status == "7", "1", "0")
+data_en$relationship.single = if_else(data_en$relationship.status == "8", "1", "0")
+data_en$relationship.other = if_else(data_en$relationship.status == "9", "1", "0")
+
+data_en$people.in.household.1 = if_else(data_en$people.in.household == "1", "1", "0")
+data_en$people.in.household.2 = if_else(data_en$people.in.household == "2", "1", "0")
+data_en$people.in.household.3to4 = if_else(data_en$people.in.household == "3", "1", "0")
+data_en$people.in.household.5to6 = if_else(data_en$people.in.household == "4", "1", "0")
+data_en$people.in.household.over6 = if_else(data_en$people.in.household == "0", "1", "0")
+
+data_en$health.status1 = if_else(data_en$health.status == "1", "1", "0")
+data_en$health.status2 = if_else(data_en$health.status == "2", "1", "0")
+data_en$health.status3 = if_else(data_en$health.status == "3", "1", "0")
+data_en$health.status4 = if_else(data_en$health.status == "4", "1", "0")
+data_en$health.status5 = if_else(data_en$health.status == "5", "1", "0")
+
+data_en$quarantine.status.none = if_else(data_en$quarantine.status == "1", "1", "0")
+data_en$quarantine.status.home = if_else(data_en$quarantine.status == "2", "1", "0")
+data_en$quarantine.status.hospital = if_else(data_en$quarantine.status == "3", "1", "0")
+data_en$quarantine.status.abroad = if_else(data_en$quarantine.status == "4", "1", "0")
+data_en$quarantine.status.other = if_else(data_en$quarantine.status == "0", "1", "0")
+
 names(data_en)[names(data_en) == "X.0"] <- "occupation1"
 names(data_en)[names(data_en) == "X"] <- "occupation2"
 names(data_en)[names(data_en) == "X.1"] <- "occupation3"
