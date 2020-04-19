@@ -315,15 +315,15 @@ data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.statu
 data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
 data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
 
-employed = c("1", "2", "3", "4") # Note that this also grabs 10, 11, 12
+employed = c("1", "2", "3", "4") # Note that this also grabs 10, 11, 12, which is fixed below
 not.employed = c("7", "8", "9", "10", "11", "12") #parental leave, studying, sick leave, unemployment w/ or w/o benefits, retired
 data_en$employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse="|"), ch))
 data_en$not.employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(not.employed, collapse="|"), ch))
 data_en$employed.13[sapply(data_en$employed.13, function(x) length(x)==0)] <- NA
 data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x)==0)] <- NA
-data_en$employed.13[which(!is.na(data_en$not.employed.13))] <- NA # also set to NA if there is 
+data_en$employed.13[which(!is.na(data_en$not.employed.13))] <- NA # also set to NA if the person additionally claims any form of unemployment
 
-# find people that are unemployed in 12 but working in 13
+# find people that are unemployed in 12 but definitely working in 13 and set their occupations to NA
 index = which(!is.na(data_en$not.working.12)) %in% which(!is.na(data_en$employed.13))
 xx = which(!is.na(data_en$not.working.12))[index]
 data_en$occupation[xx] <- NA
@@ -476,7 +476,7 @@ sd(data_en$P[which(!is.na(data_en$complete.eu))])
 #Corona pandmeic related stressors:
 term <- "CE_"
 CE <- grep(term, names(data_en))
-CE <- CE[1:29]
+CE <- CE[1:30]
 data_en$Es.SCM <- rowSums(data_en[CE] >0) #stressor count
 data_en$Es.SSM <- rowSums(data_en[CE])/5 #weighted
 
@@ -488,7 +488,7 @@ data_en$Eg.SCM <- rowSums(data_en[GE] >0) #stressor count
 data_en$Eg.SSM <- rowSums(data_en[GE])/5 #weighted
 
 #combined:
-Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:29])
+Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:30])
 data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
 data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
