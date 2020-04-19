@@ -523,36 +523,6 @@ data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
 Göran's code for stressor exposure: - REMOVE??
 ```{r stress-exposure-analysis, include=FALSE}
-# code adapted from Lara
-
-# Eg = stressor Exposure General
-# Es = stressor Exposure Specific coronoa
-# Ec = stressor Exposure Combinded
-# SCM = stressor count method
-# SSM = stressor severity method
-# P = menatal health problems
-
-#Corona pandmeic Specific related stressors:
-# GÖRANS SELECTION
-# Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
-# # CHANGED TO INCLUDE ITEM 30:
-# Es <- grep("CE_[0-3][0-9]$", names(data_en), value = TRUE)
-# data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
-# data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
-
-## General stressors:
-#Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
-#data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
-#data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
-#
-## Combined:
-#Eall <- c(grep("CE_[0-2]", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
-#data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
-#data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
-
-# test
-which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
-
 
 # stressor count method (SCM)
 xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
@@ -772,16 +742,24 @@ correlation.P <- cor(data_en[,c("P", "Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.S
 stargazer(correlation.P[,1], title="Correlations of 'P' with stressors", type = "text", out="cor_P_stressors.txt")
 stargazer(correlation.stressors, title="Correlation among stressors (Pearson r)", type = "text", out="correlation.stressors.txt")
 
-# count stressor frequency in complete sample
-data_en.complete = data_en[which(!is.na(data_en$complete.eu)),]
-stressors.df = data.frame(names = c("a", "b", "c"),
-                          stressors = c(colSums(data_en.complete[CE] >0), colSums(data_en.complete[GE] >0)))
 
-# subsample
+# subsample of complete responses
+
+Mean.Ec.SSM <- vector()
+for(i in 1:length(CE)){ 
+     m= which(!is.na(data_en$complete.eu) & data_en[, CE[i]] > 0)
+     Mean.Ec.SSM[i] = mean(data_en[m,CE[i]])
+}
+Mean.Eg.SSM <- vector()
+for(i in 1:length(GE)){ 
+     m= which(!is.na(data_en$complete.eu) & data_en[, GE[i]] > 0)
+     Mean.Eg.SSM[i] = mean(data_en[m,GE[i]])
+}
+
 stressors.df = data.frame(Category = c("a", "b", "c"),
-                          Count = c(colSums(data_en.complete[CE] >0), colSums(data_en.complete[GE] >0)),
-                          Frequency = c(round(colSums(data_en.complete[CE] >0)/length(data_en.complete$CE_01)*100,2), round(colSums(data_en.complete[GE] >0)/length(data_en.complete$CE_01)*100,2)),
-                          severity = c(round(apply(data_en.complete[CE],2,mean),2), round(apply(data_en.complete[GE],2,mean),2))
+                          Count = c(colSums(data_en[!is.na(data_en$complete.eu), CE] >0), colSums(data_en[!is.na(data_en$complete.eu), GE] >0)),
+                          Frequency = c(round(colSums(data_en[!is.na(data_en$complete.eu), CE] >0)/length(data_en$CE_01[!is.na(data_en$complete.eu)])*100,2), round(colSums(data_en[!is.na(data_en$complete.eu),GE] >0)/length(data_en$CE_01[!is.na(data_en$complete.eu)])*100,2)),
+                          severity = c(round(Mean.Ec.SSM,2), round(Mean.Eg.SSM,2))
                           )
 write.csv(stressors.df, "stressor_prevalence.csv")
 
@@ -1136,84 +1114,7 @@ data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
 
 
 ```{r old table code - remove?}
-# 
-# ######### table 1: sample demographics and health status 
-# # (all the initial basic variables and people‘s thinking about how the crisis is managed).
-# 
-# ''' very awkward solution from myside; preparing aver single variable as a vector and rbind in the end to a dataframe.. /mz
-# # 
-# demovar <- c("age", "gender", "current.stay.out.of.town", "years.of.education", "occupational.status",
-#              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
-#              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
-#              "adherence.to.recommended.procedures" )
-# demog <- data_en[which(!is.na(data_en$complete.eu)), demovar]
-# 
-# gender <- 
-# demog.summary <- data.frame()
-# age_descr <- c("Median age (range)", str_glue("{age[3]}","({age[1]}-{age[6]})"))
-# Gender_title <- c("Gender", "")
-# Male
-# '''
-# #demog.summary <- rbind(age_descr,sex_title)
-# 
-# 
-# 
-# ######### table 2: average values + SD of the sample in all the dependent and independent variables
-# 
-# ###step 1: extract all variables of interest into a new dataframe
-# ##NOTE: excel sheet SR_Ec.SCM SR_Ec.SSM do not match in R, in R they are defined as SR_c.SCM and SR_c.SSM - if adjusted, change in line below and code above
-# variables.of.interest = data_en[, c("SR_Eg.SCM", "SR_Es.SCM", "SR_c.SCM", "SR_Eg.SSM", "SR_Es.SSM", "SR_c.SSM", "PAS", "PSS", "CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC", "P", "Es.SCM", "Es.SSM", "Eg.SCM", "Eg.SSM", "Ec.SCM", "Ec.SSM", "CERQSum", "PAS", "age")]
-# 
-# ###step 2: calculate mean/SD and put into a new dataframe
-# ##NOTE: SR... variables are Z-scores, mean of Z-score is always 0 and SD will be 1 -> pointless to calculate?
-# Mean = as.data.frame(colMeans(variables.of.interest))
-# SD = as.data.frame(apply(variables.of.interest, 2, sd))
-# table.mean.sd = cbind(Mean, SD) #combine mean and SD into one table
-# colnames(table.mean.sd)[1] <- "Mean" #rename header
-# colnames(table.mean.sd)[2] <- "SD" #rename header
-# table.mean.sd[, c(1:2)] = table.mean.sd %>% mutate_at(vars(Mean, SD), funs(round(., 2))) #round to two decimals
-# 
-# ###step 3: use formattable package to create a nice table that can be viewed in the viewer window of R
-# formattable(table.mean.sd)
-# 
-# 
-# ######### table 3: intercorrelations of dependent and independent variables
-# 
-# ###Basic correlation matrix
-# corr.matrix = as.data.frame(cor(variables.of.interest, use = "complete.obs")) #intercorrelation matrix
-# corr.matrix[, c(1:25)] = corr.matrix %>% mutate_at(vars(c(1:25)), funs(round(., 2))) #round to two decimals
-# formattable(corr.matrix, 
-#             align = c("c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c", "c") #center values
-# )
-# 
-# ###basic cor(...) does not give p-values, so use rcorr instead (requires more than 4 cases)
-# ##variables.of.interest[nrow(variables.of.interest) + 1,] = 1 #testing purpose (needed more than 4 cases, ignore this line) 
-# 
-# corr.p.matrix <- rcorr(as.matrix(variables.of.interest))
-# corr.p.matrix$r #gives correlations
-# corr.p.matrix$P #gives p values of correlations
-# 
-# flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
-#   ut <- upper.tri(cormat)
-#   data.frame(
-#     row = rownames(cormat)[row(cormat)[ut]],
-#     column = rownames(cormat)[col(cormat)[ut]],
-#     cor  =(cormat)[ut],
-#     p = pmat[ut]
-#   )
-# }
-# 
-# corr.p.matrix <- as.data.frame(flattenCorrMatrix(corr.p.matrix$r, corr.p.matrix$P))
-# corr.p.matrix$Sign <- ifelse(corr.p.matrix$p < 0.05, "significant", "not significant") #threshold set at .05
-# corr.p.matrix[, c(3,4)] = round(corr.p.matrix[, c(-1, -2, -5)],2) #round 2 decimals, change last value (the 2) if you want more/less decimals
-# formattable(corr.p.matrix) #viewer table
-# 
-# 
-# ###helpful intercorrlation matrix graph 
-# x = cor(variables.of.interest)
-# corrplot(x, type = "lower")
-# 
-# #
+
 
 df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.eu))],
                      PSS=data_en$PSS[which(!is.na(data_en$complete.eu))],
@@ -1298,42 +1199,3 @@ table.diagnoses <- rbind(table.diagnoses, c("total", sum(table.diagnoses$complet
 format_table(table.diagnoses)                                        
 
 ```
-
-```{r Matthias is playing around, can be deleted later}
-
-summary(data_en$End.Date)
-#                 Min.               1st Qu.                Median                  Mean 
-#"2020-03-22 00:00:00" "2020-03-25 00:00:00" "2020-03-29 00:00:00" "2020-03-28 00:28:16" 
-#              3rd Qu.                  Max. 
-#"2020-03-31 00:00:00" "2020-04-01 00:00:00" 
-mean(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 3.292359
-mean(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 3.240343
-mean(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 3.224191
-mean(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 3.212466
-sd(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 0.6278865
-sd(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 0.6523222
-sd(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 0.6427986
-sd(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 0.639339
-length(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"])
-#[1] 318
-length(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"])
-#[1] 983
-length(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"])
-#[1] 1723
-length(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"])
-#[1] 2303
-mean(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 3.289076
-sd(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"], na.rm=T)
-#[1] 0.62802
-length(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"])
-#[1] 628
-
