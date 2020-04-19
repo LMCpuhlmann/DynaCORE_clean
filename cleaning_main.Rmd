@@ -479,7 +479,7 @@ sd(data_en$P[which(!is.na(data_en$complete.eu))])
 #Corona pandmeic related stressors:
 term <- "CE_"
 CE <- grep(term, names(data_en))
-CE <- CE[1:30]
+CE <- CE[1:29]
 data_en$Es.SCM <- rowSums(data_en[CE] >0) #stressor count
 data_en$Es.SSM <- rowSums(data_en[CE])/5 #weighted
 
@@ -491,7 +491,7 @@ data_en$Eg.SCM <- rowSums(data_en[GE] >0) #stressor count
 data_en$Eg.SSM <- rowSums(data_en[GE])/5 #weighted
 
 #combined:
-Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:30])
+Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:29])
 data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
 data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
@@ -543,15 +543,20 @@ Es <- grep("CE_[0-3][0-9]$", names(data_en), value = TRUE)
 data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
 data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
 
-# General stressors:
-Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
-data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
-data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
-
-# Combined:
-Eall <- c(grep("CE_[0-2]", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
-data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
-data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
+##Corona pandmeic Specific related stressors:
+#Es <- grep("CE_[0-2]", names(data_en), value = TRUE)
+#data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
+#data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least #an "overall-rated weighted where the severity is assessed for all respondents
+#
+## General stressors:
+#Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
+#data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
+#data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
+#
+## Combined:
+#Eall <- c(grep("CE_[0-2]", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
+#data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
+#data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
 
 # test
 which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
@@ -1287,3 +1292,42 @@ min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
 min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
 min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
 ```
+
+```{r Matthias is playing around, can be deleted later}
+
+summary(data_en$End.Date)
+#                 Min.               1st Qu.                Median                  Mean 
+#"2020-03-22 00:00:00" "2020-03-25 00:00:00" "2020-03-29 00:00:00" "2020-03-28 00:28:16" 
+#              3rd Qu.                  Max. 
+#"2020-03-31 00:00:00" "2020-04-01 00:00:00" 
+mean(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 3.292359
+mean(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 3.240343
+mean(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 3.224191
+mean(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 3.212466
+sd(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 0.6278865
+sd(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 0.6523222
+sd(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 0.6427986
+sd(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 0.639339
+length(data_en$CSS[data_en$End.Date<"2020-03-24 00:00:00" & data_en$survey.language=="de"])
+#[1] 318
+length(data_en$CSS[data_en$End.Date<="2020-03-25 00:00:00"& data_en$End.Date<"2020-03-28 00:00:00" & data_en$survey.language=="de"])
+#[1] 983
+length(data_en$CSS[data_en$End.Date<="2020-03-28 00:00:00"& data_en$End.Date<"2020-03-31 00:00:00" & data_en$survey.language=="de"])
+#[1] 1723
+length(data_en$CSS[data_en$End.Date<="2020-03-31 00:00:00" & data_en$survey.language=="de"])
+#[1] 2303
+mean(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 3.289076
+sd(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"], na.rm=T)
+#[1] 0.62802
+length(data_en$CSS[data_en$End.Date<"2020-03-25 00:00:00" & data_en$survey.language=="de"])
+#[1] 628
+
