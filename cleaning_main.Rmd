@@ -23,7 +23,7 @@ require(dplyr)
 require(stringr)
 require(BBmisc)
 require(formattable)
-#require(Hmisc)
+require(Hmisc)
 #require(corrplot)
 
 # source functions to renames variables and occupation and occupational status in lists
@@ -756,8 +756,7 @@ for(i in 1:length(GE)){
      Mean.Eg.SSM[i] = mean(data_en[m,GE[i]])
 }
 
-stressors.df = data.frame(Category = c("a", "b", "c"),
-                          Count = c(colSums(data_en[!is.na(data_en$complete.eu), CE] >0), colSums(data_en[!is.na(data_en$complete.eu), GE] >0)),
+stressors.df = data.frame(Count = c(colSums(data_en[!is.na(data_en$complete.eu), CE] >0), colSums(data_en[!is.na(data_en$complete.eu), GE] >0)),
                           Frequency = c(round(colSums(data_en[!is.na(data_en$complete.eu), CE] >0)/length(data_en$CE_01[!is.na(data_en$complete.eu)])*100,2), round(colSums(data_en[!is.na(data_en$complete.eu),GE] >0)/length(data_en$CE_01[!is.na(data_en$complete.eu)])*100,2)),
                           severity = c(round(Mean.Ec.SSM,2), round(Mean.Eg.SSM,2))
                           )
@@ -1091,10 +1090,12 @@ data_en[,c(172:173, 23:38, 40:51)] <- lapply(data_en[,c(172:173, 23:38, 40:51)],
 data_en$health.status = factor(data_en$health.status, order = TRUE)
 data_en$survey.language = revalue(data_en$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
 data_en$survey.language = droplevels(data_en$survey.language)
+```
 
-#covariates = c("age", "gender", "household.income.old","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "risk.group", "infection.test.status", "quarantine.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education", "nationality", "Country.of.residence","Survey.language","current.stay.out.of.town", "occupation1", "occupation2", "occupation3", "occupation4", "occupation5", "occupation6", "occupation7", "occupation8", "occupation9", "occupation10", "occupation11", "occupation12", "occupation13", "occupation14", "occupation15", "occupation16", "occupation17", "occupational.status1", "occupational.status2", "occupational.status3", "occupational.status4", "occupational.status5", "occupational.status6", "occupational.status7", "occupational.status8", "occupational.status9", "occupational.status10", "occupational.status11", "occupational.status12", "occupational.status13")
+Provide referene categories
+```{r ref-cats}
+Ref.cats = c("Reference categories: male (Gender), married (Relationship status), 1 (People in household), less healthy / more frequently ill (General health status), yes (Risk group),  yes (Infection test status), other (Quarantine Staus), yes (Current stay out of town), no (Country of residence: Germany), no (Occupation: student or employee working in research/education), no (Occupational status: permanent contract)")
 
-#covariates = which(names(data_en) %in% covariates)
 ```
 
 ```{r final-cleaning}
@@ -1108,13 +1109,15 @@ if(length(xx)>0){data_en = data_en[-xx]}
 # note that in the real data, the above step will also exclude the column IP address
 
 data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
-
+data_en$people.in.household <- revalue(data_en$people.in.household, c("0" = "6"))
+data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "6"), order = FALSE)
+data_en$people.in.household = as.numeric(data_en$people.in.household)
+data_en$health.status = as.numeric(data_en$health.status)
 #save(data_en, file = "data_en_19.04.RData")
 ```
 
-
-```{r old table code - remove?}
-
+Table of Resilience factor corrlations and descriptives of subsample wiht mental health diagnosis
+```{r further-descriptives, include = FALSE}
 
 df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.eu))],
                      PSS=data_en$PSS[which(!is.na(data_en$complete.eu))],
@@ -1125,7 +1128,7 @@ df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.eu))],
                      NEU=data_en$NEU[which(!is.na(data_en$complete.eu))], 
                      BCS=data_en$BCS[which(!is.na(data_en$complete.eu))], 
                      PAC=data_en$PAC[which(!is.na(data_en$complete.eu))],
-                     R.SSM.C=(data_en$SR_c.SSM[which(!is.na(data_en$complete.eu))])*-1)
+                     R.SSM.C=(data_en$SR_Ec.SSM[which(!is.na(data_en$complete.eu))])*-1)
 matrix.cor <- rcorr(as.matrix(df.cor))
 
  flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
