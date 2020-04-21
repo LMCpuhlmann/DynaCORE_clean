@@ -40,10 +40,10 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
-# data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
- data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-# data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_text = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
+#data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/DynaCORE-C_text_answers.csv", sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_en$X.0 = data_en$occupation
@@ -212,7 +212,7 @@ data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.au
 data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
 
 # people.in.household as continuous
-data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-1 # factor 0, meaning more than 6, was recoded to 1
+data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-2 # factor 0, meaning more than 6, was recoded to 2, "1" to 3, and so on
 xx = as.numeric(numextract(data_en$X.28))
 xx[which(xx==0)] = 1
 data_en$people.in.household.cont[which(data_en$people.in.household.cont == 0)] = xx[!is.na(xx)]
@@ -521,31 +521,6 @@ data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
 ```
 
-Göran's code for stressor exposure: - REMOVE??
-```{r stress-exposure-analysis, include=FALSE}
-
-# stressor count method (SCM)
-xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
-
-summary(m1_scm <- lm(P ~ poly(Eg.SCM,2), data= data_en[xx,]))
-summary(m2_scm <- lm(P ~ poly(Es.SCM,2), data= data_en[xx,]))
-summary(m3_scm <- lm(P ~ poly(Ec.SCM,2), data= data_en[xx,]))
-summary(m4_scm <- lm(P ~ poly(Es.SCM,2)  + poly(Eg.SCM,2),data= data_en[xx,])) 
-anova(m1_scm, m2_scm, m3_scm, m4_scm, test="F")
-
-# stressor severity method (SSM)
-xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
-
-summary(m1_ssm <- lm(P~poly(Eg.SSM,2),data= data_en[xx,]))
-summary(m2_ssm <- lm(P~poly(Es.SSM,2),data= data_en[xx,]))
-summary(m3_ssm <- lm(P~poly(Ec.SSM,2),data= data_en[xx,]))
-summary(m4_ssm <- lm(P~poly(Es.SSM,2) + poly(Eg.SSM,2),data= data_en[xx,]))
-anova(m1_ssm, m2_ssm, m3_ssm, m4_ssm, test="F")
-
-# overall anova 
-anova(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm)
-```
-
 generate subgroups
 ```{r subgroups, include = FALSE}
 
@@ -589,8 +564,8 @@ mean(data_en$P[which(data_en$academia== "yes"& !is.na(data_en$complete.eu))])
 sd(data_en$P[which(data_en$academia== "yes" & !is.na(data_en$complete.eu))])
 
 # psychiatric diagnoses
-#ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
-ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
+ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
+#ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
 names(ID.diagnosed)[1] <- "ID"
 data_en$psychiatric.diagnose <- NA
 #data_en$psychiatric.diagnose[which(ID.diagnosed$ID %in% data_en$Respondent.ID)] <- 1
@@ -608,8 +583,8 @@ length(which(mental.health$complete==1))
 length(which(nchar(data_en$mental.health.details)>0))
 length(which(data_en$diagnosed.mental.health==0)) # all who said yes specified their condition
 
-#mental.health.old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/mental.health.csv")
-mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
+mental.health.old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/mental.health.csv")
+#mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
 
 # new variables
 mental.health$new = 0
