@@ -393,7 +393,7 @@ if(length(which(data_en$household.income==1))>0){
 }
 #data_en$household.income.old = factor(data_en$household.income, order = TRUE)
 test <- data_en[c("Respondent.ID","check_ID_text","household.income", "check_income_text"),] #to check corresponding factors
-data_en$household.income <- mapvalues(data_en$household.income,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
+#data_en$household.income <- mapvalues(data_en$household.income,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
 ```
 
 Calculate reponses to questionnaires, inverting items where necessary
@@ -756,7 +756,7 @@ write.csv(stressors.df, "stressor_prevalence.csv")
 # table S1
 
 demovar <- c("age", "gender", "nationality","country.of.residence", "current.stay.out.of.town",   "years.of.education", "occupational.status",
-             "household.income.old", "relationship.status", "people.in.household", "diagnosed.mental.health",
+             "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
              "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27", "survey.language")
 demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
@@ -797,7 +797,7 @@ demog$country.of.residence = droplevels(demog$country.of.residence)
 
 demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
 demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
-demog$household.income.old <- factor(demog$household.income.old, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"))
+demog$household.income <- factor(demog$household.income, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"))
 
 # revalue levels for table
 demog$gender = revalue(demog$gender, c("1" = "male", "2" = "female", "3" = "diverse"))
@@ -807,8 +807,8 @@ demog$infection.test.status = revalue(demog$infection.test.status, c("0" = "yes"
 demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
 demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" = "at home", "3" = "in the hospital", "4" = "abroad", "0" = "other"))
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
-demog$people.in.household = revalue(demog$people.in.household, c("1" = "1", "2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
-demog$household.income.old = revalue(demog$household.income.old, c("1" = "0-24.999", "2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
+demog$people.in.household = revalue(demog$people.in.household, c("2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
+demog$household.income = revalue(demog$household.income, c("2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
 demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
 
 demog$survey.language = droplevels(demog$survey.language)
