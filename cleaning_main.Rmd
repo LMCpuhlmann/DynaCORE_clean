@@ -1181,24 +1181,4 @@ table.diagnoses <- rbind(table.diagnoses, c("total", sum(table.diagnoses$complet
 format_table(table.diagnoses)                                        
 
 ```
-```{scales }
-setwd("C:/Users/Matze/Documents/Promotion/Analysen/qualitative_data")
-load("data_pull_5000_completesurveys_eu_cleaned_data.RData")
 
-data_en.eu.complete <- data_en[!is.na(data_en$complete.eu),] 
-
-# Positive Appraisal Style:
-term <- "CERQ"
-CERQ <- grep(term, names(data_en.eu.complete))
-PAS <- data_en.eu.complete[,c(CERQ,100,104 )]
-PAS[,c("H1_COPE_18","H1_COPE_28")] <- PAS[,c("H1_COPE_18","H1_COPE_28")]*5/4 #rescale
-PAS$CERQSum <- NULL
-data_en.eu.complete$PAS <- rowMeans(PAS)
-
-aPAS <- psych::alpha(PAS) #raw alpha 0.83
-
-# SOEP: CERQ 15, 16, 11 COPE 10 + catasrophizing item (not in CORE-C)
-
-PAS_SOEP <- data_en.eu.complete[,c(108,110,111)]
-
-aPAS_SOEP <- psych::alpha(PAS_SOEP) #raw alpha 0.65
