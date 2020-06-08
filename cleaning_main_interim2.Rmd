@@ -1,0 +1,1199 @@
+---
+title: "Extracting + cleaning data for DynaCORE_C interimanalysis"
+author: "Lara Puhlmann (lara.puhlmann@lir-mainz.de), Matthias Zerban (matthias.zerban@unimedizin-mainz.de), Jeroen Weermeijer (jeroen.weermeijer@kuleuven.be), Haakon Engen"
+bibliography: bib.bib
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+    toc: true
+    theme: united
+---
+notes:
+- double check household income exclusion
+
+Formats data for interim analysis and includes plausibility checks
+
+WARNING: Only run once! 
+
+Definition of Europe based on United Nations, Department of Economic and Social Affairs, Population Division (2019). World Population Prospects 2019, Online Edition. Rev. 1.
+
+```{r setup, include=FALSE}
+library(knitr)
+require(foreign)
+require(plyr)
+require(dplyr)
+require(stringr)
+require(BBmisc)
+require(formattable)
+require(Hmisc)
+#require(corrplot)
+
+# source functions to renames variables and occupation and occupational status in lists
+source("rename.R") 
+source("formatting.R")
+
+# function to extract numeric part free response
+numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")} 
+
+```
+
+# Read and format data
+```{r data, include=FALSE}
+# load data - currently set up to work with owncloud. Data must have 171 columns!
+
+# user-specific path [change accordingly]:
+#data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
+
+data_en = rename(data_en) #rename variables
+data_en$X.0 = data_en$occupation
+data_en$X.00 = data_en$occupational.status
+data_en = formatting(data_en) #group occupation + status in lists
+
+data_en = data_en[which(!is.na(data_en$Respondent.ID)),] # remove row without respondent ID
+
+# 
+# data_en_complete = rename(data_en_complete) #rename variables
+# data_en_complete$X.0 = data_en_complete$occupation
+# data_en_complete$X.00 = data_en_complete$occupational.status
+# data_en_complete = formatting(data_en_complete) #group occupation + status in lists
+# 
+# data_en_complete = data_en_complete[which(!is.na(data_en$Respondent.ID)),] # remove row without respondent ID
+# 
+# # indicate missings in questionnaires
+# data_en_complete[,c(68:154,156:167)] <- lapply(data_en_complete[,c(68:154,156:167)], as.numeric) # questionnaires
+# data_en_complete$missings <- rowSums(is.na(data_en_complete[,c(68:154,156:167)]))
+
+
+# indicate missings in questionnaires
+data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+
+# indicate missing data in covariates:
+data_en$missing.cov = NA
+
+# 1) anyone away from their residence and not specifying the country or city of their current location
+xx  = which(data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.country)==0 | data_en$current.stay.out.of.town==1 & nchar(data_en$current.stay.out.of.town.city)==0)
+data_en$missing.cov[xx] = 1
+
+# 2): missing symptom specification
+xx = which(data_en$infection.test.status=="0" & is.na(as.numeric(data_en$symptom.severity)))
+data_en$missing.cov[xx] = 1
+
+```
+
+<!-- ```{r quality-check-income, include = FALSE} -->
+<!-- i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1 -->
+<!-- data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)] -->
+<!-- data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)] -->
+<!-- test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable -->
+<!-- test$ID <- data_en$Respondent.ID -->
+<!-- isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)]) -->
+<!-- test$income <- data_en$household.income -->
+<!-- table(test$income)  -->
+<!-- #            1       10       11       12       13       14        2        3        4        5        6        7  -->
+<!-- #3174      416      409      205      123       60      130      936      742      777     1273     2045     1392  -->
+<!-- #  8        9 Response  -->
+<!-- #750      422        1  -->
+
+<!-- table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])  -->
+<!-- #there are multiple levels coded to this response: -->
+<!-- #    10    6  -->
+<!-- #1  409 2045 -->
+
+<!-- ``` -->
+
+# Format date and time of responses
+```{r date-time, include=FALSE}
+
+#split month-day-year date + time col into two col, one with the date format, one with correct time
+for(i in 1:length(data_en$Respondent.ID)){
+  start = strsplit(data_en$Start.Date[i], " ")
+  data_en$Start.Date[i] = start[[1]][1]
+  data_en$Start.Time[i] = paste(start[[1]][2], start[[1]][3])
+  
+  end = strsplit(data_en$End.Date[i], " ")
+  data_en$End.Date[i] = end[[1]][1]
+  data_en$End.Time[i] = paste(end[[1]][2], end[[1]][3])
+}
+
+# dealing with different separators for date outputs (e.g. mm/dd/yyyy vs. mm.dd.yyyy).
+data_en$Start.Date = gsub(".", "/", data_en$Start.Date, fixed=TRUE) #mm.dd.yyyy becomes mm/dd/yyyy
+
+#convert month-day-year to year-month-day date, then to POSIXlt
+data_en$Start.Date = as.Date(data_en$Start.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
+data_en$End.Date = as.Date(data_en$End.Date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE)
+data_en$Start.Date = as.POSIXlt(paste(data_en$Start.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
+data_en$End.Date = as.POSIXlt(paste(data_en$End.Date), tz = "Europe/Berlin", format="%Y-%m-%d")
+data_en$Start.DateTime = as.POSIXlt(paste(data_en$Start.Date, data_en$Start.Time), tz = "Europe/Berlin", format="%Y-%m-%d %I:%M:%S %p")
+data_en$End.DateTime = as.POSIXlt(paste(data_en$End.Date, data_en$End.Time), tz = "Europe/Berlin", format="%Y-%m-%d %I:%M:%S %p")
+max(data_en$End.DateTime)
+# #test
+# data_en$Start.Date[4] #should give year/month/day GMT
+# data_en$End.Date[4] #should give year/month/day GMT
+# data_en$Start.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+# data_en$End.DateTime[4] #should give year/month/day hour/minutes/seconds GMT
+
+#completion time
+data_en$completionTime = difftime(data_en$End.DateTime, data_en$Start.DateTime)
+# test: data_en$completionTime[3] #gives time difference in mins
+data_en$completionTime <- as.numeric(data_en$completionTime, units="secs")
+
+#data_en_subsample = data_en
+#data_en = data_en_complete
+```
+
+Select data, complete and not, up until the 19th April)
+```{r data-selection, include=FALSE}
+
+Europe = c(2, 4, 11, 17, 18, 23, 28, 45, 48, 51, 60, 63, 64, 68, 70, 77, 80, 81, 86, 88, 98, 103, 104, 105, 111, 117, 119, 127, 132, 142, 143, 146, 147, 148, 154, 158, 162, 163, 168, 174, 175, 180, 191, 193)
+
+data_en = data_en[order(data_en$End.DateTime),] # sort by completion date + time
+
+data_en$april19 = NA #indicator for responses before pull date
+data_en$april19[which(data_en$End.DateTime<"2020-04-19 23:59:59 CEST")]=1
+data_en$complete.april19 = NA #indicator for complete responses before pull date
+data_en$complete.april19[which(data_en$End.DateTime<"2020-04-19 23:59:59 CEST"&is.na(data_en$missing.cov)&data_en$missings==0)]=1
+#data_en$complete.april19[which(data_en$End.Date<"2020-04-20 CEST"&data_en$missings==0)]=1
+
+sum(data_en$april19, na.rm=TRUE)
+sum(data_en$complete.april19, na.rm=TRUE)
+
+data_en=data_en[which(data_en$april19==1),]
+max(data_en$End.DateTime)
+#max(data_en$End.DateTime[data_en$End.Date=="2020-04-19 CEST"])
+
+#which(!(data_en_subsample$Respondent.ID %in% data_en$Respondent.ID))
+#data_en$Respondent.ID[which(data_en$complete.april19==1)][which(!(data_en$Respondent.ID[which(data_en$complete.april19==1)] %in%data_en_subsample$Respondent.ID))]
+
+dim(data_en[data_en$missings == 0 &is.na(data_en$missing.cov),]) 
+dim(data_en[data_en$missings > 0|!is.na(data_en$missing.cov),]) # should be the remaining
+
+data_eu = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
+data_ex = data_en[which(!(data_en$country.of.residence %in% Europe)),] # exclude all non-European residents
+
+#incomplete responses:
+dim(data_eu[data_eu$missings > 0|!is.na(data_eu$missing.cov),])
+dim(data_ex[data_ex$missings > 0|!is.na(data_ex$missing.cov),])
+dim(data_eu[data_eu$missings == 0&is.na(data_eu$missing.cov),])
+dim(data_ex[data_ex$missings == 0&is.na(data_ex$missing.cov),])
+dim(data_ex[data_ex$missings > 0,]) # very high n of incomplete resp
+#write.csv(data_ex[,c(1:21, 52:179)], "data_outside_eu.csv")
+
+data_all = data_en # all data up to 'pull date'
+# data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
+```
+
+clean "out of town" response whilte it is still in char format
+```{r clean-out-of-town, include = FALSE}
+
+# set "out of town" response of people naming a different country than their country of residence to yes
+xx = which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")] != data_en$country.of.residence[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")])
+
+data_en$current.stay.out.of.town[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country !="")][xx] = "1"
+
+# set responses of people not out of town and naming the same as their country of residence to empty
+length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2")] != ""))
+length(which(data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2"&!is.na(data_en$complete.april19))] != ""))
+
+data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town=="2" & data_en$current.stay.out.of.town.country != "")] <- ""
+
+data_en$current.location <- ifelse(data_en$current.stay.out.of.town == '1', data_en$current.stay.out.of.town.country, data_en$country.of.residence)
+ 
+# test
+data_en$country.of.residence[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+data_en$current.stay.out.of.town.country[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17] 
+data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$missings ==0)][17]
+
+# how many are not currently in Europe?
+length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
+data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
+```
+
+Format covariates
+```{r  format-covs, include=FALSE}
+#data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
+data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)] <- lapply(data_en[,c(1:2, 10:12,14:16, 18:19, 53:54, 58, 60:61,64)], as.factor)# covariates
+
+data_en$health.status = as.numeric(data_en$health.status)
+data_en$household.income = factor(data_en$household.income, order = TRUE)
+data_en$symptom.severity = factor(data_en$symptom.severity, order = TRUE)
+
+data_en$people.in.household.under.18 = as.numeric(data_en$people.in.household.under.18)
+data_en$opinion.about.authorities.measures = as.numeric(data_en$opinion.about.authorities.measures)
+data_en$adherence.to.recommended.procedures = as.numeric(data_en$adherence.to.recommended.procedures)
+
+# people.in.household as continuous
+data_en$people.in.household.cont = as.numeric(data_en$people.in.household)-2 # factor 0, meaning more than 6, was recoded to 2, "1" to 3, and so on
+xx = as.numeric(numextract(data_en$X.28))
+xx[which(xx==0)] = 1
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 0)] = xx[!is.na(xx)]
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 3)] = 3.5
+data_en$people.in.household.cont[which(data_en$people.in.household.cont == 4)] = 5.5
+
+# date of Corona test
+data_en$infection.test.status.date = gsub(".", "/", data_en$infection.test.status.date, fixed=TRUE)
+data_en$infection.test.status.date[which(nchar(data_en$infection.test.status.date)<5)]=NA # set all that are not a date to NA
+data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date, tryFormats = c("%m-%d-%Y", "%m/%d/%Y"), optional = FALSE) # convert month-day-year to year-month-day date
+data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.status.date), tz = "Europe/Berlin", format="%Y-%m-%d") # date as POSIXlt
+```
+
+Plausibility checks & cleaning of covariates 
+```{r covs-cleaning, include = FALSE}
+# remaining incomplete covariates among those without missings - should all be 0
+data_en.complete = data_en[which(!is.na(data_en$complete.april19)),]
+#length(which(data_en.complete$current.stay.out.of.town==1 & data_en.complete$current.stay.out.of.town.city==""))
+length(which(data_en.complete$people.in.household==0 & nchar(data_en.complete$X.28)==0))
+length(which(data_en.complete$infection.test.status==0 & is.na(as.numeric(data_en.complete$symptom.severity))))
+
+
+###### age #####
+
+data_en$age.fulltext = data_en$age
+data_en$age = gsub("o", "0", data_en$age) #account for people accidently typing 'o' instead of '0'
+
+# extract the numeric component from age response
+data_en$age = numextract(data_en$age)
+data_en$age = as.numeric(data_en$age)
+data_en$age[which(data_en$age > 100)] # 111 seems possible, so keep
+length(which(is.na(data_en$age))) # none
+
+# if any ages are 0, this could be due to a leading o that was substituted above. Check fulltext:
+data_en$age.fulltext[which(data_en$age==0)] # -> one person, who says to be 41 soon
+data_en$age[which(data_en$age==0)] = 41 # recode this person:
+
+# check invalid age responses 
+which(data_en$age < 18) # four
+which(data_en$age[which(!is.na(data_en$complete.april19))] < 18)
+
+which(is.na(data_en$age[which(!is.na(data_en$complete.april19))])) # none
+
+# exclude those resposes
+data_en$Respondent.ID[which(data_en$age < 18)]<- NA
+
+data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
+
+###### education #####
+
+data_en$years.of.education.fulltext = data_en$years.of.education
+data_en$years.of.education = numextract(data_en$years.of.education) # extract the numeric component of response
+data_en$years.of.education = as.numeric(data_en$years.of.education)
+# if people fail to add their years of education to a total, they may end up with too low of a value. "years.of.education.fulltext" includes the full answer for years.of.education for anyone with less than 10 years
+
+length(which(data_en$years.of.education > data_en$age)) # indicate people with more years of education than age
+length(which(data_en$years.of.education[which(!is.na(data_en$complete.april19))] > data_en$age[which(!is.na(data_en$complete.april19))]))
+
+for(i in 1:length(data_en$Respondent.ID)){
+  if (!is.na(data_en$years.of.education[i])) {
+    if(data_en$years.of.education[i] > data_en$age[i]){
+      data_en$years.of.education[i] = NA  # this applies to none
+    }
+    if(!is.na(data_en$years.of.education[i]) && data_en$years.of.education[i] > 10){
+      data_en$years.of.education.fulltext[i] = NA
+    }
+  }
+}
+
+# check fulltest answers to make sure this was not due to typos or nor summing the total years of 
+data_en$years.of.education.fulltext[which(!is.na(data_en$years.of.education.fulltext))] # all plausible
+
+####  inconsistent responses ####
+
+# count cases where more/same as total nr of people in household are underage
+xx = which(data_en$people.in.household.cont+0.5<=data_en$people.in.household.under.18)
+xx = which(data_en$people.in.household.cont[which(!is.na(data_en$complete.april19))]+0.5<=data_en$people.in.household.under.18[which(!is.na(data_en$complete.april19))])
+
+# set symptom ratings of those not being COVID positive to NA
+xx = which(data_en$symptom.severity[which(data_en$infection.test.status==1)] > 1) # symptom severity above 1 although saying they were not tested pos
+#xx = which(data_en.complete$symptom.severity[which(data_en.complete$infection.test.status==1)] > 1)
+length(which(data_en$symptom.severity[which(data_en$infection.test.status==1)] != ""))
+data_en$symptom.severity[which(data_en$infection.test.status==1)] <- ""
+
+
+### occupation
+
+# variable with occupation of people with only one occupation
+data_en$occupation.if.only.one <- as.character(data_en$occupation)
+data_en$occupation.if.only.one <- as.numeric(data_en$occupation.if.only.one)
+# variable with occupational status of people with only one indicated
+data_en$occupational.status.if.only.one <- as.character(data_en$occupational.status)
+data_en$occupational.status.if.only.one <- as.numeric(data_en$occupational.status.if.only.one)
+
+#data_en$occupational.status[sapply(data_en$occupational.status, function(x)  "1" %in% x)]
+
+### set cases with mismatch in occupation to NA
+data_en$not.working.12 <- lapply(data_en$occupation, function(ch) grep("16", ch))
+data_en$not.working.12[sapply(data_en$not.working.12, function(x) length(x)==0)] <- NA
+
+employed = c("1", "2", "3", "4") # Note that this also grabs 10, 11, 12, which is fixed below
+not.employed = c("7", "8", "9", "10", "11", "12") #parental leave, studying, sick leave, unemployment w/ or w/o benefits, retired
+data_en$employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(employed, collapse="|"), ch))
+data_en$not.employed.13 <- lapply(data_en$occupational.status, function(ch) grep(paste(not.employed, collapse="|"), ch))
+data_en$employed.13[sapply(data_en$employed.13, function(x) length(x)==0)] <- NA
+data_en$not.employed.13[sapply(data_en$not.employed.13, function(x) length(x)==0)] <- NA
+data_en$employed.13[which(!is.na(data_en$not.employed.13))] <- NA # also set to NA if the person additionally claims any form of unemployment
+
+# find people that are unemployed in 12 but definitely working in 13 and set their occupations to NA
+index = which(!is.na(data_en$not.working.12)) %in% which(!is.na(data_en$employed.13))
+xx = which(!is.na(data_en$not.working.12))[index]
+data_en$occupation[xx] <- NA
+data_en$occupational.status[xx] <- NA
+
+# drop empty levels
+data_en$gender = droplevels(data_en$gender)
+data_en$nationality = droplevels(data_en$nationality)
+data_en$country.of.residence = droplevels(data_en$country.of.residence)
+data_en$current.stay.out.of.town = droplevels(data_en$current.stay.out.of.town)
+data_en$current.stay.out.of.town.country = droplevels(data_en$current.stay.out.of.town.country)
+data_en$infection.test.status = droplevels(data_en$infection.test.status)
+data_en$survey.language = droplevels(data_en$survey.language)
+data_en$relationship.status = droplevels(data_en$relationship.status)
+data_en$people.in.household = droplevels(data_en$people.in.household)
+data_en$risk.group = droplevels(data_en$risk.group)
+data_en$quarantine.status = droplevels(data_en$quarantine.status)
+data_en$household.income = droplevels(data_en$household.income)
+```
+
+Some data checks:
+```{r checks, include=FALSE}
+
+# indicate individuals who report COVID symptoms but in stressor exposure said this situation did not happen
+data_en$symptom.inconsistency = NA
+data_en$symptom.inconsistency[which(data_en$symptom.severity >0 & data_en$CE_01 == 0)] = 1
+sum(data_en$symptom.inconsistency, na.rm = T) # -> none
+
+# indicate individuals who report being in a risk group but in stressor exposure said to risk group "this situation did not happen"
+data_en$risk.group.inconsistency = NA
+data_en$risk.group.inconsistency[which(data_en$risk.group == 1 & data_en$CE_04 == 0)] = 1
+sum(data_en$risk.group.inconsistency, na.rm = T)
+
+## find people who provide a stressor rating > 0 in the free answers but fail to describe the stressor
+length(which(data_en$CE_30>0 & nchar(data_en$CE_30_text) == 0))
+length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0))
+
+length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
+length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
+
+# number of responses per country
+sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
+
+# frequency table of 10 most frequent countries
+sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
+
+```
+
+Income coding was changed in-between survey responses, for this interim analysis drop all participants with answer option 1
+```{r income coding, include=FALSE}
+ table(data_en$household.income)
+if(length(which(data_en$household.income==1))>0){
+  data_en = data_en[-which(data_en$household.income==1),]
+}
+#data_en$household.income.old = factor(data_en$household.income, order = TRUE)
+test <- data_en[c("Respondent.ID","check_ID_text","household.income", "check_income_text"),] #to check corresponding factors
+data_en$household.income <- mapvalues(data_en$household.income,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
+```
+
+Calculate reponses to questionnaires, inverting items where necessary
+```{r numeric-vars, include = FALSE}
+
+#data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric)
+#data_en <- data_en[data_en$missings == 0,] # remove any cases with missings
+
+# Mental Health Problems [P]
+data_en$CM_07 <- 5 - data_en$CM_07
+term <- "CM"
+GHQ <- grep(term, names(data_en))
+GHQrecode <- function(x){recode(x, '1'=0L, '2'=1L, '3'=2L, '4'=3L)}
+data_en[GHQ] <- lapply(data_en[GHQ], GHQrecode)
+GHQ <- GHQ[1:12]
+data_en$P <- rowSums(data_en[GHQ])
+
+# percieved social support [PSS]
+term <- "H2_"
+PSSindex <- grep(term, names(data_en))
+PSSindex <- PSSindex[1:7]
+data_en$PSS <- rowSums(data_en[PSSindex])
+
+# Optimism:
+data_en$OPT <- as.numeric(data_en$H3_01)
+
+# Perceived general self efficacy
+term <-"H4_"
+GSEindex <- grep(term, names(data_en))
+data_en$GSE <- rowSums(data_en[GSEindex])
+
+# self-percieved resilience (BRS)
+term <- "H5_"
+BRS <- grep(term, names(data_en))
+BRSrec <- c("H5_02", "H5_04", "H5_06")
+data_en[,BRSrec] <- 6 - data_en[,BRSrec]
+data_en$REC <- rowMeans(data_en[BRS])
+
+# BFI Neuroticism
+data_en$H6_01 <- 6 - data_en$H6_01
+term <- "H6_"
+BFI <- grep(term, names(data_en))
+BFIrecode <- function(x){recode(x, '1'=-2L, '2'=-1L, '3'=0L, '4'=1L,'5'=2L)}
+data_en[BFI] <- lapply(data_en[BFI], BFIrecode)
+data_en$NEU <- rowSums(data_en[BFI])
+
+# Behavioral Coping style
+term <- "COPE"
+COPE <- grep(term, names(data_en))
+COPE <- COPE[c(1:5,7:9)]
+data_en$BCS <- rowSums(data_en[COPE])
+
+# CERQ
+term <- "CERQ"
+CERQ <- grep(term, names(data_en))
+data_en$CERQSum <- rowSums(data_en[CERQ])
+
+# Positive Appraisal Style:
+PAS <- data_en[,c(CERQ, 106, 110 )]
+PAS[,c("H1_COPE_18","H1_COPE_28")] <- PAS[,c("H1_COPE_18","H1_COPE_28")]*5/4 #rescale
+data_en$PAS <- rowMeans(PAS)
+
+# Corona specific appraisal
+term <- "H1_Cor_"
+PAC <- grep(term, names(data_en))
+data_en$PAC <- rowSums(data_en[PAC])
+
+# summarise GHQ
+length(data_en$P[which(!is.na(data_en$complete.all))])
+mean(data_en$P[which(!is.na(data_en$complete.all))])
+sd(data_en$P[which(!is.na(data_en$complete.all))])
+
+length(data_en$P[which(is.na(data_en$complete.all))])
+length(data_en$P[which(is.na(data_en$complete.all)&!is.na(data_en$P))])
+mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+sd(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+
+data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
+
+length(data_en$P[which(is.na(data_en$complete.april19))])
+length(data_en$P[which(is.na(data_en$complete.april19)&!is.na(data_en$P))])
+mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+sd(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
+
+length(data_en$P[which(!is.na(data_en$complete.april19))])
+mean(data_en$P[which(!is.na(data_en$complete.april19))])
+sd(data_en$P[which(!is.na(data_en$complete.april19))])
+
+```
+
+```{r calculation of stressors}
+
+# SCM = stressor count method
+# SSM = stressor severity method
+
+#Corona pandmeic related stressors:
+term <- "CE_"
+CE <- grep(term, names(data_en))
+CE <- CE[1:30]
+data_en$Es.SCM <- rowSums(data_en[CE] >0) #stressor count
+data_en$Es.SSM <- rowSums(data_en[CE])/5 #weighted
+
+#general stressors:
+term <- "GE_"
+GE <- grep(term, names(data_en))
+GE <- GE[1:12]
+data_en$Eg.SCM <- rowSums(data_en[GE] >0) #stressor count
+data_en$Eg.SSM <- rowSums(data_en[GE])/5 #weighted
+
+#combined:
+Eall <- c(grep("GE_", names(data_en))[1:12], grep("CE_", names(data_en))[1:30])
+data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
+data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
+
+# test
+which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
+
+```
+
+```{r calculate SR Scores}
+
+# stressor count method
+m1 <- summary(lm(scale(P)~scale(Eg.SCM),data= data_en[!is.na(data_en$Eg.SCM),]))
+data_en$SR_Eg.SCM[!is.na(data_en$Eg.SCM)] <-as.numeric(scale(resid(m1)))
+
+m2 <- summary(lm(scale(P)~scale(Es.SCM),data= data_en[!is.na(data_en$Es.SCM),]))
+data_en$SR_Es.SCM[!is.na(data_en$Es.SCM)] <-as.numeric(scale(resid(m2)))
+
+m3 <- summary(lm(scale(P)~scale(Ec.SCM),data= data_en[!is.na(data_en$Ec.SCM),]))
+data_en$SR_Ec.SCM[!is.na(data_en$Ec.SCM)] <-as.numeric(scale(resid(m3)))
+
+# stressor severity method
+m4 <- summary(lm(scale(P)~scale(Eg.SSM),data= data_en[!is.na(data_en$Eg.SSM),]))
+data_en$SR_Eg.SSM[!is.na(data_en$Eg.SSM)] <-as.numeric(scale(resid(m4)))
+
+m5 <- summary(lm(scale(P)~scale(Es.SSM),data= data_en[!is.na(data_en$Es.SSM),]))
+data_en$SR_Es.SSM[!is.na(data_en$Es.SSM)] <-as.numeric(scale(resid(m5)))
+
+m6 <- summary(lm(scale(P)~scale(Ec.SSM),data= data_en[!is.na(data_en$Ec.SSM),]))
+data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
+
+```
+
+generate subgroups
+```{r subgroups, include = FALSE}
+
+# index people in Germany
+data_en$Germany = "no"
+data_en$Germany[which(data_en$country.of.residence=="68")] = "yes"
+length(data_en$Germany[which(data_en$Germany== 1& !is.na(data_en$complete.april19))])/length(data_en$Germany[which(!is.na(data_en$complete.april19))])
+data_en$Germany = as.factor(data_en$Germany)
+
+# index people with permanent contract
+data_en$permanent_contract = "no"
+contract = c("1", "3")
+index.contract <- sapply(data_en$occupational.status, function(ch) contract %in% ch)
+data_en$permanent_contract[which(index.contract[1,] > 0 |index.contract[2,] > 0)]="yes"
+# #test
+# data_en$occupational.status[which(data_en$permanent_contract==1)][1000:1100]
+# data_en$occupational.status[which(data_en$permanent_contract==0)][1000:1100]
+length(data_en$occupational.status[which(data_en$permanent_contract== "no" & !is.na(data_en$complete.april19))])
+length(data_en$occupational.status[which(data_en$permanent_contract== "yes" & !is.na(data_en$complete.april19))])
+length(data_en$occupational.status[which(data_en$permanent_contract== "yes" & !is.na(data_en$complete.april19))])/length(data_en$occupational.status[which(!is.na(data_en$complete.april19))])
+data_en$permanent_contract = as.factor(data_en$permanent_contract)
+
+# index people in 'academia'
+data_en$academia = "no"
+academia = c("1", "2")
+index.academia <- sapply(data_en$occupation, function(ch) academia %in% ch)
+#data_en$occupational.status[which(index.academia[1,] > 0 |index.academia[2,] > 0)]
+data_en$academia[which(index.academia[1,] > 0 |index.academia[2,] > 0)]="yes"
+# #test
+# data_en$occupation[which(data_en$academia=="yes")][1000:1100]
+# data_en$occupation[which(data_en$academia=="no")][1000:1100]
+length(data_en$occupation[which(data_en$academia== "no"& !is.na(data_en$complete.april19))])
+length(data_en$occupation[which(data_en$academia== "yes" & !is.na(data_en$complete.april19))])/length(data_en$occupation[which(!is.na(data_en$complete.april19))])
+data_en$academia = as.factor(data_en$academia)
+
+
+# GHQ in academia
+mean(data_en$P[which(data_en$academia== "no"& !is.na(data_en$complete.april19))])
+sd(data_en$P[which(data_en$academia== "no"& !is.na(data_en$complete.april19))])
+mean(data_en$P[which(data_en$academia== "yes"& !is.na(data_en$complete.april19))])
+sd(data_en$P[which(data_en$academia== "yes" & !is.na(data_en$complete.april19))])
+
+# psychiatric diagnoses
+# ID.diagnosed <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/included_psych_diagnosis.txt")
+# #ID.diagnosed <- read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/included_psych_diagnosis.txt")
+# names(ID.diagnosed)[1] <- "ID"
+# data_en$psychiatric.diagnose <- NA
+# #data_en$psychiatric.diagnose[which(ID.diagnosed$ID %in% data_en$Respondent.ID)] <- 1
+# data_en$psychiatric.diagnose[which(data_en$Respondent.ID %in% ID.diagnosed$ID)] <- 1
+
+# newly included people with mental health conditions
+mental.health = data.frame(ID = data_en$Respondent.ID[which(nchar(data_en$mental.health.details)>0)],
+                           diagnosed.condition =  data_en$mental.health.details[which(nchar(data_en$mental.health.details)>0)],
+                           complete = data_en$complete.april19[which(nchar(data_en$mental.health.details)>0)]
+)
+mental.health$complete[which(!is.na(mental.health$complete))] = 1
+which(!(data_en$Respondent.ID[data_en$diagnosed.mental.health==0] %in% mental.health$ID)) # all included
+length(which(mental.health$complete==1))
+
+length(which(nchar(data_en$mental.health.details)>0))
+length(which(data_en$diagnosed.mental.health==0)) # all who said yes specified their condition
+
+#mental.health.old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/mental.health.csv")
+#mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
+# 
+# # new variables
+# mental.health$new = 0
+# mental.health$new[which(!(mental.health$ID %in% mental.health.old$ID))] = 1
+# sum(mental.health$new)
+# 
+# length(mental.health.old$ID[which(!(mental.health.old$ID %in% mental.health$ID))])
+# 
+# # not included anymore
+# mental.health.old$old = 0
+# mental.health.old$old[which(!(mental.health.old$ID %in% mental.health$ID))] = 1
+# sum(mental.health.old$old)
+# 
+# # do the numbers add up?
+# length(which(mental.health.old$complete==1)) - sum(mental.health.old$old[which(mental.health.old$complete==1)]) + sum(mental.health$new[which(mental.health$complete==1)]) # same as current n of mental health cases
+# 
+# length(which(mental.health$complete==1)) - sum(mental.health.old$old[which(mental.health.old$complete==1)]) + sum(mental.health$new[which(mental.health$complete==1)])
+# 
+# length(mental.health.old$ID[which(mental.health.old$old==1)])
+# 
+# mental.health.excluded.IDs = mental.health.old[which(mental.health.old$old==1),]
+# 
+# write.csv(mental.health, "mental.health.new.csv")
+# write.csv(mental.health.old, "mental.health.old.csv")
+# write.csv(mental.health.excluded.IDs, "mental.health.excluded.IDs.csv")
+
+#answered yes to whether diagnosed but didn't specify:
+# diagnosed.no.details = data.frame(ID = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)],
+#                            diagnosed.condition = data_en$mental.health.details[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)],
+#                            complete = data_en$complete.april19[which(data_en$diagnosed.mental.health==0 & nchar(data_en$mental.health.details)==0)]
+# )
+# diagnosed.no.details$complete[which(nchar(diagnosed.no.details$complete)>0)] <- 1
+# 
+# write.csv(diagnosed.no.details, "diagnosed.but.no.details.csv")
+
+str(data_en$diagnosed.mental.health[which(!is.na(data_en$complete.april19))])
+length(which(data_en$diagnosed.mental.health[which(!is.na(data_en$complete.april19))]==0))
+length(which(data_en$diagnosed.mental.health[which(!is.na(data_en$complete.april19))]==""))
+
+# mean(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.april19))])
+# sd(data_en$P[which(!is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.april19))])
+# mean(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.april19))])
+# sd(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.april19))])
+# #test
+# which(!(ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))
+# ID.diagnosed$ID[which(!(ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))]
+# ID.diagnosed$ID[which(!(ID.diagnosed$ID %in% data_en$Respondent.ID))]
+# 
+# which((ID.diagnosed$ID %in% data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]))
+
+mean(data_en$P[which(data_en$diagnosed.mental.health==0& !is.na(data_en$complete.april19))])
+sd(data_en$P[which(is.na(data_en$psychiatric.diagnose)& !is.na(data_en$complete.april19))])
+
+mean(data_en$P[which(data_en$diagnosed.mental.health==1& !is.na(data_en$complete.april19))])
+
+```
+
+```{r response variance and completion time, include = FALSE}
+
+# exclude subjects with no response variance (check block-wise for all questionnaires with more than 2 items)
+var = matrix(NA, nrow = length(data_en$Respondent.ID), ncol = 8)
+for (i in 1:nrow(data_en)){ 
+  var[i,1] = (var(as.vector(as.matrix(data_en[i, GHQ])))) 
+  var[i,2] = (var(as.vector(as.matrix(data_en[i, PSSindex])))) 
+  var[i,3] = (var(as.vector(as.matrix(data_en[i, GSEindex])))) #object asku not found
+  var[i,4] = (var(as.vector(as.matrix(data_en[i, BRS])))) 
+  var[i,5] = (var(as.vector(as.matrix(data_en[i, COPE])))) 
+  var[i,6] = (var(as.vector(as.matrix(data_en[i, CERQ])))) 
+  var[i,7] = (var(as.vector(as.matrix(data_en[i, CE])))) 
+  var[i,8] = (var(as.vector(as.matrix(data_en[i, GE])))) 
+}
+
+data_en$response_variance = rowSums(var)
+# exclude subject with 0 response variance
+data_en$Respondent.ID[which(data_en$response_variance == 0)] # none
+
+# distributions
+hist(data_en$response_variance) # distribution of response variance - looks good
+hist(data_en$age) # distribution of age
+hist(data_en$completionTime/60) # distribution of completion time - some outliers
+hist(data_en$completionTime[which(data_en$completionTime/60<1440)]/60) # distribution of completion time under 1 day
+hist(data_en$completionTime[which(data_en$completionTime/60<60)]/60) # distribution of completion time under 1 hour
+length(which(data_en$completionTime/60>1440)) # longer than 1 day
+length(which(data_en$completionTime/60>2880)) # longer than 2 days
+
+# very short completion time
+which(is.na(data_en$completionTime[which(!is.na(data_en$complete.april19))]))
+min(data_en$completionTime[which(!is.na(data_en$complete.april19))], na.rm = T)
+# in complete sample at least 5.75 min, which is plausible
+
+```
+
+
+```{r check used languages, include=FALSE}
+table(data_en$survey.language)
+table(data_en$survey.language[which(!is.na(data_en$complete.april19))])
+table(data_en$survey.language[which(is.na(data_en$complete.april19))])
+
+# # check dates of survey language
+# min(data_en$Start.DateTime[which(data_en$survey.language=="cs")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="da")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="de")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="en")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="es")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="et")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="fr")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="he")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="hu")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="it")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="nl")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="no")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="pl")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="sk")])
+# min(data_en$Start.DateTime[which(data_en$survey.language=="zh_Hant")])
+```
+
+Generate demographics Table S1 of the interim sample for people who provided complete responses
+```{r descriptives, results='asis'}
+require(stargazer)
+require(tableone)
+require(kableExtra)
+require(pander)
+require(table1)
+
+# correlation of stressors
+correlation.stressors <- cor(data_en[,c("Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs", method = "pearson")
+correlation.P <- cor(data_en[,c("P", "Eg.SCM","Es.SCM","Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")], use = "pairwise.complete.obs", method = "pearson")
+
+stargazer(correlation.P[,1], title="Correlations of 'P' with stressors", type = "text", out="cor_P_stressors.txt")
+stargazer(correlation.stressors, title="Correlation among stressors (Pearson r)", type = "text", out="correlation.stressors.txt")
+
+
+# subsample of complete responses
+
+Mean.Ec.SSM <- vector()
+for(i in 1:length(CE)){ 
+     m= which(!is.na(data_en$complete.april19) & data_en[, CE[i]] > 0)
+     Mean.Ec.SSM[i] = mean(data_en[m,CE[i]])
+}
+Mean.Eg.SSM <- vector()
+for(i in 1:length(GE)){ 
+     m= which(!is.na(data_en$complete.april19) & data_en[, GE[i]] > 0)
+     Mean.Eg.SSM[i] = mean(data_en[m,GE[i]])
+}
+
+stressors.df = data.frame(Count = c(colSums(data_en[!is.na(data_en$complete.april19), CE] >0), colSums(data_en[!is.na(data_en$complete.april19), GE] >0)),
+                          Frequency = c(round(colSums(data_en[!is.na(data_en$complete.april19), CE] >0)/length(data_en$CE_01[!is.na(data_en$complete.april19)])*100,2), round(colSums(data_en[!is.na(data_en$complete.april19),GE] >0)/length(data_en$CE_01[!is.na(data_en$complete.april19)])*100,2)),
+                          severity = c(round(Mean.Ec.SSM,2), round(Mean.Eg.SSM,2))
+                          )
+write.csv(stressors.df, "stressor_prevalence.csv")
+
+
+# table S1
+
+demovar <- c("age", "gender", "nationality","country.of.residence", "current.stay.out.of.town",   "years.of.education", "occupational.status",
+             "household.income.old", "relationship.status", "people.in.household", "diagnosed.mental.health",
+             "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
+             "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27", "survey.language")
+demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
+
+# To get the table of incomplete cases run:
+# demog <- data_en[which(is.na(data_en$complete.april19)), demovar]
+
+# only incude common countries of residence
+
+sort( table(unlist(demog$country.of.residence)),decreasing=TRUE)
+# countries of residence with N > 10:  
+# 68   88   18  142  127   80  175  168  193   64   60   11  174   51  132  143   63
+
+#name most frequent countries
+demog$country.of.residence = revalue(demog$country.of.residence,
+      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "174" = "Sweden", "51" = "Denmark", "132" = "Norway", "63" = "Finland"))
+
+frequent.countries = c("Germany", "Poland", "Belgium", "Italy", "France", "Austria", "Netherlands", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Sweden","Denmark", "Norway", "Finland")
+
+levels(demog$country.of.residence) = c(levels(demog$country.of.residence), "Other")
+demog$country.of.residence[which(!(demog$country.of.residence %in% frequent.countries))] <- "Other"
+
+# frequent nationalities
+sort( table(unlist(demog$nationality)),decreasing=TRUE)
+
+demog$nationality = revalue(demog$nationality,
+      c("68" = "Germany", "88" = "Italy", "142" = "Poland", "18" = "Belgium", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "132" = "Norway", "143" ="Portugal", "63" = "Finland", "195" = "United States of America", "82" = "India", "186" = "Turkey", "70" = "Greece"))
+
+frequent.nationalities = c("Germany", "Poland", "Belgium", "Italy", "Austria", "Netherlands", "Serbia", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Norway", "Portugal", "Finland", "United States of America", "India", "Turkey", "Greece")
+
+#68   88  142   18  127   80  168  175   64   60  193   11  195   82  132  147   63  143  186  148   70 
+# 174
+levels(demog$nationality) = c(levels(demog$nationality), "Other")
+demog$nationality[which(!(demog$nationality %in% frequent.nationalities))] <- "Other"
+
+demog$nationality = droplevels(demog$nationality)
+demog$country.of.residence = droplevels(demog$country.of.residence)
+
+demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
+demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
+demog$household.income.old <- factor(demog$household.income.old, levels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14"))
+
+# revalue levels for table
+demog$gender = revalue(demog$gender, c("1" = "male", "2" = "female", "3" = "diverse"))
+demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
+demog$risk.group = revalue(demog$risk.group, c("1" = "yes", "2" = "no", "3" = "unsure"))
+demog$infection.test.status = revalue(demog$infection.test.status, c("0" = "yes", "1" = "no"))
+demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
+demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" = "at home", "3" = "in the hospital", "4" = "abroad", "0" = "other"))
+demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
+demog$people.in.household = revalue(demog$people.in.household, c("1" = "1", "2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
+demog$household.income.old = revalue(demog$household.income.old, c("1" = "0-24.999", "2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
+
+demog$survey.language = droplevels(demog$survey.language)
+
+demog$diagnosed.mental.health = revalue(demog$diagnosed.mental.health, c("0" = "yes", "1" = "no"))
+levels(demog$diagnosed.mental.health) = c(levels(demog$diagnosed.mental.health), "not specified")
+demog$diagnosed.mental.health[which(demog$diagnosed.mental.health=="")] <- "not specified"
+demog$diagnosed.mental.health = droplevels(demog$diagnosed.mental.health)
+
+demog$household.income.old = droplevels(demog$household.income.old)
+
+# occupation
+demog$X.0 = if_else(demog$X.0=="1", "Undergoing Education", "")
+demog$X = if_else(demog$X=="2", "Education or research", "")
+demog$X.1 = if_else(demog$X.1=="3", "Arts, entertainment, sports and media", "")
+demog$X.2 = if_else(demog$X.2=="4", "Healthcare", "")
+demog$X.3 = if_else(demog$X.3=="5", "First responder (paramedic/firefighter/police)", "")
+demog$X.4 = if_else(demog$X.4!="", "Military", "")
+demog$X.5 = if_else(demog$X.5!="", "Civil services, politics", "")
+demog$X.6 = if_else(demog$X.6!="", "Finance and economy", "")
+demog$X.7 = if_else(demog$X.7!="", "Industry", "")
+demog$X.8 = if_else(demog$X.8!="", "Sales and services (incl. restaurants and bars)", "")
+demog$X.9 = if_else(demog$X.9!="", "Transport (goods and people)", "")
+demog$X.10 = if_else(demog$X.10!="", "Installation, maintenance, cleaning, and repairs", "")
+demog$X.11 = if_else(demog$X.11!="", "Construction", "")
+demog$X.12 = if_else(demog$X.12!="", "Farming, fishing, and forestry", "")
+demog$X.13 = if_else(demog$X.13!="", "Office and administrative support", "")
+demog$X.14 = if_else(demog$X.14!="", "(Currently) not working", "")
+demog$X.15 = if_else(demog$X.15!="", "Other", "")
+
+# occupational status
+demog$X.00 = if_else(demog$X.00=="1", "Permanent contract, full-time", "")
+demog$X.16 = if_else(demog$X.16=="2", "Temporary contract, full-time", "")
+demog$X.17 = if_else(demog$X.17=="3", "Permanent contract, part-time", "")
+demog$X.18 = if_else(demog$X.18=="4", "Temporary contract, part-time", "")
+demog$X.19 = if_else(demog$X.19=="5", "Self-employed", "")
+demog$X.20 = if_else(demog$X.20!="", "Working as a freelancer", "")
+demog$X.21 = if_else(demog$X.21!="", "On parental leave", "")
+demog$X.22 = if_else(demog$X.22!="", "On sick leave (long term)", "")
+demog$X.23 = if_else(demog$X.23!="", "Unemployed on social benefit", "")
+demog$X.24 = if_else(demog$X.24!="", "Unemployed without social benefit", "")
+demog$X.25 = if_else(demog$X.25!="", "Full-time studying", "")
+demog$X.26 = if_else(demog$X.26!="", "Retired", "")
+demog$X.27 = if_else(demog$X.27!="", "Other", "")
+
+# group people underage as yes / no
+demog$people.in.household.under.18 = if_else(demog$people.in.household.under.18>0, "yes", "no", "missing")
+demog$people.in.household.under.18 = as.factor(demog$people.in.household.under.18)
+
+label(demog$age)   <- "Age"
+label(demog$gender)   <- "Gender"
+label(demog$nationality) <- "Nationality"
+label(demog$country.of.residence) <- "Country of residence"
+label(demog$risk.group) <- "Belong to a risk group"
+label(demog$quarantine.status) <- "Quarantine"
+label(demog$infection.test.status) <- "Tested positive for COVID-19"
+label(demog$relationship.status) <- "Relationship status"
+label(demog$people.in.household) <- "People in household"
+label(demog$people.in.household.under.18)   <- "People underage in household"
+label(demog$opinion.about.authorities.measures) <- "Agreement with authorities' measures" # Agreement with authorities' measures to curtail spread of the Corona virus
+label(demog$adherence.to.recommended.procedures) <- "Following recommended procedures" #Following recommended procedures to limit the spread of the Corona virus
+label(demog$current.stay.out.of.town)    <- "Currently out of town"
+label(demog$years.of.education) <- "Education"
+label(demog$household.income) <- "Household income"
+label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
+label(demog$health.status) <- "Good general health"
+label(demog$survey.language) <- "Response language"
+
+label(demog$X.0) <- "Occupation"
+label(demog$X) <- ""
+label(demog$X.1) <- ""
+label(demog$X.2) <- ""
+label(demog$X.3) <- ""
+label(demog$X.4) <- ""
+label(demog$X.5) <- ""
+label(demog$X.6) <- ""
+label(demog$X.7) <- ""
+label(demog$X.8) <- ""
+label(demog$X.9) <- ""
+label(demog$X.10) <- ""
+label(demog$X.11) <- ""
+label(demog$X.12) <- ""
+label(demog$X.13) <- ""
+label(demog$X.14) <- ""
+label(demog$X.15) <- ""
+
+label(demog$X.00) <- "Occupational status"
+label(demog$X.16) <- ""
+label(demog$X.17) <- ""
+label(demog$X.18) <- ""
+label(demog$X.19) <- ""
+label(demog$X.20) <- ""
+label(demog$X.21) <- ""
+label(demog$X.22) <- ""
+label(demog$X.23) <- ""
+label(demog$X.24) <- ""
+label(demog$X.25) <- ""
+label(demog$X.26) <- ""
+label(demog$X.27) <- ""
+
+label(demog$years.of.education) <- "Education"
+label(demog$household.income.old) <- "Household income"
+label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
+label(demog$health.status) <- "Good general health"
+
+units(demog$age)   <- "years"
+units(demog$risk.group)   <- "N"
+units(demog$infection.test.status)   <- "N"
+units(demog$quarantine.status)   <- "N"
+units(demog$relationship.status)   <- "N"
+units(demog$years.of.education)    <- "years"
+units(demog$people.in.household)   <- "N"
+units(demog$people.in.household.under.18)   <- "N"
+units(demog$household.income)   <- "€"
+units(demog$nationality)   <- "N"
+units(demog$country.of.residence)   <- "N"
+units(demog$current.stay.out.of.town)   <- "N"
+units(demog$health.status)   <- "self-report, 1-5"
+
+my.render.cont <- function(x) {
+    with(stats.apply.rounding(stats.default(x), digits=2), c("",
+        "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
+}
+
+t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income.old + country.of.residence + current.stay.out.of.town + nationality + survey.language +
+              X.0 + X + X.1 + X.2 + X.3 + X.4 + X.5 + X.6 + X.7 + X.8 + X.9 + X.10 + X.11 + X.12 + X.13 + X.14 + X.15 + X.16 + X.00 + X.17 + X.18 + X.19 + X.20 + X.21 + X.22 + X.23 + X.24 + X.25 + X.26 +X.27| gender, data=demog) #, render.continuous=my.render.cont
+
+t1
+
+# additional details on incomplete cases
+data_incomplete = data_en[which(is.na(data_en$complete.april19)),]
+length(which(is.na(data_incomplete$Es.SCM)))
+length(which(is.na(data_incomplete$Eg.SCM)))
+length(which(is.na(data_incomplete$Ec.SCM)))
+length(which(is.na(data_incomplete$Es.SSM)))
+length(which(is.na(data_incomplete$Eg.SSM)))
+length(which(is.na(data_incomplete$Ec.SSM)))
+
+length(which(data_incomplete$missings>0))
+length(which(data_incomplete$missings==0&data_incomplete$missing.cov>0))
+
+```
+
+Compare how well each stressor score relates to mental healh problems P
+```{r model-fits, results='asis'}
+
+# stressor count method (SCM):
+xx = !is.na(data_en$complete.april19)# match sample size
+
+m1 <- lm(scale(P)~scale(Eg.SCM),data= data_en[xx,])
+m2 <- lm(scale(P)~scale(Es.SCM),data= data_en[xx,])
+m3 <- lm(scale(P)~scale(Ec.SCM),data= data_en[xx,])
+
+anova(m1)
+anova(m1, m2, m3, test="F") # only for examination - non-nested models cannot be compared
+
+# stressor severity method (SSM):
+xx =  !is.na(data_en$complete.april19)# match sample size
+
+m4 <- lm(scale(P)~scale(Eg.SSM),data= data_en[xx,])
+m5 <- lm(scale(P)~scale(Es.SSM),data= data_en[xx,])
+m6 <- lm(scale(P)~scale(Ec.SSM),data= data_en[xx,])
+
+# examine explained variance
+modelfits = matrix(c(summary(m1)$r.squared, summary(m2)$r.squared, summary(m3)$r.squared, summary(m4)$r.squared, summary(m5)$r.squared, summary(m6)$r.squared), ncol = 1)
+rownames(modelfits)  <-  c("Eg.SCM", "Es.SCM", "Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM")
+colnames(modelfits) <- c("Rsq")
+#stargazer(modelfits, title="R squared for 'P'", type = "text", out="correlation.P.txt")
+
+modelfits.df = data.frame(category = c("Eg.SCM", "Es.SCM", "Ec.SCM", "Eg.SSM", "Es.SSM", "Ec.SSM"),
+                          Rsq.adj = c(summary(m1)$adj.r.squared, summary(m2)$adj.r.squared, summary(m3)$adj.r.squared, summary(m4)$adj.r.squared, summary(m5)$adj.r.squared, summary(m6)$adj.r.squared),
+                          model = c(as.character(summary(m1)$call)[2], as.character(summary(m2)$call)[2], as.character(summary(m3)$call)[2], as.character(summary(m4)$call)[2], as.character(summary(m5)$call)[2],as.character(summary(m6)$call)[2]))
+
+names(modelfits.df)[2] <- "adj. R-sq."
+
+pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, "test")
+writeLines(capture.output(pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, 'Explained variance by stressor category')), "modelfits.txt")
+
+anova(m6)
+anova(m4, m5, m6)
+anova(m1, m2, m3, m4, m5, m6)
+
+var(data_en$Es.SCM, na.rm =T)
+var(data_en$Eg.SCM, na.rm =T)
+```
+
+prepare covariates for main analysis script:
+```{r covariates, include = FALSE}
+
+data_en$gender.m = if_else(data_en$gender == "1", "1", "0")
+data_en$gender.f = if_else(data_en$gender == "2", "1", "0")
+data_en$gender.d = if_else(data_en$gender == "3", "1", "0")
+
+data_en$relationship.married = if_else(data_en$relationship.status == "1", "1", "0")
+data_en$relationship.widowed = if_else(data_en$relationship.status == "2", "1", "0")
+data_en$relationship.divorced = if_else(data_en$relationship.status == "3", "1", "0")
+data_en$relationship.separated = if_else(data_en$relationship.status == "4", "1", "0")
+data_en$relationship.domestic.partnership = if_else(data_en$relationship.status == "5", "1", "0")
+data_en$relationship.steady.together = if_else(data_en$relationship.status == "6", "1", "0")
+data_en$relationship.steady.apart = if_else(data_en$relationship.status == "7", "1", "0")
+data_en$relationship.single = if_else(data_en$relationship.status == "8", "1", "0")
+data_en$relationship.other = if_else(data_en$relationship.status == "9", "1", "0")
+
+data_en$people.in.household.1 = if_else(data_en$people.in.household == "1", "1", "0")
+data_en$people.in.household.2 = if_else(data_en$people.in.household == "2", "1", "0")
+data_en$people.in.household.3to4 = if_else(data_en$people.in.household == "3", "1", "0")
+data_en$people.in.household.5to6 = if_else(data_en$people.in.household == "4", "1", "0")
+data_en$people.in.household.over6 = if_else(data_en$people.in.household == "0", "1", "0")
+
+data_en$health.status1 = if_else(data_en$health.status == "1", "1", "0")
+data_en$health.status2 = if_else(data_en$health.status == "2", "1", "0")
+data_en$health.status3 = if_else(data_en$health.status == "3", "1", "0")
+data_en$health.status4 = if_else(data_en$health.status == "4", "1", "0")
+data_en$health.status5 = if_else(data_en$health.status == "5", "1", "0")
+
+data_en$quarantine.status.none = if_else(data_en$quarantine.status == "1", "1", "0")
+data_en$quarantine.status.home = if_else(data_en$quarantine.status == "2", "1", "0")
+data_en$quarantine.status.hospital = if_else(data_en$quarantine.status == "3", "1", "0")
+data_en$quarantine.status.abroad = if_else(data_en$quarantine.status == "4", "1", "0")
+data_en$quarantine.status.other = if_else(data_en$quarantine.status == "0", "1", "0")
+
+data_en[,c(220:246)] <- lapply(data_en[,c(220:246)], as.factor)
+
+names(data_en)[names(data_en) == "X.0"] <- "occupation1"
+names(data_en)[names(data_en) == "X"] <- "occupation2"
+names(data_en)[names(data_en) == "X.1"] <- "occupation3"
+names(data_en)[names(data_en) == "X.2"] <- "occupation4"
+names(data_en)[names(data_en) == "X.3"] <- "occupation5"
+names(data_en)[names(data_en) == "X.4"] <- "occupation6"
+names(data_en)[names(data_en) == "X.5"] <- "occupation7"
+names(data_en)[names(data_en) == "X.6"] <- "occupation8"
+names(data_en)[names(data_en) == "X.7"] <- "occupation9"
+names(data_en)[names(data_en) == "X.8"] <- "occupation10"
+names(data_en)[names(data_en) == "X.9"] <- "occupation11"
+names(data_en)[names(data_en) == "X.10"] <- "occupation12"
+names(data_en)[names(data_en) == "X.11"] <- "occupation13"
+names(data_en)[names(data_en) == "X.12"] <- "occupation14"
+names(data_en)[names(data_en) == "X.13"] <- "occupation15"
+names(data_en)[names(data_en) == "X.14"] <- "occupation16"
+names(data_en)[names(data_en) == "X.15"] <- "occupation17"
+
+names(data_en)[names(data_en) == "X.00"] <- "occupational.status1"
+names(data_en)[names(data_en) == "X.16"] <- "occupational.status2"
+names(data_en)[names(data_en) == "X.17"] <- "occupational.status3"
+names(data_en)[names(data_en) == "X.18"] <- "occupational.status4"
+names(data_en)[names(data_en) == "X.19"] <- "occupational.status5"
+names(data_en)[names(data_en) == "X.20"] <- "occupational.status6"
+names(data_en)[names(data_en) == "X.21"] <- "occupational.status7"
+names(data_en)[names(data_en) == "X.22"] <- "occupational.status8"
+names(data_en)[names(data_en) == "X.23"] <- "occupational.status9"
+names(data_en)[names(data_en) == "X.24"] <- "occupational.status10"
+names(data_en)[names(data_en) == "X.25"] <- "occupational.status11"
+names(data_en)[names(data_en) == "X.26"] <- "occupational.status12"
+names(data_en)[names(data_en) == "X.27"] <- "occupational.status13"
+
+which(names(data_en)=="occupation17")
+which(names(data_en)=="occupational.status13")
+
+data_en$occupation17[which(nchar(data_en$occupation17)>0)] = "17"
+data_en$occupational.status13[which(nchar(data_en$occupational.status13)>0)] = "13"
+#test
+length(which(data_en$occupation17[which(!is.na(data_en$complete.april19))]=="17"))
+length(which(data_en$occupation13[which(!is.na(data_en$complete.april19))]=="13"))
+length(which(data_en$occupational.status13[which(!is.na(data_en$complete.april19))]=="13"))
+length(which(data_en$occupational.status11[which(!is.na(data_en$complete.april19))]=="11"))
+
+data_en[,c(172:173, 23:38, 40:51)] <- lapply(data_en[,c(172:173, 23:38, 40:51)], as.factor)# convert to factor
+
+data_en$health.status = factor(data_en$health.status, order = TRUE)
+data_en$survey.language = revalue(data_en$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English"))
+data_en$survey.language = droplevels(data_en$survey.language)
+```
+
+Provide referene categories
+```{r ref-cats}
+Ref.cats = c("Reference categories: male (Gender), married (Relationship status), 1 (People in household), less healthy / more frequently ill (General health status), yes (Risk group),  yes (Infection test status), other (Quarantine Staus), yes (Current stay out of town), no (Country of residence: Germany), no (Occupation: student or employee working in research/education), no (Occupational status: permanent contract)")
+
+```
+
+```{r final-cleaning}
+# exclude all subjects that were set to NA:
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
+
+# remove unnecessary columns 
+xx = grep("X", colnames(data_en))
+if(length(xx)>0){data_en = data_en[-xx]}
+# note that in the real data, the above step will also exclude the column IP address
+
+data_en = data_en[, colSums(is.na(data_en)) != nrow(data_en)]
+data_en$people.in.household <- revalue(data_en$people.in.household, c("0" = "6"))
+data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "6"), order = FALSE)
+data_en$people.in.household = as.numeric(data_en$people.in.household)
+data_en$health.status = as.numeric(data_en$health.status)
+#save(data_en, file = "data_en_19.04.RData")
+```
+
+Table of Resilience factor corrlations and descriptives of subsample wiht mental health diagnosis
+```{r further-descriptives, include = FALSE}
+
+df.cor <- data.frame(PAS=data_en$PAS[which(!is.na(data_en$complete.april19))],
+                     PSS=data_en$PSS[which(!is.na(data_en$complete.april19))],
+                     CSS=data_en$CSS[which(!is.na(data_en$complete.april19))],
+                     OPT=data_en$OPT[which(!is.na(data_en$complete.april19))], 
+                     GSE=data_en$GSE[which(!is.na(data_en$complete.april19))], 
+                     REC=data_en$REC[which(!is.na(data_en$complete.april19))], 
+                     NEU=data_en$NEU[which(!is.na(data_en$complete.april19))], 
+                     BCS=data_en$BCS[which(!is.na(data_en$complete.april19))], 
+                     PAC=data_en$PAC[which(!is.na(data_en$complete.april19))],
+                     R.SSM.C=(data_en$SR_Ec.SSM[which(!is.na(data_en$complete.april19))])*-1)
+matrix.cor <- rcorr(as.matrix(df.cor))
+
+ flattenCorrMatrix <- function(cormat, pmat) { #function to put r and p value into one table
+   ut <- upper.tri(cormat)
+   data.frame(
+     row = rownames(cormat)[row(cormat)[ut]],
+     column = rownames(cormat)[col(cormat)[ut]],
+     cor  =(cormat)[ut],
+     p = pmat[ut]
+   )
+ }
+corr.p.matrix <- as.data.frame(flattenCorrMatrix(matrix.cor$r, matrix.cor$P))
+
+formattable(matrix.cor$r)
+
+df <- as.data.frame(matrix.cor$r)
+df <- round(df, 2)
+
+
+#means for diagnosed and non diagnosed cases:
+
+complete.diagnosed <- read.csv("Complete_psych_diagnosis_N1039.csv", header=F)
+names(complete.diagnosed)[1] <- "ID"
+incomplete.diagnosed <- read.csv("Incomplete_psych_diagnosis_N162.csv", header=F)
+names(incomplete.diagnosed)[1] <- "ID"
+data_en$diagnose.confirmed <- 0
+data_en$diagnose.confirmed[which(data_en$Respondent.ID %in% complete.diagnosed$ID)] <- 1
+data_en$diagnose.confirmed[which(data_en$Respondent.ID %in% incomplete.diagnosed$ID)] <- 1
+
+length(which(data_en$Respondent.ID %in% complete.diagnosed$ID))
+#[1] 1039
+length(which(!(data_en$Respondent.ID %in% complete.diagnosed$ID)))
+#[1] 4826
+length(which(data_en$Respondent.ID %in% complete.diagnosed$ID))+length(which(!(data_en$Respondent.ID %in% complete.diagnosed$ID)))
+#[1] 5865
+length(which(!(data_en$Respondent.ID[data_en$diagnosed.mental.health==""] %in% complete.diagnosed$ID)))
+#[1] 589
+length(which(data_en$Respondent.ID %in% incomplete.diagnosed$ID))
+#[1] 162
+length(which(!(data_en$Respondent.ID %in% incomplete.diagnosed$ID)))
+#[1] 5703
+length(which(data_en$Respondent.ID %in% incomplete.diagnosed$ID))+length(which(!(data_en$Respondent.ID %in% incomplete.diagnosed$ID)))
+#[1] 5865
+length(which(!(data_en$Respondent.ID[data_en$diagnosed.mental.health==""] %in% incomplete.diagnosed$ID)))
+#[1] 589
+data_d <- data_en[!data_en$diagnosed.mental.health=="",]
+data_d <- data_d[!is.na(data_d$complete.april19),]
+mean(data_d$P) #14.9592
+mean(data_d$P[which(data_d$Respondent.ID %in% complete.diagnosed$ID)]) # 16.70356
+mean(data_d$P[which(!(data_d$Respondent.ID %in% complete.diagnosed$ID))]) #14.43326
+
+sd(data_d$P) #5.729393
+sd(data_d$P[which(data_d$Respondent.ID %in% complete.diagnosed$ID)]) # 6.409042
+sd(data_d$P[which(!(data_d$Respondent.ID %in% complete.diagnosed$ID))]) #5.399569
+
+data_d_inc <- data_en[!data_en$diagnosed.mental.health=="",]
+data_d_inc <- data_d_inc[is.na(data_d_inc$complete.april19),]
+mean(data_d_inc$P, na.rm=T) #15.94652
+mean(data_d_inc$P[which(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID)], na.rm=T) #6.73065
+mean(data_d_inc$P[which(!(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID))], na.rm=T) #5.419887
+
+sd(data_d_inc$P, na.rm=T) #5.894808
+sd(data_d_inc$P[which(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID)], na.rm=T) #6.73065
+sd(data_d_inc$P[which(!(data_d_inc$Respondent.ID %in% incomplete.diagnosed$ID))], na.rm=T) #5.419887
+
+#table diagnoses:
+
+table.comp <- read.csv("Complete_diagnosis_table.csv", header=F, sep=";", encoding = "UTF-8")
+table.incomp <- read.csv("Incomplete_diagnosis_table.csv", header=F, sep=";", encoding="UTF-8")
+table.diagnoses <- data.frame(diagnose=table.comp$V1, "complete respondents (N=4485)"=table.comp$V2,"percentage complete"=round(table.comp$V2/4485*100,2), "incomplete respondents (N=791)"=table.incomp$V2, "percentage incomplete"=round(table.incomp$V2/4485*100, 2))
+table.diagnoses$diagnose <- as.character(table.diagnoses$diagnose)
+
+table.diagnoses <- rbind(table.diagnoses, c("total", sum(table.diagnoses$complete.respondents..N.4485.), "",sum(table.diagnoses$incomplete.respondents..N.791.),""))
+
+format_table(table.diagnoses)                                        
+
+```
+
