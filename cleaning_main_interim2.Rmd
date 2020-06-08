@@ -8,8 +8,10 @@ output:
     toc: true
     theme: united
 ---
-notes:
+to do:
 - double check household income exclusion
+- double check data cleaning - why are there only 8000 remaining atm?
+- provide mental health details for Ilya
 
 Formats data for interim analysis and includes plausibility checks
 
@@ -818,7 +820,7 @@ levels(demog$diagnosed.mental.health) = c(levels(demog$diagnosed.mental.health),
 demog$diagnosed.mental.health[which(demog$diagnosed.mental.health=="")] <- "not specified"
 demog$diagnosed.mental.health = droplevels(demog$diagnosed.mental.health)
 
-demog$household.income.old = droplevels(demog$household.income.old)
+demog$household.income = droplevels(demog$household.income)
 
 # occupation
 demog$X.0 = if_else(demog$X.0=="1", "Undergoing Education", "")
@@ -910,7 +912,7 @@ label(demog$X.26) <- ""
 label(demog$X.27) <- ""
 
 label(demog$years.of.education) <- "Education"
-label(demog$household.income.old) <- "Household income"
+label(demog$household.income) <- "Household income"
 label(demog$diagnosed.mental.health) <- "Diagnosed mental health condition"
 label(demog$health.status) <- "Good general health"
 
@@ -933,7 +935,7 @@ my.render.cont <- function(x) {
         "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
 }
 
-t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income.old + country.of.residence + current.stay.out.of.town + nationality + survey.language +
+t1 = table1(~ age + risk.group + infection.test.status + quarantine.status + opinion.about.authorities.measures + adherence.to.recommended.procedures + diagnosed.mental.health + health.status + relationship.status + people.in.household + people.in.household.under.18 + years.of.education + household.income + country.of.residence + current.stay.out.of.town + nationality + survey.language +
               X.0 + X + X.1 + X.2 + X.3 + X.4 + X.5 + X.6 + X.7 + X.8 + X.9 + X.10 + X.11 + X.12 + X.13 + X.14 + X.15 + X.16 + X.00 + X.17 + X.18 + X.19 + X.20 + X.21 + X.22 + X.23 + X.24 + X.25 + X.26 +X.27| gender, data=demog) #, render.continuous=my.render.cont
 
 t1
