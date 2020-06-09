@@ -10,12 +10,12 @@ output:
 ---
 to do:
 - double check household income exclusion
+- group & check nationality 
+- implement subgroup groupings (income, country of res, naitonality, age, education)
+- update mental health for those 'officially' diagnosed
 
-- group nationality , check UK
-- identify ~300 excluded
-income level 10
-- 
-- provide mental health details for Ilya
+Main complete sample: 16163
+clean complete sample: 15793  (355 with false income response; 15 with invalid age response: 5 unreadable, 4 not following answering instructions, 6 under 18)
 
 Formats data for interim analysis and includes plausibility checks
 
@@ -214,7 +214,7 @@ data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$miss
 
 # how many are not currently in Europe?
 length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
-data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
+#data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
 ```
 
 Format covariates
@@ -247,50 +247,57 @@ data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.sta
 
 Plausibility checks & cleaning of covariates 
 ```{r covs-cleaning, include = FALSE}
+sum(data_en$april19, na.rm=TRUE)
+sum(data_en$complete.april19, na.rm=TRUE)
+
 # remaining incomplete covariates among those without missings - should all be 0
 data_en.complete = data_en[which(!is.na(data_en$complete.april19)),]
 #length(which(data_en.complete$current.stay.out.of.town==1 & data_en.complete$current.stay.out.of.town.city==""))
 length(which(data_en.complete$people.in.household==0 & nchar(data_en.complete$X.28)==0))
 length(which(data_en.complete$infection.test.status==0 & is.na(as.numeric(data_en.complete$symptom.severity))))
 
-
 ###### age #####
-
 data_en$age.fulltext = data_en$age
 data_en$age = gsub("o", "0", data_en$age) #account for people accidently typing 'o' instead of '0'
 
 # extract the numeric component from age response
-data_en$age = numextract(data_en$age)
+data_en$age = numextract(data_en$age) # one NA
 data_en$age = as.numeric(data_en$age)
-data_en$age[which(data_en$age > 100)] # 111 seems possible, so keep
-length(which(is.na(data_en$age))) # none
+data_en$age[which(data_en$age > 100)] # 111 seems possible, but remove 999:
+data_en$age[which(data_en$age > 100&!is.na(data_en$complete.april19))] # 999 person is not from complete sample
+data_en$age[which(data_en$age > 150)] <- NA
+
+length(which(is.na(data_en$age))) # many
+length(which(is.na(data_en$age[which(!is.na(data_en$complete.april19))]))) # 7
+data_en$age.fulltext[which(is.na(data_en$age)&!is.na(data_en$complete.april19))] # 5 unreadable, 2 not following answering instructions -> dropped below
 
 # if any ages are 0, this could be due to a leading o that was substituted above. Check fulltext:
-data_en$age.fulltext[which(data_en$age==0)] # -> one person, who says to be 41 soon
-data_en$age[which(data_en$age==0)] = 41 # recode this person:
+data_en$age.fulltext[which(data_en$age==0)] # -> one person says to be 41 soon, 3 with unclear answers
+data_en$age[which(data_en$age==0)][1] = 41 # recode one person, the rest is dropped below (1 saying 0, 2 not folowing answer instructions)
 
 # check invalid age responses 
-which(data_en$age < 18) # four
-which(data_en$age[which(!is.na(data_en$complete.april19))] < 18)
-
-which(is.na(data_en$age[which(!is.na(data_en$complete.april19))])) # none
+which(data_en$age < 18) 
+which(data_en$age[which(!is.na(data_en$complete.april19))] < 18) # eight
+data_en$age[which(!is.na(data_en$complete.april19)& data_en$age< 18)]
 
 # exclude those resposes
-data_en$Respondent.ID[which(data_en$age < 18)]<- NA
-
 data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
+data_en$Respondent.ID[which(data_en$age<18)]<- NA
 xx = which(is.na(data_en$Respondent.ID))
 if(length(xx)>0){data_en = data_en[-xx,]}
 
-###### education #####
+#-->5 unreadable, 4 not following answering instructions, 6 under 18
+sum(data_en$april19, na.rm=TRUE)
+sum(data_en$complete.april19, na.rm=TRUE) 
 
+###### education #####
 data_en$years.of.education.fulltext = data_en$years.of.education
 data_en$years.of.education = numextract(data_en$years.of.education) # extract the numeric component of response
 data_en$years.of.education = as.numeric(data_en$years.of.education)
 # if people fail to add their years of education to a total, they may end up with too low of a value. "years.of.education.fulltext" includes the full answer for years.of.education for anyone with less than 10 years
 
 length(which(data_en$years.of.education > data_en$age)) # indicate people with more years of education than age
-length(which(data_en$years.of.education[which(!is.na(data_en$complete.april19))] > data_en$age[which(!is.na(data_en$complete.april19))]))
+length(which(data_en$years.of.education[which(!is.na(data_en$complete.april19))] > data_en$age[which(!is.na(data_en$complete.april19))])) # 3 in complete sample
 
 for(i in 1:length(data_en$Respondent.ID)){
   if (!is.na(data_en$years.of.education[i])) {
@@ -382,6 +389,7 @@ length(which(data_en.complete$CE_30>0 & nchar(data_en.complete$CE_30_text) == 0)
 
 length(which(data_en$GE_12>0 & nchar(data_en$GE_12_text) == 0))
 length(which(data_en.complete$GE_12>0 & nchar(data_en.complete$GE_12_text) == 0))
+# --> MANY
 
 # number of responses per country
 sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
@@ -397,6 +405,7 @@ Income coding was changed in-between survey responses, for this interim analysis
 if(length(which(data_en$household.income==1))>0){
   data_en = data_en[-which(data_en$household.income==1),]
 }
+sum(data_en$complete.april19, na.rm=TRUE) 
 #data_en$household.income.old = factor(data_en$household.income, order = TRUE)
 test <- data_en[c("Respondent.ID","check_ID_text","household.income", "check_income_text"),] #to check corresponding factors
 #data_en$household.income <- mapvalues(data_en$household.income,c(1,2,3,4,5,6,7,8,9,10,11,12), c(1,1,1,1,1,6,7,8,9,6,11,12))
@@ -543,6 +552,38 @@ data_en$SR_Ec.SSM[!is.na(data_en$Ec.SSM)] <-as.numeric(scale(resid(m6)))
 
 generate subgroups
 ```{r subgroups, include = FALSE}
+# groups for countries of residence with > 500 respondends
+x = table(data_en$country.of.residence)
+names(x[which(x>500)])
+
+#name most frequent countries
+demog$country.of.residence = revalue(demog$country.of.residence,
+      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "174" = "Sweden", "51" = "Denmark", "132" = "Norway", "63" = "Finland"))
+
+frequent.countries = c("Germany", "Poland", "Belgium", "Italy", "France", "Austria", "Netherlands", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Sweden","Denmark", "Norway", "Finland")
+
+levels(demog$country.of.residence) = c(levels(demog$country.of.residence), "Other")
+demog$country.of.residence[which(!(demog$country.of.residence %in% frequent.countries))] <- "Other"
+
+sort( table(unlist(demog$country.of.residence)),decreasing=TRUE)
+# countries of residence with N > 10:  
+# 68   88   18  142  127   80  175  168  193   64   60   11  174   51  132  143   63
+
+# same for nationalities
+sort(table(unlist(demog$nationality)),decreasing=TRUE)
+
+demog$nationality = revalue(demog$nationality,
+      c("68" = "Germany", "88" = "Italy", "142" = "Poland", "18" = "Belgium", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "132" = "Norway", "143" ="Portugal", "63" = "Finland", "195" = "United States of America", "82" = "India", "186" = "Turkey", "70" = "Greece"))
+
+frequent.nationalities = c("Germany", "Poland", "Belgium", "Italy", "Austria", "Netherlands", "Serbia", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Norway", "Portugal", "Finland", "United States of America", "India", "Turkey", "Greece")
+
+#68   88  142   18  127   80  168  175   64   60  193   11  195   82  132  147   63  143  186  148   70 
+# 174
+levels(demog$nationality) = c(levels(demog$nationality), "Other")
+demog$nationality[which(!(demog$nationality %in% frequent.nationalities))] <- "Other"
+
+demog$nationality = droplevels(demog$nationality)
+demog$country.of.residence = droplevels(demog$country.of.residence)
 
 # index people in Germany
 data_en$Germany = "no"
@@ -768,37 +809,6 @@ demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
 
 # To get the table of incomplete cases run:
 # demog <- data_en[which(is.na(data_en$complete.april19)), demovar]
-
-# only incude common countries of residence
-
-sort( table(unlist(demog$country.of.residence)),decreasing=TRUE)
-# countries of residence with N > 10:  
-# 68   88   18  142  127   80  175  168  193   64   60   11  174   51  132  143   63
-
-#name most frequent countries
-demog$country.of.residence = revalue(demog$country.of.residence,
-      c("68" = "Germany", "142" = "Poland", "18" = "Belgium", "88" = "Italy", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "174" = "Sweden", "51" = "Denmark", "132" = "Norway", "63" = "Finland"))
-
-frequent.countries = c("Germany", "Poland", "Belgium", "Italy", "France", "Austria", "Netherlands", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Sweden","Denmark", "Norway", "Finland")
-
-levels(demog$country.of.residence) = c(levels(demog$country.of.residence), "Other")
-demog$country.of.residence[which(!(demog$country.of.residence %in% frequent.countries))] <- "Other"
-
-# frequent nationalities
-sort( table(unlist(demog$nationality)),decreasing=TRUE)
-
-demog$nationality = revalue(demog$nationality,
-      c("68" = "Germany", "88" = "Italy", "142" = "Poland", "18" = "Belgium", "127" = "Netherlands", "80" = "Hungary", "168" = "Spain", "175" = "Switzerland", "193" = "United Kingdom", "64" = "France", "60" = "Estonia", "11" = "Austria", "132" = "Norway", "143" ="Portugal", "63" = "Finland", "195" = "United States of America", "82" = "India", "186" = "Turkey", "70" = "Greece"))
-
-frequent.nationalities = c("Germany", "Poland", "Belgium", "Italy", "Austria", "Netherlands", "Serbia", "Hungary", "Spain", "Switzerland", "United Kingdom", "France", "Estonia", "Austria", "Norway", "Portugal", "Finland", "United States of America", "India", "Turkey", "Greece")
-
-#68   88  142   18  127   80  168  175   64   60  193   11  195   82  132  147   63  143  186  148   70 
-# 174
-levels(demog$nationality) = c(levels(demog$nationality), "Other")
-demog$nationality[which(!(demog$nationality %in% frequent.nationalities))] <- "Other"
-
-demog$nationality = droplevels(demog$nationality)
-demog$country.of.residence = droplevels(demog$country.of.residence)
 
 demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
 demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
@@ -1108,7 +1118,7 @@ data_en$people.in.household <- revalue(data_en$people.in.household, c("0" = "6")
 data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "6"), order = FALSE)
 data_en$people.in.household = as.numeric(data_en$people.in.household)
 data_en$health.status = as.numeric(data_en$health.status)
-#save(data_en, file = "data_en2_09_06.RData")
+save(data_en, file = "C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/data_en2_09_06.RData")
 ```
 
 Table of Resilience factor corrlations and descriptives of subsample wiht mental health diagnosis
