@@ -10,7 +10,11 @@ output:
 ---
 to do:
 - double check household income exclusion
-- double check data cleaning - why are there only 8000 remaining atm?
+
+- group nationality , check UK
+- identify ~300 excluded
+income level 10
+- 
 - provide mental health details for Ilya
 
 Formats data for interim analysis and includes plausibility checks
@@ -473,8 +477,6 @@ length(data_en$P[which(is.na(data_en$complete.all)&!is.na(data_en$P))])
 mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
 sd(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
 
-data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
-
 length(data_en$P[which(is.na(data_en$complete.april19))])
 length(data_en$P[which(is.na(data_en$complete.april19)&!is.na(data_en$P))])
 mean(data_en$P[which(is.na(data_en$complete.all))], na.rm = T)
@@ -547,6 +549,8 @@ data_en$Germany = "no"
 data_en$Germany[which(data_en$country.of.residence=="68")] = "yes"
 length(data_en$Germany[which(data_en$Germany== 1& !is.na(data_en$complete.april19))])/length(data_en$Germany[which(!is.na(data_en$complete.april19))])
 data_en$Germany = as.factor(data_en$Germany)
+
+#data_en = data_en[which(data_en$country.of.residence %in% Europe),] # exclude all non-European residents
 
 # index people with permanent contract
 data_en$permanent_contract = "no"
@@ -695,7 +699,6 @@ min(data_en$completionTime[which(!is.na(data_en$complete.april19))], na.rm = T)
 
 ```
 
-
 ```{r check used languages, include=FALSE}
 table(data_en$survey.language)
 table(data_en$survey.language[which(!is.na(data_en$complete.april19))])
@@ -752,7 +755,7 @@ stressors.df = data.frame(Count = c(colSums(data_en[!is.na(data_en$complete.apri
                           Frequency = c(round(colSums(data_en[!is.na(data_en$complete.april19), CE] >0)/length(data_en$CE_01[!is.na(data_en$complete.april19)])*100,2), round(colSums(data_en[!is.na(data_en$complete.april19),GE] >0)/length(data_en$CE_01[!is.na(data_en$complete.april19)])*100,2)),
                           severity = c(round(Mean.Ec.SSM,2), round(Mean.Eg.SSM,2))
                           )
-write.csv(stressors.df, "stressor_prevalence.csv")
+write.csv(stressors.df, "stressor_prevalence_interim2.csv")
 
 
 # table S1
@@ -987,7 +990,7 @@ modelfits.df = data.frame(category = c("Eg.SCM", "Es.SCM", "Ec.SCM", "Eg.SSM", "
 names(modelfits.df)[2] <- "adj. R-sq."
 
 pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, "test")
-writeLines(capture.output(pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, 'Explained variance by stressor category')), "modelfits.txt")
+writeLines(capture.output(pandoc.table(modelfits.df, digits = 4, round = 4, keep.trailing.zeros = TRUE, 'Explained variance by stressor category')), "modelfits_interim2.txt")
 
 anova(m6)
 anova(m4, m5, m6)
@@ -1105,7 +1108,7 @@ data_en$people.in.household <- revalue(data_en$people.in.household, c("0" = "6")
 data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "6"), order = FALSE)
 data_en$people.in.household = as.numeric(data_en$people.in.household)
 data_en$health.status = as.numeric(data_en$health.status)
-#save(data_en, file = "data_en_19.04.RData")
+#save(data_en, file = "data_en2_09_06.RData")
 ```
 
 Table of Resilience factor corrlations and descriptives of subsample wiht mental health diagnosis
