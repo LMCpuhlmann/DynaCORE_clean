@@ -48,9 +48,11 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
-#data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 #data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
+data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
+#data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_en$X.0 = data_en$occupation
@@ -89,27 +91,52 @@ data_en$missing.cov[xx] = 1
 
 ```
 
-<!-- ```{r quality-check-income, include = FALSE} -->
-<!-- i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1 -->
-<!-- data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)] -->
-<!-- data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)] -->
-<!-- test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable -->
-<!-- test$ID <- data_en$Respondent.ID -->
-<!-- isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)]) -->
-<!-- test$income <- data_en$household.income -->
-<!-- table(test$income)  -->
-<!-- #            1       10       11       12       13       14        2        3        4        5        6        7  -->
-<!-- #3174      416      409      205      123       60      130      936      742      777     1273     2045     1392  -->
-<!-- #  8        9 Response  -->
-<!-- #750      422        1  -->
+```{r quality-check-income, include = FALSE}
+i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
+data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)] 
+data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)] 
+test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable 
+test$ID <- data_en$Respondent.ID 
+isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)]) 
+test$income <- data_en$household.income 
+table(test$income)  
+#            1       10       11       12       13       14        2        3        4        5        6        7 
+ #3174      416      409      205      123       60      130      936      742      777     1273     2045     1392  
+#  8        9 Response
+#750      422        1  
 
-<!-- table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])  -->
-<!-- #there are multiple levels coded to this response: -->
-<!-- #    10    6  -->
-<!-- #1  409 2045 -->
+table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])  
+#there are multiple levels coded to this response: 
+#    10    6  
+#1  409 2045 
 
-<!-- ``` -->
+# check what has changed between datasets 
+data_en_old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+en_old_ten <- data_en_old[,c("Respondent.ID","What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..")]
+en_old_ten <- en_old_ten[en_old_ten$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..=="10",]
+en_new_ten <- data_en[,c("Respondent.ID","household.income")]
+en_new_ten <- en_new_ten[en_new_ten$household.income==10,]
+which(!(en_old_ten$Respondent.ID %in% en_new_ten$Respondent.ID))
+#[1] 360
+en_old_ten$Respondent.ID[360]
+#[1] 11438710356
+which(data_en$Respondent.ID=="11438710356")
+#[1] 32416
+en_old_ten[360,]
+#      Respondent.ID
+#12540   11438710356
+#      What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..
+#12540                                                                                  10
+data_en$Respondent.ID[32416]
+#[1] 11438710356
+data_en[32416,c("Respondent.ID","household.income")]
+#      Respondent.ID household.income
+#32417   11438710356                7
 
+
+
+
+``` 
 # Format date and time of responses
 ```{r date-time, include=FALSE}
 
