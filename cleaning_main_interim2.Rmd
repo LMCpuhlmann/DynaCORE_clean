@@ -48,11 +48,11 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
-#data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 #data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
-data_text = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv", sep = ",", stringsAsFactors = FALSE)# unfortunately, data text has a different n than the normal answers
-#load("C:/Users/Nutzer/ownCloud/DynaCORE_C/data_pull_5000_completesurveys_eu_cleaned_data.RData")
+data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
+#data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_text = rename(data_text) #rename variables
@@ -94,27 +94,52 @@ data_en$missing.cov[xx] = 1
 
 ```
 
-<!-- ```{r quality-check-income, include = FALSE} -->
-<!-- i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1 -->
-<!-- data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)] -->
-<!-- data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)] -->
-<!-- test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable -->
-<!-- test$ID <- data_en$Respondent.ID -->
-<!-- isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)]) -->
-<!-- test$income <- data_en$household.income -->
-<!-- table(test$income)  -->
-<!-- #            1       10       11       12       13       14        2        3        4        5        6        7  -->
-<!-- #3174      416      409      205      123       60      130      936      742      777     1273     2045     1392  -->
-<!-- #  8        9 Response  -->
-<!-- #750      422        1  -->
+```{r quality-check-income, include = FALSE}
+i <- which.first(data_en$Respondent.ID[2]==data_text$Respondent.ID) -1
+data_en$check_ID_text <- data_text$Respondent.ID[i:nrow(data_text)] 
+data_en$check_income_text <- data_text$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..[i:nrow(data_text)] 
+test <- data_en[,c(ncol(data_en)-1, ncol(data_en))] #subset to check income variable 
+test$ID <- data_en$Respondent.ID 
+isTRUE(test$check_ID_text[nrow(test)]==test$ID[nrow(test)]) 
+test$income <- data_en$household.income 
+table(test$income)  
+#            1       10       11       12       13       14        2        3        4        5        6        7 
+ #3174      416      409      205      123       60      130      936      742      777     1273     2045     1392  
+#  8        9 Response
+#750      422        1  
 
-<!-- table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])  -->
-<!-- #there are multiple levels coded to this response: -->
-<!-- #    10    6  -->
-<!-- #1  409 2045 -->
+table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])  
+#there are multiple levels coded to this response: 
+#    10    6  
+#1  409 2045 
 
-<!-- ``` -->
+# check what has changed between datasets 
+data_en_old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+en_old_ten <- data_en_old[,c("Respondent.ID","What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..")]
+en_old_ten <- en_old_ten[en_old_ten$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..=="10",]
+en_new_ten <- data_en[,c("Respondent.ID","household.income")]
+en_new_ten <- en_new_ten[en_new_ten$household.income==10,]
+which(!(en_old_ten$Respondent.ID %in% en_new_ten$Respondent.ID))
+#[1] 360
+en_old_ten$Respondent.ID[360]
+#[1] 11438710356
+which(data_en$Respondent.ID=="11438710356")
+#[1] 32416
+en_old_ten[360,]
+#      Respondent.ID
+#12540   11438710356
+#      What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..
+#12540                                                                                  10
+data_en$Respondent.ID[32416]
+#[1] 11438710356
+data_en[32416,c("Respondent.ID","household.income")]
+#      Respondent.ID household.income
+#32417   11438710356                7
 
+
+
+
+``` 
 # Format date and time of responses
 ```{r date-time, include=FALSE}
 
@@ -839,9 +864,9 @@ demog$infection.test.status = revalue(demog$infection.test.status, c("0" = "yes"
 demog$current.stay.out.of.town = revalue(demog$current.stay.out.of.town, c("1" = "yes", "2" = "no"))
 demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" = "at home", "3" = "in the hospital", "4" = "abroad", "0" = "other"))
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
-demog$people.in.household = revalue(demog$people.in.household, c("2" = "2", "3" = "3-4", "4" = "5-6", "0"="7 +"))
-demog$household.income = revalue(demog$household.income, c("2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000 +")) #"9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
-demog$survey.language = revalue(demog$survey.language, c("ar"="Arabic", "el"="Greek", "en_GB"="English", "en_US"="English", "fi"="Finnish", "hr"="Croatian", "ja" = "Japanese", "lt" = "Lithuanian", "pt" = "Portuguese", "de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese (Traditional)", "zh_Hant_TW" = "Chinese (Traditional, Taiwanese)", "cs" = "English", "da" = "English", "no" = "English"))
+demog$people.in.household = revalue(demog$people.in.household, c("2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
+demog$household.income = revalue(demog$household.income, c("2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English", "ja"="English", "ar"="Arabic", "el"="Greek", "fi"="Finnish", "hr"="Croatian", "lt"="Lithuanian", "pt"="Portuguese", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian","zh_Hant_TW"="Chinese","en_GB"="English", "en_US"="English" ))
 
 demog$survey.language = droplevels(demog$survey.language)
 
