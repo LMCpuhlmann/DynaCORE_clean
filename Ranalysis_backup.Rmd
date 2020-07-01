@@ -1,0 +1,1373 @@
+---
+  title: "DynaCORE_C second interimanalysis"
+bibliography: bib.bib
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_document:
+  toc: true
+theme: united
+---
+  
+  
+# Descriptives
+  
+```{r setup, include=FALSE}
+library(knitr)
+knitr::opts_chunk$set(cache=TRUE, cache.path = 'cache/', include=TRUE, # include r output (exept warnings etc.)
+                      fig.width=8.8, fig.height=6.3, fig.path='InterimAnalysis2/figures/', fig.show='hold', dev='svg', # "svg", "svglite", fig.ext = ".svg"
+                      results='show', message=FALSE, warning=FALSE, comment=NA, echo=FALSE, tidy=TRUE, concordance=TRUE, autodep=TRUE)
+
+if (!require("pacman")) install.packages("pacman")
+pacman::p_load(plyr,dplyr,reshape2, data.table, robustbase, tidyverse, cvTools, paran, psych, corrplot, RColorBrewer, glmnet, VIM, mice, knitr, stargazer, lmtest, tableone, RMediation, glmnet, effects, Hmisc, ggpubr, broom, gglasso)
+
+options(width = 100)
+theme_set(theme_classic())
+our_theme <-
+  theme_classic()+
+  theme(axis.text.x = element_text(size = 16,color = "black",vjust = .5),
+        axis.title.x = element_text(size = 14),
+        axis.text.y = element_text(hjust = 0, size = 12, color = "black"),
+        axis.title.y = element_text(size = 16),
+        axis.ticks = element_blank()# ,
+        # line= element_blank(),
+        # legend.position = "none"
+  )
+
+# can we use this to set the wd depending on the user? this is pretty handy
+# gk: sure! just replcace opts with setwd. Hwever, rmd is not very interested in you changing the wd ;)
+if (Sys.getenv("USERNAME")=="koeber"){    # Linux: if (system("echo $USER",intern=TRUE)=="sommer"){
+  opts_knit$set(root.dir="C:/DynaMORE/data/DynaCORE_C")
+} else if (Sys.getenv("USERNAME")=="athan"){
+  knitr::opts_knit$set(root.dir="F:/Cloud/DynaCloud/")
+} else if (Sys.getenv("USER")=="Athanatizein"){
+  knitr::opts_knit$set(root.dir="~/DynaCloud")
+} else if (Sys.getenv("USERNAME")=="Nutzer"){
+  knitr::opts_knit$set(root.dir="C:/Users/Nutzer/ownCloud/DynaCORE_C/")
+} else {
+  stop("please add your username and working directory above the last else if!")
+}
+```
+
+```{r read-data, include=FALSE}
+
+load("./InterimAnalysis2/data_en2_09_06.RData")
+data_en <- data_en[which(!is.na(data_en$complete.april19)),]
+data_en$household.income= as.numeric(data_en$household.income)
+
+sum(data_en$complete.april19, na.rm=TRUE) # should be 15790
+
+# # covs as numeric:
+data_en$health.status = as.numeric(data_en$health.status)
+# 5 for people in household means 6 or more
+
+# covs as unordered factor:
+# data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "0"), order = FALSE)
+# data_en$health.status <- factor(data_en$health.status, levels = c("1", "2", "3", "4", "5"), order = FALSE)
+
+# # covs as before:
+# data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "0"), order = TRUE)
+```
+
+Raffael: " am already writing the paper. We will need a supplementary section where we describe the sample demographics and health status (all the initial basic variables and people‘s thinking about how the crisis is managed). Another suppl table we will need are the average values of the sample in all the dependent and independent variables. And then, a table of their intercorrelations. In cleaning the data, can you already start this work? (Using, if you like, help by Sophie, Aleksa, Netali.) Format: NEJM."
+
+```{r describe-pred, results='asis', eval=FALSE}
+# 
+# Hmisc::describe(df)
+# desc_df <- data_en[c("gender", "age", "infection.test.status", "symptom.severity", names(data_en[,137:173]))]
+# 
+# kable(psych::describe(data_en), digits = 2, caption = "Descriptive table of analytical data frame")
+# 
+# 
+# kable(psych::describe(data_en[,c(137:173)]), digits = 2, caption = "Descriptive table of analytical data frame")
+# 
+# desc_df <- data_en[,137:173]
+# 
+# kable(psych::describe(data_en), digits = 2, caption = "Descriptive table of analytical data frame")
+# rm(desc_df)
+```
+
+```{r describe-tableone, results='asis', eval=FALSE}
+# CreateTableOne(data = df)
+# ## Vector of variables to summarize
+# myVars <- c("time", "status", "trt", "age", "sex", "ascites", "hepato",
+#           "spiders", "edema", "bili", "chol", "albumin", "copper", "alk.phos",
+#           "ast", "trig", "platelet", "protime", "stage")
+# ## Vector of categorical variables that need transformation
+# catVars <- c("status", "trt", "ascites", "hepato",
+#              "spiders", "edema", "stage")
+# ## Create a TableOne object
+# tab2 <- CreateTableOne(vars = myVars, data = pbc, factorVars = catVars)
+```
+
+### Stressor exposure measures
+
+Raffael Kalisch  11:06 AM
+Hi Göran No, we do not want to report all 6 SR scores. We first want to see which of the 6 possible E score explains most variance in P, to then build the SR score to be reported on that basis. If it happens that the "best" E score is a combined score EC (meaning our main SR score in based on that), then we say in the prereg that we will also report SR scores based on EG and ES (coming from the same stressor scoring method as used for the best EC). It is all nicely describe in the prereg in the named chapters and we must follow exactly that procedure. I also say in the prereg that we define the inverse SR as our outcome (prxy of resilience), and in the draft of the paper I use the abbreviation R for that (so R=-SR). We should use that also in the figures and tables. Apart from this, I agree with the coefficients plot. As said, this would allow us to show for the same RF several R (=-SR) scores. For instance one based on EC (if that turns out to be the "best" EC) and then also those based on EG and ES. One could then immediately compare on which type of resilience the RF "acts" most strongly. If we do that: Would you agree that we report all the covariates and other stuff in supplementary tables?
+  
+  I might have missed something, but it is not clear to me how to decide between $SCM$ and $SSM$. To me, it is no surprise that $SSM$ explains more in $P$ (because of "subjective over-reactions (i.e., overly negative appraisal)") and that the Combined Exposure $E_c$ is better than $E_s$ and $E_g$ (because it entails more information than each separately).
+
+A little detour: I have a statistical/domain expertise question here. So far, we combined the stressor variables to get the $SR_{Ec}$. From a statistical point of view, it would be much more reasonable to allow both $E_g$ and $E_s$ its own parameter in the regression. This is provided in model 4 and 8. Less surprisingly, this is the best model within SSM and SCM (according to the F-test; because it has more flexibility compared to model 3 and 7). As far as I see it, this is no contradiction to the prereg.
+
+This section is based on Lara's code.
+
+Are there subject matter reasons against the "two coefficients approach" in model 4 and 8?
+
+Until we have a decision on all this, I continue with the "one-parameter $E_c$" for $SSM$.
+
+```{r stress-exposure-analysis, include=FALSE}
+# code adapted from Lara
+
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+#Corona pandmeic Specific stressors:
+Es <- grep("CE_[0-3][0-9]$", names(data_en), value = TRUE)
+data_en$Es.SCM <- rowSums(data_en[Es] >0) #stressor count
+data_en$Es.SSM <- rowSums(data_en[Es])/5 #self-rated weighted, an external weighting would be nice, Haakon worked on that; Or at least an "overall-rated weighted where the severity is assessed for all respondents
+
+# General stressors:
+Eg <- grep("GE_[0-1][0-9]$", names(data_en), value = TRUE)
+data_en$Eg.SCM <- rowSums(data_en[Eg] >0) #stressor count
+data_en$Eg.SSM <- rowSums(data_en[Eg])/5 #weighted
+
+# Combined:
+Eall <- c(grep("CE_[0-3][0-9]$", names(data_en), value = TRUE), grep("GE_[0-1][0-9]$", names(data_en), value = TRUE))
+data_en$Ec.SCM <- rowSums(data_en[Eall] >0) #stressor count
+data_en$Ec.SSM <- rowSums(data_en[Eall])/5 #weighted
+
+# test
+which(data_en$Ec.SCM!=rowSums(data_en[ , c("Eg.SCM" ,"Es.SCM")])) # should be 0
+
+# compare model fits
+
+# stressor count method
+xx = !is.na(data_en$Eg.SCM) & !is.na(data_en$Es.SCM) & !is.na(data_en$Ec.SCM) # match sample size
+
+summary(m1_scm <- lm(P ~ poly(Eg.SCM,2), data= data_en[xx,]))
+summary(m2_scm <- lm(P ~ poly(Es.SCM,2), data= data_en[xx,]))
+summary(m3_scm <- lm(P ~ poly(Ec.SCM,2), data= data_en[xx,]))
+summary(m4_scm <- lm(P ~ poly(Es.SCM,2)  + poly(Eg.SCM,2),data= data_en[xx,])) 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+summary(m1_ssm <- lm(P~poly(Eg.SSM,2),data= data_en[xx,]))
+summary(m2_ssm <- lm(P~poly(Es.SSM,2),data= data_en[xx,]))
+summary(m3_ssm <- lm(P~poly(Ec.SSM,2),data= data_en[xx,]))
+summary(m4_ssm <- lm(P~poly(Es.SSM,2) + poly(Eg.SSM,2),data= data_en[xx,]))
+anova(m1_ssm, m2_ssm, m3_ssm, m4_ssm, test="F")
+
+# overall anova 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm)
+```
+
+```{r report-stressor-analysis, results = 'asis'}
+reg_title <- "Linear regression models of stressor exposure analysis"
+model.labels <- NULL
+labels.IV <- NULL
+notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br>"
+
+stargazer(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm, type = "html",
+          out = "InterimAnalysis2/tables/stressor_exposure_analysis.html",
+          # out = "all.html",
+          digits = 2, # digits.extra = 1,
+          report = "vcs*",
+          # column.labels   = c("Germany", "Australia"), column.separate = c(3, 3),
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          # type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>P</i>",
+          dep.var.labels.include = FALSE,
+          omit.stat = c("ll",  "aic", "bic"),
+          # add.lines = list()
+          notes = notes.regression)
+```
+
+
+# Analysis plan 
+##	Data exclusion
+
+Only fully completed surveys will be included in the analysis. As a sensitivity analysis, we will also perform an analysis with a multiple imputation approach.
+
+##	Analysis time points
+
+Data collection may be ongoing for many months (see 6.2.2), but analyses will be of public relevance before the end of data collection. A first interim analysis will be conducted after n=5000   completed surveys in German language . The further analysis plan, including an alpha spending strategy for statistical testing at subsequent analysis time points, will be determined based on this interim analysis and documented in amendments to this preregistration. This decision will also take into account information on sociodemographic and health variables, such as the distribution of gender, age, countries of residence, nationalities, and occupations in the interim sample.
+
+##	Covariates
+
+In a first step of any analysis (interim and further), the influence of the socio-demographic and health covariates on resilience (inverse of the independent outcome variable SR) will be assessed using separate univariate regression analyses in the whole analyzed sample. Variables surviving a likelihood ratio test at p<0.2 will be included in further analysis. Age and gender will always be included.
+
+```{r calc-SR-and-flip-to-RES}
+data_en$SR_Eg.SSM2[xx] <-as.numeric(scale(resid(m1_ssm)))
+data_en$SR_Es.SSM2[xx] <-as.numeric(scale(resid(m2_ssm)))
+data_en$SR_Ec.SSM2[xx] <-as.numeric(scale(resid(m3_ssm)))
+
+data_en$SR_Eg.SCM2[xx] <-as.numeric(scale(resid(m1_scm)))
+data_en$SR_Es.SCM2[xx] <-as.numeric(scale(resid(m2_scm)))
+data_en$SR_Ec.SCM2[xx] <-as.numeric(scale(resid(m3_scm)))
+
+# check with previous ones
+# ------------
+# plot(data_en$SR_Eg.SSM, data_en$SR_Eg.SSM2)
+# plot(data_en$SR_Es.SSM, data_en$SR_Es.SSM2)
+# plot(data_en$SR_Ec.SSM, data_en$SR_Ec.SSM2) 
+# plot(data_en$SR_Eg.SCM, data_en$SR_Eg.SCM2)
+# plot(data_en$SR_Es.SCM, data_en$SR_Es.SCM2)
+# plot(data_en$SR_Ec.SCM, data_en$SR_Ec.SCM2) 
+# ------------
+
+# invert sr to res
+# ------------
+data_en$RES_c.SSM <- data_en$SR_Ec.SSM2 * (-1)
+data_en$RES_g.SSM <- data_en$SR_Eg.SSM2 * (-1)
+data_en$RES_s.SSM <- data_en$SR_Es.SSM2 * (-1)
+
+data_en$RES_c.SCM <- data_en$SR_Ec.SCM2 * (-1)
+data_en$RES_g.SCM <- data_en$SR_Eg.SCM2 * (-1)
+data_en$RES_s.SCM <- data_en$SR_Es.SCM2 * (-1)
+# ------------
+
+# save new df once
+#save(data_en, file = "data/new_RES_scores")
+```
+
+```{r general_functions_and_objects}
+# ------
+# important global variables
+## location of important groups of variables; appear in heat map and lasso
+dv <- grep(names(data_en), pattern = "^RES", value = FALSE)  # dependent variables
+preds_names <- c("PAS", "PSS", "CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC")
+preds <- which(names(data_en) %in% preds_names) # predictors
+
+covariate_names = c("age", "gender", "household.income","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education", "academia", "permanent_contract", "country.of.residence")
+# covariate_names = c("age", "gender", "household.income","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "risk.group", "infection.test.status", "quarantine.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education","current.stay.out.of.town", "academia", "permanent_contract", "Germany")
+
+# covariate_names = c("age", "gender", "household.income","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "risk.group", "infection.test.status", "quarantine.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education", "nationality", "country.of.residence","survey.language","current.stay.out.of.town", "occupation1", "occupation2", "occupation3", "occupation4", "occupation5", "occupation6", "occupation7", "occupation8", "occupation9", "occupation10", "occupation11", "occupation12", "occupation13", "occupation14", "occupation15", "occupation16", "occupation17", "occupational.status1", "occupational.status2", "occupational.status3", "occupational.status4", "occupational.status5", "occupational.status6", "occupational.status7", "occupational.status8", "occupational.status9", "occupational.status10", "occupational.status11", "occupational.status12", "occupational.status13")
+
+# covariate_names_lrt = c("age", "gender", "household.income","relationship.status", "people.in.household", "people.in.household.under.18","health.status", "risk.group", "infection.test.status", "quarantine.status", "adherence.to.recommended.procedures", "opinion.about.authorities.measures", "years.of.education", "nationality", "country.of.residence","survey.language","current.stay.out.of.town", "occupation", "occupational.status")
+covariates = which(names(data_en) %in% covariate_names)
+# --------
+
+# general functions
+# --------
+additional_R2 <- function(model, basemodel=base){
+  summary(model)$adj.r.squared - summary(basemodel)$adj.r.squared
+}
+
+extract_coef_infos <- function(model, position_of_interest = 2) {
+  tmp <- broom::tidy(model, conf.int = TRUE, conf.level = 0.99)
+  return(tmp[position_of_interest,])
+}
+# --------
+```
+
+```{r fit-covariate-models, include=FALSE}
+model_list <- lapply(covariate_names, function(x) {
+    lm(substitute(RES_c.SSM ~ i, list(i = as.name(x))), data = data_en)
+})
+
+# lapply(model_list, lrtest)
+lrt_pvalues <- vector("numeric", length(model_list)) # init
+for (i in 1:length(model_list)) {
+  # print(model_list[[i]])
+  print(lrtest(model_list[[i]]))
+  lrt_pvalues[i] <- lrtest(model_list[[i]])[[5]][2] # save p-value
+}
+
+lrt_results <- data.frame(covariate = covariate_names, pvalue = lrt_pvalues, in_model = ifelse(lrt_pvalues < 0.2, "yes", "no"))
+```
+
+```{r report_cov_lrt, results = 'asis'}
+kable(lrt_results)
+
+# accordingly, the full covariate model is:
+base <- lm(RES_c.SSM~age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures, data = data_en)
+
+
+base_with <- lm(RES_c.SSM~gender+age+years.of.education+as.numeric(household.income)+relationship.status+risk.group+infection.test.status, data = data_en)
+base_wo <- lm(RES_c.SSM~gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en)
+
+
+#labels.list = c("<i>PAS</i>", "<i>PSS</i>", "<i>CSS</i>", "<i>OPT</i>", "<i>GSE</i>", "<i>REC</i>", "<i>NEU</i>", "<i>BCS</i>", "<i>PAC</i>",  "<i>Age</i>", "<i>Gender</i>: Female<sup>a</sup>", "<i>Gender</i>: Diverse<sup>a</sup>", "<i>Country of residence</i>: Germany<sup>a</sup>", "<i>Education</i> (yrs)", "<i>Occupation</i>: Student / working in research/education<sup>a</sup>", "<i>Occupational status</i>: Permanent contract<sup>a</sup>", "<i>Household income</i>", "<i>Relationship status</i>: Widowed<sup>a</sup>", "<i>Relationship status</i>: Divorced<sup>a</sup>", "<i>Relationship status</i>: Separated<sup>a</sup>", "<i>Relationship status</i>: Domestic partnership/civil union<sup>a</sup>","<i>Relationship status</i>: Steady relationship, living together<sup>a</sup>", "<i>Relationship status</i>: Steady relationship, living apart<sup>a</sup>", "<i>Relationship status</i>: Single<sup>a</sup>", "<i>Relationship status</i>: Other<sup>a</sup>", "<i>People in household</i>", "<i>People underage (<18) in household</i>", "<i>General health status</i>", "<i>Opinion about authorities' measures</i>", "<i>Adherence to recommended procedures</i>")
+
+
+#labels.list.mediation = c("REC", labels.list[!(labels.list %in% c("CSS", "OPT", "GSE", "REC", "NEU", "BCS", "PAC"))])
+#c( "REC", "PAS", "PSS", "Gender: Female", "Gender: Diverse", "Country of residence: Germany", "Years of education", "Occupation: student or employee working in research/education", "Occupatinal status: permanent contract", "Household income", "Relationship status: Widowed", "Relationship status: Divorced", "Relationship status: Separated", "Relationship status: In a domestic partnership or civil union","Relationship status: In a steady relationship living together", "Relationship status: In a steady relationship living apart", "Relationship status: Single", "Relationship status: Other", "People in household (linear)", "People in household (quadratic)", "People in household (cubic)", "People in household (4)", "Nr of people in household under 18", "General health status (linear)", "General health status (quadratic)", "General health status (cubic)", "General health status (4)", "Opinion about authorities’ measures to curtail virus spread", "Adherence to recommended procedures to limit virus spread")
+
+```
+
+##	Hypothesis testing with multiple regression (H1-H9) and mediation analyses (H10-H11)
+
+The directed hypotheses given in Table 1 will be tested separately using multiple regression with covariates (H1 to H9) and mediation analysis following Baron and Kenny (H10, H11) at an overall alpha level of p<0.05. The first interim analysis will use an alpha level of p<0.01. Alpha levels of further analyses will be determined based on the first interim analysis (alpha spending strategy). In case of a significant effect, the test will be repeated in those two thirds of the subjects with the highest overall stressor exposure E, and the results of such secondary analysis must go in the same direction as those of the primary analysis, in order for the primary analysis results to be considered valid. We will report the primary hypothesis H1 but also the key secondary hypotheses (H2 to H9) as well as the secondary hypotheses (H10, H11).
+
+
+Raffael Kalisch  8:10 AM
+Göran I think the first decision to make is if we want to show the results of the separate multiple regressions in a table (like your first upload) or in a graph (like your second upload in the other channel, the used hand-written sketch). In the graph (which in principle is more illustrative, of course): How could we indicate the used covariates and their effects (which you have in the table)? 
+gk: No problem! Could go into the caption!
+
+
+And how would we deal with the necessity to report separately results with EG and with ES (and perhaps, if that comes out from above decision) even results from EC? If we do tables, we need 2 (or 3) separate tables, I guess? Whereas if we use graphs, maybe the all 2 (or 3) outcomes could be shown combined for each of the predictors? So should we maybe show such a graph in the main text and separate tables in the supplement?
+gk: Yes. I would opt for graphs in the text, tables in the supplement! I have this plot in my mind where we show the coefficients of the RFs (Hypothesis 1-9) in subplot a and the indirect effects of the mediation analysis both as coefficient plots (similar to the sketch I uploaded).
+
+```{r hyp_regression, include=FALSE}
+summary(h1PAS <- update(base, .~ scale(PAS) + .))
+summary(h2PSS <- update(base, .~ scale(PSS) + .))
+summary(h3CSS <- update(base, .~ scale(CSS) + .))
+summary(h4OPT <- update(base, .~ scale(OPT) + .))
+summary(h5GSE <- update(base, .~ scale(GSE) + .))
+summary(h6REC <- update(base, .~ scale(REC) + .))
+summary(h7NEU <- update(base, .~ scale(NEU) + .))
+summary(h8BCS <- update(base, .~ scale(BCS) + .))
+summary(h9PAC <- update(base, .~ scale(PAC) + .))
+```
+
+```{r hyp_regression_Eg, include=FALSE}
+summary(h1PAS_g <- update(base, RES_g.SSM~ scale(PAS) + .))
+summary(h2PSS_g <- update(base, RES_g.SSM~ scale(PSS) + .))
+summary(h3CSS_g <- update(base, RES_g.SSM~ scale(CSS) + .))
+summary(h4OPT_g <- update(base, RES_g.SSM~ scale(OPT) + .))
+summary(h5GSE_g <- update(base, RES_g.SSM~ scale(GSE) + .))
+summary(h6REC_g <- update(base, RES_g.SSM~ scale(REC) + .))
+summary(h7NEU_g <- update(base, RES_g.SSM~ scale(NEU) + .))
+summary(h8BCS_g <- update(base, RES_g.SSM~ scale(BCS) + .))
+summary(h9PAC_g <- update(base, RES_g.SSM~ scale(PAC) + .))
+```
+
+
+```{r hyp_regression_Es, include=FALSE}
+summary(h1PAS_s <- update(base, RES_s.SSM~ scale(PAS) + .))
+summary(h2PSS_s <- update(base, RES_s.SSM~ scale(PSS) + .))
+summary(h3CSS_s <- update(base, RES_s.SSM~ scale(CSS) + .))
+summary(h4OPT_s <- update(base, RES_s.SSM~ scale(OPT) + .))
+summary(h5GSE_s <- update(base, RES_s.SSM~ scale(GSE) + .))
+summary(h6REC_s <- update(base, RES_s.SSM~ scale(REC) + .))
+summary(h7NEU_s <- update(base, RES_s.SSM~ scale(NEU) + .))
+summary(h8BCS_s <- update(base, RES_s.SSM~ scale(BCS) + .))
+summary(h9PAC_s <- update(base, RES_s.SSM~ scale(PAC) + .))
+```
+
+
+```{r plot-regression, fig.width=7, fig.height=8}
+hyp_model_list <- list(h1PAS, h2PSS, h3CSS, h4OPT, h5GSE , h6REC, h7NEU, h8BCS, h9PAC)
+hyp_model_list_g <- list(h1PAS_g, h2PSS_g, h3CSS_g, h4OPT_g, h5GSE_g, h6REC_g, h7NEU_g, h8BCS_g, h9PAC_g)
+hyp_model_list_s <- list(h1PAS_s, h2PSS_s, h3CSS_s, h4OPT_s, h5GSE_s, h6REC_s, h7NEU_s, h8BCS_s, h9PAC_s)
+
+coefficients_Ec <- as.data.frame(t(sapply(hyp_model_list, extract_coef_infos)))
+coefficients_Eg <- as.data.frame(t(sapply(hyp_model_list_g, extract_coef_infos)))
+coefficients_Es <- as.data.frame(t(sapply(hyp_model_list_s, extract_coef_infos)))
+coefficients_all <- rbind(data.frame(dvar = "Ec", coefficients_Ec),
+      data.frame(dvar = "Eg", coefficients_Eg),
+      data.frame(dvar = "Es", coefficients_Es))
+coefficients_all$term <- stringr::str_sub(coefficients_all$term, 7, 9)
+coefficients_all$term <- fct_relevel(coefficients_all$term, preds_names)
+pd <- position_dodge(0.4) # move them x to the left and right
+
+coefficients_plot <- ggplot(coefficients_all, aes(x=dvar, y=unlist(estimate), color=term)) +
+  geom_point(position=pd, size=3) +
+  geom_errorbar(aes(ymin=unlist(conf.low), ymax=unlist(conf.high)),width=.3, position=pd, size=0.4) +
+  geom_hline(yintercept=c(0), lty=2)+
+  labs(y='Betas') +
+  scale_x_discrete(breaks = , name = "",
+                   c(levels(coefficients_all$dvar)),
+                    labels = c(bquote(''*~RES[C]~''), bquote(''*~RES[G]~''), bquote(''*~RES[S]~'')))  + 
+  scale_shape(solid = TRUE) + guides(colour = guide_legend(title="Resilience\nfactors")) + our_theme +
+  theme(legend.position=c(.95,.5)) # + ggtitle()
+coefficients_plot
+```
+
+
+
+### Mediation
+
+NEJM: "Significance tests should be accompanied by confidence intervals for estimated effect sizes, measures of association, or other parameters of interest. The confidence intervals should be adjusted to match any adjustment made to significance levels in the corresponding test." -> to test the mediation, we can test the indirect effect, i.e. beta_x->m * beta_m->y, and assess statistical significance with the distribution of the product method
+
+#### Some background
+
+
+![Conceptual diagram and fundamental terminology in mediation analysis](figures/mediation.png)
+
+The independent variable x influences the dependent variable y directly (c') as well as indirectly via the mediator. This indirect effect is assessed as the product of the regression coefficients $\beta_{a} \times \beta_{b}$. Since it needs to be assessed in separate regression this mediation model can be algebraically formalized as:
+
+
+$$ y_{i} = \beta_{0y} + \beta_{c'}  \times x_{i} + \beta_{b}  \times me_{i}  +  \epsilon_{iy} \quad \text{and} $$
+$$ m_{i} = \beta_{0m} +\beta_{a}  \times x_{i}   + \epsilon_{im} $$
+
+
+Importantly, the product of the regression coefficients $\beta_{a} \times \beta_{b}$ is known as indirect effect. It is of great importance for the mediation analysis and can be interpreted as the change of $y_i$ when $x_i$  increased by one due to the effect of $x_i$ on $m_i$. Hence, an indirect effect provides information about the strength and significance of the hypothesized mediation path. While its computation is straightforward, there are various comprehensively compared methods to define the inferential significance [@biesanz2010assessing]. The author follows Tofighi and MacKinnon’s [-@tofighi2011rmediation] recommendations and uses the distribution of the product method.
+
+
+```{r hyp_mediation, include=FALSE}
+# H10: PSS -> PAS -> R
+summary(med_h10_a <- lm(scale(PAS) ~ scale(PSS) + 
+                          age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures, data = data_en))
+summary(med_h10_b <- lm(RES_c.SSM ~ scale(PAS) + scale(PSS) + 
+                          age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures , data = data_en))
+# summary(med_h10_a <- lm(scale(PAS) ~ scale(PSS) + gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en))
+# summary(med_h10_b <- lm(RES_c.SSM ~ scale(PAS) + scale(PSS) + gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en))
+indirect_effect_PSS <- medci(mu.y = summary(med_h10_b)$coef[3,1], se.y=summary(med_h10_b)$coef[3,2],  mu.x = summary(med_h10_a)$coef[2,1], se.x = summary(med_h10_a)$coef[2,2], alpha = 0.01, type="dop")
+medci(mu.y = summary(med_h10_b)$coef[3,1], se.y=summary(med_h10_b)$coef[3,2],  mu.x = summary(med_h10_a)$coef[2,1], se.x = summary(med_h10_a)$coef[2,2], alpha = 0.0001, type="dop")
+
+
+# H11: PAS -> REC -> R
+summary(med_h11_a <- lm(scale(REC) ~ scale(PAS) +  
+                          age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en))
+summary(med_h11_b <- lm(RES_c.SSM ~ scale(REC) + scale(PAS) + 
+                          age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en))
+# summary(med_h11_a <- lm(scale(REC) ~ scale(PAS) +  gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en))
+# summary(med_h11_b <- lm(RES_c.SSM ~ scale(REC) + scale(PAS) + gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en))
+indirect_effect_PAS <- medci(mu.y = summary(med_h11_b)$coef[3,1], se.y=summary(med_h11_b)$coef[3,2],  mu.x = summary(med_h11_a)$coef[2,1], se.x = summary(med_h11_a)$coef[2,2], alpha = 0.01, type="dop")
+
+medci(mu.y = summary(med_h11_b)$coef[3,1], se.y=summary(med_h11_b)$coef[3,2],  mu.x = summary(med_h11_a)$coef[2,1], se.x = summary(med_h11_a)$coef[2,2], alpha = 0.0001, type="dop", plot=TRUE) # assess p<0.0001
+```
+
+<!-- Lara: mediation with new covariates: -->
+
+<!-- ```{r hyp_mediation_newcov, include=FALSE} -->
+<!-- # H10: PSS -> PAS -> R -->
+<!-- summary(med_h10_a <- lm(scale(PAS) ~ scale(PSS) +  -->
+<!--                           age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en)) -->
+
+<!-- summary(med_h10_b <- lm(RES_c.SSM ~ scale(PAS) + scale(PSS) +  -->
+<!--                           age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en)) -->
+
+<!-- # y = PAS; x = PSS -->
+<!-- indirect_effect_PSS <- medci(mu.y = summary(med_h10_b)$coef[2,1], se.y=summary(med_h10_b)$coef[2,2],  mu.x = summary(med_h10_a)$coef[2,1], se.x = summary(med_h10_a)$coef[2,2], alpha = 0.01, type="dop") -->
+<!-- medci(mu.y = summary(med_h10_b)$coef[2,1], se.y=summary(med_h10_b)$coef[2,2],  mu.x = summary(med_h10_a)$coef[2,1], se.x = summary(med_h10_a)$coef[2,2], alpha = 0.0001, type="dop") -->
+
+
+<!-- # H11: PAS -> REC -> R -->
+<!-- summary(med_h11_a <- lm(scale(REC) ~ scale(PAS) +   -->
+<!--                           age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en)) -->
+
+<!-- summary(med_h11_b <- lm(RES_c.SSM ~ scale(REC) + scale(PAS) +  -->
+<!--                           age+gender+country.of.residence+years.of.education + academia  + permanent_contract + as.numeric(household.income)+relationship.status + people.in.household +people.in.household.under.18+ health.status + opinion.about.authorities.measures + adherence.to.recommended.procedures , data = data_en)) -->
+
+<!-- indirect_effect_PAS <- medci(mu.y = summary(med_h11_b)$coef[2,1], se.y=summary(med_h11_b)$coef[2,2],  mu.x = summary(med_h11_a)$coef[2,1], se.x = summary(med_h11_a)$coef[2,2], alpha = 0.01, type="dop") -->
+<!-- medci(mu.y = summary(med_h11_b)$coef[2,1], se.y=summary(med_h11_b)$coef[2,2],  mu.x = summary(med_h11_a)$coef[2,1], se.x = summary(med_h11_a)$coef[2,2], alpha = 0.0001, type="dop", plot=TRUE) # assess p<0.0001 -->
+<!-- ``` -->
+
+
+```{r med_plot, include=FALSE}
+# GÖRAN: Please check if the order of effects is as in my legend below. Can you give the p values? Can you also give the actual numbers for the indirect effects. (see also abstract)
+# My legend would be: “B) Indirect effects with 99% CI of mediation analyses testing if the positive association of PSS with RESC is mediated by PAS (left) and if the positive association of PAS on RESC is mediated by REC (right). Indirect effects were significant at p<0.001. The standardized coefficients of all paths (a: PAS/PSS -> Mediator; b: Mediator -> RESC, c: direct effect of PAS/PSS) are shown next to indirect effect.”
+
+tmp <- rbind(unlist(indirect_effect_PSS), unlist(indirect_effect_PAS))
+pdf <- cbind(c("PSS", "PAS"), data.frame(tmp))
+colnames(pdf) <- c("x", "ll", "ul", "est", "se")
+
+med_model_list <- list(med_h10_a, med_h10_b, med_h11_a, med_h11_b)
+coefficients_mediation <- as.data.frame(t(sapply(med_model_list, extract_coef_infos)))
+coefficients_mediation$est <- round(unlist(coefficients_mediation$estimate), 2)
+
+coefficients_mediation_direct <- as.data.frame(t(sapply(list(med_h10_b, med_h11_b), function(x)extract_coef_infos(x, 3))))
+coefficients_mediation_direct$est <- round(unlist(coefficients_mediation_direct$estimate), 2)
+
+pdf$label <- 
+  c(  paste("a: ", coefficients_mediation$est[1], "p<0.001\nb: ", coefficients_mediation$est[2], "p<0.001\nc: ", coefficients_mediation_direct$est[1],"p<0.001"),
+      paste("a: ", coefficients_mediation$est[3], "p<0.001\nb: ", coefficients_mediation$est[4], "p<0.001\nc: ", coefficients_mediation_direct$est[2],"p<0.001")) 
+
+mediation_plot <- ggplot(pdf, aes(x=x, y=est, label=label)) +  
+  geom_errorbar(aes(ymin=ll, ymax=ul), width=.1, position=pd, size=0.4) + 
+  geom_point() + 
+  geom_hline(yintercept=c(0), lty=2) +
+  # geom_text(aes(label=label), position = position_dodge(0.9), size=4) +
+  geom_text(hjust = 0, nudge_x = 0.05, size=4) +
+  labs(y = "Indirect effects (a x b)", x = "")  + 
+  scale_x_discrete(limits=c("PSS", "PAS"),
+                   labels=c(expression(PSS %->% PAS %->% RES[C]), expression(PAS %->% REC %->% RES[C]))) +
+  our_theme
+mediation_plot
+
+expression(PSS %->% PAS)
+
+```
+
+
+<!-- ```{r figure1-ab, fig.width=6, fig.height=10} -->
+<!-- coefficients_plot -->
+<!-- # mediation_plot -->
+<!-- ``` -->
+
+
+```{r figure1-combined, fig.width=12}
+coefficients_plot
+mediation_plot
+ggarrange(coefficients_plot, mediation_plot, labels="AUTO", widths = c(3, 2))
+```
+
+
+##	Combined regularized regression analysis
+
+### LASSO
+
+In order to identify the strongest resilience factors among H1 to H9, we will combine the variables and included covariates in a LASSO analysis, where the L1-Norm of the coefficients is penalized with a parameter λ (Hastie et al., 2015). The LASSO is used specifically as a sensitivity analysis for selecting important variables in multi-variable settings. We will pick λ based on cross-validation to identify a subset of variables that is particularly suited for predicting resilience. 
+
+
+```{r sparse-model, results='asis', eval="TRUE", out.width='50%'}
+set.seed(123) # make cv.glmnet reproducible; swith every now and then to test its robustness!
+
+# Lasso, Ridge, Elastic net? 
+# -------
+which_alpha = 1 # 1=Lasso, 0=Ridge
+which_nfold = 15 # number of lasso_df subsets during cv, try also 8 +/-2
+# -------
+rscore <- 1 # in order of appearance in the lasso_df (see also heatmap below, which includes the names of 
+lasso_df <- data_en[c(dv, covariates, preds)]
+# lasso_df <- data_en[c(dv, covariates, preds[-9])]# run without PAC
+lasso_df <- lasso_df[, c(rscore, (length(dv)+1):dim(lasso_df)[2])]
+# lasso_df$PAC <- NULL
+# # double check -----
+# summary(lm(RES_c.SSM ~ ., data = lasso_df))
+# # -------
+tmp_df <- lasso_df
+tmp_df[, sapply(lasso_df, is.numeric)] <- apply(lasso_df[, sapply(lasso_df, is.numeric)], 2, scale)
+
+# re run without PAC at some point in time
+# tmp_df <- lasso_df[-which(names(lasso_df) == "PAC")]
+# tmp_df[, sapply(lasso_df, is.numeric)] <- apply(lasso_df[, sapply(lasso_df, is.numeric)], 2, scale)
+
+tmp_df$household.income <- as.numeric(tmp_df$household.income)
+x <- model.matrix(RES_c.SSM ~ ., tmp_df)[,-1]
+# colnames(x)
+
+sparse_fit_single = glmnet(x = x, y = as.vector(lasso_df[,1]), standardize = FALSE)
+plot(sparse_fit_single, xvar = "lambda", label = TRUE)
+
+sparse_fit <- cv.glmnet(x = x, y = as.vector(lasso_df[,1]), alpha=which_alpha, nfolds=which_nfold)
+# sparse_fit$lambda.min
+# plot(sparse_fit)
+# coef(sparse_fit)
+
+# plot(glmnet(x = data.matrix(lasso_df[,-1]), y = as.vector(lasso_df[,1]),
+#             alpha=which_alpha), xvar = "lambda", main=paste("optimal log lambda", round(log(sparse_fit$lambda.min,4)), "with alpha = ", which_alpha), label = TRUE)
+```
+
+
+```{r lasso-plot, fig.width=18}
+beta=coef(sparse_fit_single)
+tmp <- as.data.frame(as.matrix(beta))
+tmp$coef <- row.names(tmp)
+tmp <- reshape::melt(tmp, id = "coef")
+tmp$variable <- as.numeric(gsub("s", "", tmp$variable))
+tmp$lambda <- sparse_fit$lambda[tmp$variable+1] # extract the lambda values
+tmp$norm <- apply(abs(beta[-1,]), 2, sum)[tmp$variable+1] # compute L1 norm
+
+tmp$coef = factor(tmp$coef, levels = colnames(x))
+
+# same color coding, different order: depending on when it hits zero
+lasso_plot <- ggplot(tmp[tmp$coef != "(Intercept)",], aes(x = lambda, y = value, colour = coef)) + 
+  geom_line(size = 1.2) + ylim(-0.15,0.15) +
+  # scale_x_log10() + labs(x = expression(lambda~"(log scale)"), y = "Coefficients") + geom_vline(xintercept=c(sparse_fit$lambda.min), linetype="dotted") + our_theme
+  scale_x_log10() + labs(x = expression(paste("Penalty parameter ", lambda~"(log scale)")), y = "Coefficients") + geom_vline(xintercept=c(sparse_fit$lambda.min), linetype="dotted") + our_theme + scale_color_manual(values=c(
+    grey.colors(which(colnames(x) == "academiayes")), "#000000", blues9))
+lasso_plot
+```
+
+```{r coeffs-at-optLambda, results='asis'}
+table_df <- na.omit(tmp[tmp$lambda == sparse_fit$lambda.min,])
+# table_df <- na.omit(tmp[tmp$lambda == unique(tmp$lambda)[10],])
+table_df$type <- ifelse(seq(1:dim(table_df)[1]) < which(table_df$coef == "CSS"), "cov", "rf")
+dplyr::arrange(table_df, desc(type), value) %>% 
+  kable(digits = 4, caption = "coefficients at optimal lambda")
+```
+
+#### Group lasso
+```{r fit-grouped-lasso}
+# colnames(x)
+
+# groups based on the new covariates
+# make germany ref cat
+groups_vec <- c(1,1,1,2,2,rep(3,8),4,4,4,5,rep(6,8), 7:22)
+
+# old group vec:
+#groups_vec <- c(1,2,2,3, rep(4,8), 5:22)
+
+# groups_vec <- c(groups_vec1, 11:(11+(31-length(groups_vec1))))
+# data.frame(colnames(x), groups_vec) 
+# data.frame(c(colnames(x),rep("test", 1)), groups_vec) # debugging
+
+sparse_fit_single_gl = gglasso(x = x, y = as.vector(lasso_df[,1]), group = groups_vec)
+sparse_fit_gl <- cv.gglasso(x = x, y = as.vector(lasso_df[,1]), group = groups_vec , nfolds=which_nfold)
+# plot(sparse_fit_single, xvar = "lambda", label = TRUE)
+```
+
+```{r plot-grouped-lasso, fig.width=18}
+beta=coef(sparse_fit_single_gl)
+tmp <- as.data.frame(as.matrix(beta))
+tmp$coef <- row.names(tmp)
+tmp <- reshape::melt(tmp, id = "coef")
+tmp$variable <- as.numeric(gsub("s", "", tmp$variable))
+tmp$lambda <- sparse_fit_gl$lambda[tmp$variable+1] # extract the lambda values
+tmp$norm <- apply(abs(beta[-1,]), 2, sum)[tmp$variable+1] # compute L1 norm
+tmp$coef = factor(tmp$coef, levels = colnames(x))
+
+# same color coding, different order: depending on when it hits zero
+# note: the intercept is already set to NA above, so changing the below code to exclude it:
+
+#lasso_plot <- ggplot(tmp[tmp$coef != "(Intercept)",], aes(x = lambda, y = value, colour = coef)) + 
+
+lasso_plot <- ggplot(tmp[!is.na(tmp$coef) ,], aes(x = lambda, y = value, colour = coef)) + 
+  geom_line(size = 1.2) + ylim(-0.15,0.15) +
+  # scale_x_log10() + labs(x = expression(lambda~"(log scale)"), y = "Coefficients") + geom_vline(xintercept=c(sparse_fit_gl$lambda.min), linetype="dotted") + our_theme
+  scale_x_log10() + labs(x = expression(paste("Penalty parameter ", lambda~"(log scale)")), y = "Coefficients") + geom_vline(xintercept=c(sparse_fit_gl$lambda.min), linetype="dotted") + our_theme + scale_color_manual(values=c(grey.colors(31), "#000000", blues9))
+lasso_plot
+```
+
+```{r coeffs-at-optLambda-grouped-lasso, results='asis'}
+table_df <- na.omit(tmp[tmp$lambda == sparse_fit_gl$lambda.min,])
+table_df$type <- ifelse(seq(1:dim(table_df)[1]) < which(table_df$coef == "CSS"), "cov", "rf")
+dplyr::arrange(table_df, desc(type), value) %>% 
+  kable(digits = 4, caption = "coefficients at optimal lambda")
+```
+
+```{r plot_lasso_list-function, eval=FALSE, include=FALSE, out.width='50%'}
+plot_lasso_list <- function(lasso_list, number_of_predictors = NULL, dv_names = NULL, custom_xlab = "Resilience-Scores (-SR)") {
+  
+  # init result matrix
+  coefficients <- matrix(nrow = length(coef(lasso_list[[1]])), ncol = length(lasso_list)) 
+  
+  # loop through lasso_list to extract coefficients
+  for (i in 1:length(lasso_list)){
+    
+    if(is.null(number_of_predictors)) { # interested in "optimal" solution (as a results of the cv)
+      
+      coefficients[,i] <- abs(as.vector(coef(lasso_list[[i]])))
+      plot_title <- "Sparse regression results with optimal lambda (based on cv)"
+      
+    } else {
+      
+      coefficients[,i] <- abs(as.vector(  # interested in certain number of predictors
+        coef(lasso_list[[i]], s = lasso_list[[i]]$lambda[min(which(lasso_list[[i]]$nzero>=number_of_predictors))])
+      ))
+      plot_title <- paste("Sparse regression results with the", number_of_predictors, "most important RF")
+    }
+  }
+  
+  # Name dropping
+  lasso_coef_df <-data.frame(coef(lasso_list[[1]])@Dimnames[[1]], coefficients)
+  names(lasso_coef_df) <- c("var", dv_names)
+  
+  # Plot it like its hot
+  filter(lasso_coef_df, var != "(Intercept)") %>% gather(key = vars, value = val, -var) %>% 
+    ggplot(mapping = aes(x = vars, y = var, fill = val)) +
+    geom_tile() +
+    scale_fill_gradient2(low="white", high="black", guide="colorbar") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5),
+          text = element_text(size = 20)) + 
+    scale_y_discrete(NULL, limits = coef(lasso_list[[1]])@Dimnames[[1]][-1], #levels(plot_df$var),
+                     breaks = coef(lasso_list[[1]])@Dimnames[[1]][-1]) + 
+    labs(fill = "fully standardized\ncoefficients of\npotential RF (abs)", y = "Resilience factors (RF)", x = custom_xlab, subtitle=plot_title)
+  #  + # labels = description$Desc_Eng_short[match(order_var, description$Item)]
+  # scale_x_discrete(NULL, "Resilience factors (RF)", limits = grep("resid", colnames(predictors), value=T)) 
+  # make a tab? vis below prefered for the moments
+  # res <- round(cbind(coef_list[[1]], as.vector(coef_list[[2]]), as.vector(coef_list[[3]])),3)
+  # colnames(res) <- c("lextale", "sv.identity.clean.all", "hesitation")
+  # kable(as.matrix(res), caption = "Coefficients of Lasso-Regression (cross-validated lambda)")
+}
+```
+
+```{r plot-heatmap-cv, eval=FALSE, include=FALSE, out.width='100%'}
+# plot_lasso_list(results, dv_names = grep("^RES", colnames(lasso_df), value=T))
+# plot_lasso_list(results, number_of_predictors = 3, dv_names = grep("^SR", colnames(lasso_df), value=T))
+```
+
+```{r plot-heatmap-cv-c.SSM, eval=FALSE, include=FALSE, out.width='50%'}
+# p1 = plot_lasso_list(results[2], dv_names = grep("RES_c.SSM", colnames(lasso_df), value=T))
+# p1
+# ggsave("Lasso_RES_c.SSM.pdf", plot = p1, path = "~/InterimAnalysis2/figures", width = 5)
+```
+
+### Inclusion frequencies
+
+This plot shows how often the lasso---optimized based on cross-validation---picked each variable in the group of non-zero predictors. As described above, this reflects a more stable results than a single lasso analysis (i.e., the one above). However, it does not tell you anything about the strength nor direction of the effect. Both information (stability and interpretation) are provided in the next section.
+
+TO BE DONE LATER; PRETTY SURE THAT IT WILL WORK
+
+```{r identify_inclusion_frequencies, eval=FALSE, include=FALSE}
+plot_lasso_mat <- function(coeffs, ylabel = "", xlabel = "RES scores", title = "", exclude_intercept = TRUE, multiply_100 = TRUE, aspect = "fill", transpose_matrix = TRUE) {
+  if(exclude_intercept == TRUE){
+    coeffs <- coeffs[2:dim(coeffs)[1],]
+  }
+  if(multiply_100 == TRUE){
+    coeffs <- coeffs*100
+  }
+  if(transpose_matrix == TRUE){
+    coeffs = t(coeffs)
+  }
+  # plot all but the intercepts
+  lattice::levelplot(abs(coeffs),ylab=list(ylabel), xlab = list(xlabel), col.regions = gray(100:0/100), main=title, aspect = aspect) 
+}
+
+my_seed <- 123
+set.seed(my_seed)
+number_lasso_approaches <- 100 # loop how many times over each dependent variable?
+results_inclusion_mat <- vector("list", number_lasso_approaches) # init
+results_dependent_vars_mat <- vector("list", 2) # init
+# results_overall <- matrix(nrow = length(coef(results_inclusion_mat[[1]])), ncol = length(grep("^p[1-6]$", names(df))))
+results_overall <- matrix(nrow = length(grep("^RES", names(lasso_df), invert = TRUE)) + 1, ncol = length(grep("^RES", names(lasso_df)))) # 
+
+for (i in 1:length(grep("^RES", names(lasso_df)))) {
+  # i = 1
+  analytical_df <- na.omit(data.matrix(lasso_df[c(grep("^RES", names(lasso_df))[i], grep("^RES", names(lasso_df), invert = TRUE))]))
+  for (lasso_approach in 1:number_lasso_approaches){
+    results_inclusion_mat[[lasso_approach]] <- cv.glmnet(x = analytical_df[,-1], y = as.vector(analytical_df[,1]), alpha=which_alpha, nfolds=which_nfold)
+    
+    if (lasso_approach == 1){
+      res <- coef(results_inclusion_mat[[1]], s = "lambda.min")
+    }else{
+      res <- cbind(res, coef(results_inclusion_mat[[lasso_approach]], s = "lambda.min"))
+    }
+  }
+  results_dependent_vars_mat[[i]] <- res
+  results_overall[,i] <- apply(res, 1, nnzero)/number_lasso_approaches
+}
+
+# tail(test[order(test)], n = 30)
+# results_overall[,2-1] <- apply(res, 1, nnzero)/number_lasso_approaches
+# results_dependent_vars_mat[2]
+rownames(results_overall) <- coef(results_inclusion_mat[[1]])@Dimnames[[1]]
+# colnames(results_overall) <- paste0(grep("^RES", names(lasso_df), value = TRUE), "\n(n = ", c(length(na.omit(lasso_df$SR)), length(na.omit(df$DH_LE_SR_T1_T3.complete))), ")") # prettfied with n
+
+# png(filename="analyses/stressor_net/figures/test123.png", type="cairo",units="in", width=5, height=10, pointsize=12, res=96)
+
+# # Anonymized version
+# rownames(results_overall) <- NULL
+# # png(filename="reports/NeurIPS/figures/lasso_odep.png", type="cairo",units="in", width=5, height=10, pointsize=12, res=160)
+# pdf(file="C:/DynaMORE/reports/NeurIPS/figures/lasso_ctp.pdf", width=7, height=2.5, pointsize=12)
+# plot_lasso_mat(results_overall, title = paste0("Inclusion frequencies\n(in %; cross-validated lambda; n = ", length(reg_df$mnppid), ")"), 
+#                ylabel = "chosen time points of stress test", xlabel = "Anonymized resilience factors", aspect = "fill", transpose = FALSE)
+#                # ylabel = "Anonymized resilience factors", xlabel = "chosen time points of stress test")
+# dev.off()
+# play arround
+# plot_lasso_mat(results_overall, title = expression(Conductivity~"("*lambda*S/cm*")"))
+
+# in-depth
+# apply(results_overall,2,hist)
+
+```
+
+```{r plot_inclusion_frequencies, eval=FALSE, include=FALSE}
+plot_lasso_mat(results_overall, title = paste0("Inclusion frequencies in %\n(seed ", my_seed, " and ", number_lasso_approaches, " repetitions)"))
+```
+
+We will also report the inclusion frequencies to assess model stability (Sauerbrei et al., 2015).
+
+##	Subgroup analyses
+
+In addition to an analysis of the whole sample at any analysis time point, subgroup analyses will be conducted for relevant basic socio-demographic and health characteristics, esp. gender, age, survey language, nationality, country of residence, years of education, occupation, occupational status, household income, health status, belonging to a risk group, COVID-19 infection, symptom severity, and quarantine status, in order to identify the relatively most effective resilience factors in these groups. In another subgroup analysis, the effects of different phases of the crisis (during and after the end of official general movement or contact restrictions) will be tested.
+
+##	Exploratory analyses with further independent variables
+
+It is hypothesized that external data on infection, recovery and death rates in the geographical location of the subject as well as general political, economic and societal factor will affect resilience and resilience factors. These influences will be addressed in additional exploratory hypotheses as such data become available. We will preregister such additional analyses.
+
+gk: Very interesting analysis, indeed! However, we would need some support to geotag location before we can think of gathering the spatio-(temporal) data for the region (I suppose one of the EU NUTS regions would be the best option.)
+
+# Supplementary material
+
+## Bivariate correlations
+
+### Heat maps
+
+```{r, out.width='50%'}
+cor_mat_rf <- cor(data_en[rev(c(dv, preds))], use = "pairwise.complete.obs")
+levelplot(cor_mat_rf, main = "Corr SR with RF")
+
+cor_mat_cov <- cor(data.matrix(data_en[rev(c(dv, covariates))]), use = "pairwise.complete.obs")
+levelplot(cor_mat_cov, main = "Corr SR with covariates")
+```
+
+### SRs and RFs
+
+```{r, results='asis'}
+kable(cor_mat_rf, caption = "Bivariate correations of SRs and RFs", digits = 2)
+```
+
+### SRs and Covariates
+
+```{r, results='asis'}
+kable(cor_mat_cov, caption = "Bivariate correations of SRs and Covariates", digits = 2)
+```
+
+## Assessing potential non-linearity in the E-P relationship
+
+
+### Results for all six E scores
+
+RK: Unfortunately, for the supplement, I would need the F values and p values for the combined linear/quadratic E-P model for all 6 E scores (EC,SSM; EG,SSM; ES,SSM; EC,SCM; EG,SCM; ES,SCM)
+
+```{r stress-exposure-analysis-nonlinearity, results='asis'}
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+prettify_pvalues <- function(p) ifelse(p < .001, "p<0.001", ifelse(p < .01, "p<0.01", ifelse(p < .05, "p<0.05", "   "))) # generate 
+# prettify_pvalues((0.0001))
+
+res_names <- c("RES_c.SSM", "RES_g.SSM", "RES_s.SSM", "RES_c.SCM", "RES_g.SCM", "RES_s.SCM")
+
+assess_improvement_quad <- function(string_name){ # a dirty function which refers to global vals for convenience
+  x = dplyr::pull(data_en, string_name)
+  linear_fit <-    lm(P~poly(x,1) ,data= data_en[xx,])
+  quadratic_fit <- lm(P~poly(x,2) ,data= data_en[xx,])
+  compare_both <- anova(linear_fit, quadratic_fit)
+  compare_both_print <- round(compare_both,2)
+  paste0("F=", compare_both_print$F[2],", ",  prettify_pvalues(compare_both_print$`Pr(>F)`[2]))
+}
+
+improvement_list = lapply(res_names, assess_improvement_quad)
+kable(data.frame(var = res_names, results = unlist(improvement_list)))
+```
+
+
+
+### In-depth of Es.SCM
+
+```{r stress-exposure-analysis-nonlinearity_in_depth, include=FALSE}
+# code adapted from Lara
+
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+summary(m1_ssm_nonlinear1 <- lm(P~poly(Eg.SSM,1) ,data= data_en[xx,]))
+summary(m1_ssm_nonlinear2 <- lm(P~poly(Eg.SSM,2) ,data= data_en[xx,]))
+summary(m1_ssm_nonlinear3 <- lm(P~poly(Eg.SSM,3) ,data= data_en[xx,]))
+summary(m1_ssm_nonlinear4 <- lm(P~poly(Eg.SSM,4) ,data= data_en[xx,]))
+anova(m1_ssm_nonlinear1, m1_ssm_nonlinear2, m1_ssm_nonlinear3, m1_ssm_nonlinear4)
+```
+
+```{r report-stressor-analysis-nonlinearity, results = 'asis'}
+reg_title <- "Table 1: Linear regression models of stressor exposure analysis (non-linearity)"
+model.labels <- NULL
+labels.IV <- NULL
+notes.regression <- "99% CI in brakets<br>"
+
+stargazer(m1_ssm_nonlinear1, m1_ssm_nonlinear2, m1_ssm_nonlinear3, m1_ssm_nonlinear4, 
+          type = "html",
+          out = "InterimAnalysis2/tables/stressor_exposure_analysis_nonlinear.html",
+          # out = "all.html",
+          digits = 2, # digits.extra = 1,
+          report = "vcs*",
+          # column.labels   = c("Germany", "Australia"), column.separate = c(3, 3),
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          # type=table_type,
+          single.row = TRUE,
+          model.numbers = FALSE,
+          # column.labels = c("M1", "Germany<br>M2", "M3", "M1", "Australia<br>M2", "M3"),
+          # column.labels = c("M1 (GER)", "M2 (GER)", "M3 (GER)", "M1 (AUS)", "M2 (AUS)", "M3 (AUS)"),
+          initial.zero = F,
+          # column.labels = c("GER 1", "GER 2", "GER 3", "AUS 1", "AUS 2", "AUS 3"),
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>P</i>",
+          dep.var.labels.include = TRUE,
+          omit.stat = c("ll",  "aic", "bic"),
+          # add.lines = list()
+          notes = notes.regression)
+```
+
+For SSM there is at least a 3rd order polynomial of E necessary according to the F-Test. However, the effect is linear for large parts of the E-P relationship.
+
+From left to right: linear, quadratic, qubic, and forth order effect of E on P:
+  
+  ```{r, out.width='25%'}
+anova(m1_ssm_nonlinear1, m1_ssm_nonlinear2, m1_ssm_nonlinear3, m1_ssm_nonlinear4)
+plot(allEffects(m1_ssm_nonlinear1))
+plot(allEffects(m1_ssm_nonlinear2))
+plot(allEffects(m1_ssm_nonlinear3))
+plot(allEffects(m1_ssm_nonlinear4))
+```
+
+### In-depth of Eg.SSM
+
+```{r stress-exposure-analysis-nonlinearity_Eg_ssm, include=FALSE}
+# code adapted from Lara
+
+# Eg = stressor Exposure General
+# Es = stressor Exposure Specific coronoa
+# Ec = stressor Exposure Combinded
+# SCM = stressor count method
+# SSM = stressor severity method
+# P = menatal health problems
+
+summary(m1_scm_nonlinear <- lm(P ~ poly(Eg.SCM, 3), data= data_en[xx,]))
+# anova(m1_scm, m1_scm_nonlinear)
+summary(m2_scm_nonlinear <- lm(P ~ poly(Es.SCM, 3), data= data_en[xx,]))
+summary(m3_scm_nonlinear <- lm(P ~ poly(Ec.SCM, 3), data= data_en[xx,]))
+anova(m1_scm, m2_scm, m3_scm, test="F")
+
+# stressor severity method
+xx =  !is.na(data_en$Eg.SSM) & !is.na(data_en$Es.SSM) & !is.na(data_en$Ec.SSM) # match sample size
+
+summary(m1_ssm_nonlinear2 <- lm(P~poly(Eg.SSM,2) ,data= data_en[xx,]))
+summary(m1_ssm_nonlinear3 <- lm(P~poly(Eg.SSM,3) ,data= data_en[xx,]))
+summary(m1_ssm_nonlinear4 <- lm(P~poly(Eg.SSM,4) ,data= data_en[xx,]))
+
+summary(m2_ssm_nonlinear <- lm(P~poly(Es.SSM,3) ,data= data_en[xx,]))
+summary(m3_ssm_nonlinear <- lm(P~poly(Ec.SSM,3) ,data= data_en[xx,]))
+anova(m1_ssm, m2_ssm, m3_ssm, m4_ssm, test="F")
+
+# overall anova 
+anova(m1_scm, m2_scm, m3_scm, m4_scm, m1_ssm, m2_ssm, m3_ssm, m4_ssm)
+```
+
+```{r report-stressor-analysis-nonlinearity_Eg_ssm, results = 'asis'}
+reg_title <- "Table 1: Linear regression models of stressor exposure analysis (non-linearity)"
+model.labels <- NULL
+labels.IV <- NULL
+notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br>"
+
+stargazer(m1_ssm, m1_ssm_nonlinear2, m1_ssm_nonlinear3, m1_ssm_nonlinear4, 
+          type = "html",
+          out = "InterimAnalysis2/tables/stressor_exposure_analysis_nonlinear.html",
+          # out = "all.html",
+          digits = 2, # digits.extra = 1,
+          report = "vcs*",
+          # column.labels   = c("Germany", "Australia"), column.separate = c(3, 3),
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          # type=table_type,
+          single.row = TRUE,
+          model.numbers = FALSE,
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>P</i>",
+          dep.var.labels.include = TRUE,
+          omit.stat = c("ll",  "aic", "bic"),
+          # add.lines = list()
+          notes = notes.regression)
+```
+
+For SSM there is at least a 3rd order polynomial of E necessary according to the F-Test. However, the effect is linear for large parts of the E-P relationship.
+
+From left to right: linear, quadratic, qubic, and forth order effect of E on P:
+  
+  ```{r report-stressor-analysis-nonlinearity_Eg_ssm_plots, out.width='25%'}
+anova(m1_ssm, m1_ssm_nonlinear2, m1_ssm_nonlinear3, m1_ssm_nonlinear4)
+plot(allEffects(m1_ssm))
+plot(allEffects(m1_ssm_nonlinear2))
+plot(allEffects(m1_ssm_nonlinear3))
+plot(allEffects(m1_ssm_nonlinear4))
+```
+
+## check if covaraites interact
+
+```{r fit-covariate-models, include=FALSE}
+
+lapply(covariate_names, print(x))
+
+model_list <- lapply(covariate_names, function(x) {
+  lm(substitute(RES_c.SSM ~ i, list(i = as.name(x))), data = data_en)
+})
+
+#interaction_vec = paste(rep(covariate_names, times=9),"*",rep(preds_names,times=1,each=13), sep="")
+interaction_vec2 = matrix(NA,9*13,2)
+interaction_vec2[,1] = rep(covariate_names, times=9)
+interaction_vec2[,2] = rep(preds_names,times=1,each=13)
+
+model_list <- lapply(preds_names, function(x){
+  lapply(interaction_vec2, function(y) {
+    lm(substitute(RES_c.SSM ~ i*PAS, list(i = as.name(y))), data = data_en)
+  })
+})
+
+model_list <- lapply(interaction_vec, function(x) {
+  update(substitute(base, .~i + ., list(i = as.name(x[1]))), data = data_e)
+})
+
+
+
+# model_list <- lapply(interaction_vec, function(x) {
+#     lm(substitute(RES_c.SSM ~ i*j, list(i = as.name(x))), data = data_en)
+# })
+
+summary(h1PAS_age <- update(base, .~scale(PAS)*age + .))
+anova(h1PAS, h1PAS_age)
+summary(h1PAS_gender <- update(base, .~ scale(PAS)*gender + .))
+anova(h1PAS, h1PAS_age)
+summary(h1PAS_contract <- update(base, .~ scale(PAS)*permanent_contract + .))
+anova(h1PAS, h1PAS_contract)
+summary(h1PAS_education <- update(base, .~ scale(PAS)*years.of.education + .))
+anova(h1PAS, h1PAS_education)
+summary(h1PAS_academia <- update(base, .~ scale(PAS)*academia + .))
+anova(h1PAS, h1PAS_academia)
+summary(h1PAS_income <- update(base, .~ scale(PAS)*household.income + .))
+anova(h1PAS, h1PAS_income)
+
+# lapply(model_list, lrtest)
+lrt_pvalues <- vector("numeric", length(model_list)) # init
+for (i in 1:length(model_list)) {
+  # print(model_list[[i]])
+  print(lrtest(model_list[[i]]))
+  lrt_pvalues[i] <- lrtest(model_list[[i]])[[5]][2] # save p-value
+}
+
+lrt_results <- data.frame(covariate = covariate_names, pvalue = lrt_pvalues, in_model = ifelse(lrt_pvalues < 0.2, "yes", "no"))
+```
+
+```{r covariate-interaction, include = FALSE}
+# test wether interactions with covariates affect hypotheses
+
+# PAS
+summary(h1PAS_age <- update(base, .~scale(PAS)*age + .))
+anova(h1PAS, h1PAS_age)
+summary(h1PAS_gender <- update(base, .~ scale(PAS)*gender + .))
+anova(h1PAS, h1PAS_age)
+summary(h1PAS_contract <- update(base, .~ scale(PAS)*permanent_contract + .))
+anova(h1PAS, h1PAS_contract)
+summary(h1PAS_education <- update(base, .~ scale(PAS)*years.of.education + .))
+anova(h1PAS, h1PAS_education)
+summary(h1PAS_academia <- update(base, .~ scale(PAS)*academia + .))
+anova(h1PAS, h1PAS_academia)
+summary(h1PAS_income <- update(base, .~ scale(PAS)*household.income + .))
+anova(h1PAS, h1PAS_income)
+
+# PAC
+summary(h9PAC_age <- update(base, .~ scale(PAC)*age + .))
+anova(h9PAC, h9PAC_age)
+summary(h9PAC_gender <- update(base, .~ scale(PAC)*gender + .))
+anova(h9PAC, h9PAC_gender)
+summary(h9PAC_contract <- update(base, .~ scale(PAC)*permanent_contract + .))
+anova(h9PAC, h9PAC_contract)
+summary(h9PAC_education <- update(base, .~ scale(PAC)*years.of.education + .))
+anova(h9PAC, h9PAC_education)
+summary(h9PAC_academia <- update(base, .~ scale(PAC)*academia + .))
+anova(h9PAC, h9PAC_academia)
+summary(h9PAC_household.income <- update(base, .~ scale(PAC)*household.income + .))
+anova(h9PAC, h9PAC_household.income)
+
+# NEU
+summary(h7NEU_age <- update(base, .~ scale(NEU)*age + .))
+anova(h7NEU, h7NEU_age)
+summary(h7NEU_gender <- update(base, .~ scale(NEU)*gender + .))
+anova(h7NEU, h7NEU_gender)
+summary(h7NEU_contract <- update(base, .~ scale(NEU)*permanent_contract + .))
+anova(h7NEU, h7NEU_contract)
+summary(h7NEU_education <- update(base, .~ scale(NEU)*years.of.education + .))
+anova(h7NEU, h7NEU_education)
+summary(h9PAC_academia <- update(base, .~ scale(NEU)*academia + .))
+anova(h7NEU, h9PAC_academia)
+summary(h9PAC_household.income <- update(base, .~ scale(NEU)*household.income + .))
+anova(h7NEU, h9PAC_household.income)
+
+
+summary(h2PSS <- update(base, .~ scale(PSS) + .))
+summary(h3CSS <- update(base, .~ scale(CSS) + .))
+summary(h4OPT <- update(base, .~ scale(OPT) + .))
+summary(h5GSE <- update(base, .~ scale(GSE) + .))
+summary(h6REC <- update(base, .~ scale(REC) + .))
+summary(h7NEU <- update(base, .~ scale(NEU) + .))
+summary(h8BCS <- update(base, .~ scale(BCS) + .))
+summary(h9PAC <- update(base, .~ scale(PAC) + .))
+
+```
+
+
+## Tables and sensitivity analyses (SA)
+
+### Table of linear regression main analysis H1-H9 (SSM, Ec)
+
+```{r reg_tab, results='asis'}
+reg_title <- "Table S8: Tests of directed hypotheses H1-H9  (outcome: resilience to all stressors combined, RES<sub>C</sub>)"
+model.labels <- NULL
+# notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br><sup>a</sup>Additionally explained variance in % by RF in comparison to covariates-only model"
+Ref.cats = c("Reference categories: Male (<i>Gender</i>), Germany (<i>Country of residence</i>), Not a student / working in research/education (<i>Occupation</i>), No permanent contract (<i>Occupational status</i>), Married (<i>Relationship status</i>)")
+notes.regression <- paste0("99% CI in parentheses<br><sup>a</sup>",Ref.cats)
+
+hyp_model_list <- list(h1PAS, h2PSS, h3CSS, h4OPT, h5GSE , h6REC, h7NEU, h8BCS, h9PAC)
+additional_r2 <- unlist(lapply(hyp_model_list, additional_R2))
+
+labels.IV <- NULL # LP
+#labels.IV <- labels.list # LP
+order <- NULL
+table_type <- "html"
+
+stargazer(hyp_model_list, 
+          order = order,
+          out = "InterimAnalysis2/tables/reg_SR_Ec.SSM.html",
+          # out = "all.html",
+          digits = 2,
+          report = "vcs*",
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          add.lines = list(c("Adjusted R<sup>2</sup> increase by RF", round(additional_r2, 2))),
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>RES<sub>C</sub> (E<sub>combined</sub>; SSM)</i>",
+          dep.var.labels.include = FALSE,
+          omit.stat = c("ll",  "aic", "bic"),
+          notes = notes.regression)
+```
+
+### Table of linear regression mediation analysis H10-H11 (SSM, Ec)
+
+```{r reg_tab_mediation, results='asis'}
+reg_title <- "Table S11. Tests of mediation hypotheses H10, H11."
+model.labels <- NULL
+# notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br>"
+hyp_model_list <- list(med_h10_a, med_h10_b,med_h11_a,med_h11_b)
+
+labels.IV <- NULL 
+# labels.IV <- labels.list.mediation 
+order <- NULL
+table_type <- "html"
+
+stargazer(hyp_model_list, 
+          order = order,
+          out = "InterimAnalysis2/tables/s11_mediation.html",
+          # out = "all.html",
+          digits = 2,
+          report = "vcs*",
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          # dep.var.caption  = "DV: <i>RES<sub>C</sub> (E<sub>combined</sub>; SSM)</i>",
+          dep.var.labels.include = TRUE,
+          omit.stat = c("ll",  "aic", "bic"),
+          notes.append = TRUE,
+          notes = notes.regression)
+```
+
+### SA: Two thirds of the subjects with the highest overall stressor exposure E
+
+```{r hyp_regression_23, include=FALSE}
+data_en$thirds <- cut2(data_en$Ec.SSM, g = 3)
+twothirds_stressed <- data_en$thirds != levels(data_en$thirds)[1]
+summary(h1PAS_stressed <- update(base, .~scale(PAS) + ., subset = twothirds_stressed))
+summary(h2PSS_stressed <- update(base, .~scale(PSS) + ., subset = twothirds_stressed))
+summary(h3CSS_stressed <- update(base, .~scale(CSS) + ., subset = twothirds_stressed))
+summary(h4OPT_stressed <- update(base, .~scale(OPT) + ., subset = twothirds_stressed))
+summary(h5GSE_stressed <- update(base, .~scale(GSE) + ., subset = twothirds_stressed))
+summary(h6REC_stressed <- update(base, .~scale(REC) + ., subset = twothirds_stressed))
+summary(h7NEU_stressed <- update(base, .~scale(NEU) + ., subset = twothirds_stressed))
+summary(h8BCS_stressed <- update(base, .~scale(BCS) + ., subset = twothirds_stressed))
+summary(h9PAC_stressed <- update(base, .~scale(PAC) + ., subset = twothirds_stressed))
+```
+
+```{r reg_tab_23, results='asis'}
+reg_title <- "Table 2: Linear regression models of H1-H9 (subgroup: two thirds of the subjects with the highest overall stressor exposure E)"
+model.labels <- NULL
+# notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br><sup>a</sup>Additionally explained variance in % by RF in comparison to covariates-only model"
+
+hyp_model_list <- list(h1PAS_stressed, h2PSS_stressed, h3CSS_stressed, h4OPT_stressed, h5GSE_stressed , h6REC_stressed, h7NEU_stressed, h8BCS_stressed, h9PAC_stressed)
+additional_r2 <- unlist(lapply(hyp_model_list, additional_R2))
+
+labels.IV <- NULL 
+# labels.IV <- labels.list 
+order <- NULL
+table_type <- "html"
+
+stargazer(hyp_model_list, 
+          order = order,
+          out = "InterimAnalysis2/tables/reg_SR_Ec.SSM_twothirds.html",
+          # out = "all.html",
+          digits = 2,
+          report = "vcs*",
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          add.lines = list(c("Adjusted R<sup>2</sup> increase by RF", round(additional_r2, 2))),
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>RES(E<sub>combined</sub>; SSM)</i>",
+          dep.var.labels.include = FALSE,
+          omit.stat = c("ll",  "aic", "bic"),
+          notes = notes.regression)
+```
+
+
+### SA: H1-H9 with E_g and E_s
+
+#### General stressors
+
+```{r reg_tab_Eg, results='asis'}
+reg_title <- "Table S9: Tests of directed hypotheses H1-H9  (outcome: resilience to general stressors, RES<sub>G</sub>)"
+model.labels <- NULL
+# notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br><sup>a</sup>Additionally explained variance in % by RF in comparison to covariates-only model"
+
+hyp_model_list <- list(h1PAS_g, h2PSS_g, h3CSS_g, h4OPT_g, h5GSE_g, h6REC_g, h7NEU_g, h8BCS_g, h9PAC_g)
+additional_r2 <- unlist(lapply(hyp_model_list, additional_R2))
+
+
+order <- NULL
+table_type <- "html"
+
+stargazer(hyp_model_list, 
+          order = order,
+          out = "InterimAnalysis2/tables/reg_SR_Eg.SSM.html",
+          # out = "all.html",
+          digits = 2,
+          report = "vcs*",
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          add.lines = list(c("Adjusted R<sup>2</sup> increase by RF", round(additional_r2, 2))), # WRONG BECAUSE BASED ON BASE!
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>RES<sub>g</sub> (E<sub>general</sub>; SSM)</i>",
+          dep.var.labels.include = FALSE,
+          omit.stat = c("ll",  "aic", "bic"),
+          notes = notes.regression)
+```
+
+
+#### Corona-specific stressors
+
+```{r reg_tab_Es, results='asis'}
+reg_title <- "Table S10: Tests of directed hypotheses H1-H9  (outcome: resilience to Corona pandemic-specific stressors, RES<sub>S</sub>)"
+model.labels <- NULL
+# notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br><sup>a</sup>Additionally explained variance in % by RF in comparison to covariates-only model"
+
+hyp_model_list <- list(h1PAS_s, h2PSS_s, h3CSS_s, h4OPT_s, h5GSE_s, h6REC_s, h7NEU_s, h8BCS_s, h9PAC_s)
+additional_r2 <- unlist(lapply(hyp_model_list, additional_R2))
+
+labels.IV <- NULL # LP
+# labels.IV <- labels.list # LP
+order <- NULL
+table_type <- "html"
+
+stargazer(hyp_model_list, 
+          order = order,
+          out = "InterimAnalysis2/tables/reg_SR_Ec.SSM.html",
+          # out = "all.html",
+          digits = 2,
+          report = "vcs*",
+          star.cutoffs = c(0.01, 0.001, 0.0001),
+          ci = TRUE, ci.level = 0.99, ci.separator = ";",
+          type=table_type, 
+          single.row = TRUE,
+          model.numbers = FALSE,
+          add.lines = list(c("Adjusted R<sup>2</sup> increase by RF", round(additional_r2, 2))), # WRONG BECAUSE BASED ON BASE!
+          initial.zero = F,
+          title = reg_title,
+          covariate.labels = labels.IV,
+          dep.var.caption  = "DV: <i>RES<sub>s</sub> (E<sub>specific</sub>; SSM)</i>",
+          dep.var.labels.include = FALSE,
+          omit.stat = c("ll",  "aic", "bic"),
+          notes = notes.regression)
+```
+
+
+<!-- <!-- Outdated and not executed stuff --> -->
+  
+  <!-- ```{r fit-covariate-models_scm, include=FALSE} -->
+  <!-- ### OUTDATED SA: H1-H9 with counts (SCM) instead of severity (SSM)  -->
+  
+  <!-- covm_gender <- lm(SR_Ec.SCM~gender, data = data_en) -->
+  <!-- covm_age <- lm(SR_Ec.SCM~age, data = data_en) -->
+  <!-- covm_years.of.education <- lm(SR_Ec.SCM~years.of.education, data = data_en) -->
+  <!-- # covm_occupation <- lm(SR_Ec.SCM~occupation, data = data_en) -->
+  <!-- # covm_occupational.status <- lm(SR_Ec.SCM~occupational.status, data = data_en) -->
+  <!-- covm_unstable.occupational.status <- lm(SR_Ec.SCM~unstable.occupational.status, data = data_en) -->
+  <!-- covm_household.income <- lm(SR_Ec.SCM~as.numeric(household.income), data = data_en) -->
+  <!-- covm_health.status <- lm(SR_Ec.SCM~health.status, data = data_en) -->
+  <!-- covm_risk.group <- lm(SR_Ec.SCM~risk.group, data = data_en) -->
+  <!-- covm_infection.test.status <- lm(SR_Ec.SCM~infection.test.status, data = data_en) -->
+  <!-- covm_symptom.severity <- lm(SR_Ec.SCM~symptom.severity, data = data_en) -->
+  <!-- covm_quarantine.status <- lm(SR_Ec.SCM~quarantine.status, data = data_en) -->
+  <!-- #covm_quarantine.status.text <- lm(SR_Ec.SCM~quarantine.status.text, data = data_en) -->
+  <!-- model_list <- list(covm_gender, covm_age ,  -->
+                            <!--                    covm_years.of.education, # covm_occupation, -->
+                          <!--                    # covm_occupational.status,  -->
+                            <!--                    # covm_unstable.occupational.status,  -->
+                            <!--                    covm_household.income, covm_health.status, covm_risk.group, covm_infection.test.status, -->
+                            <!--                    # covm_symptom.severity,  -->
+                            <!--                    covm_quarantine.status) -->
+  
+  <!-- lapply(model_list, lrtest) -->
+  
+  <!-- lrt_results <- vector("numeric", length(model_list)) # init -->
+<!-- for (i in 1:length(model_list)) { -->
+    <!--   print(model_list[[i]]) -->
+    <!--   print(lrtest(model_list[[i]])) -->
+    <!--   lrt_results[i] <- lrtest(model_list[[i]])[[5]][2] # save p-value -->
+    <!-- } -->
+  <!-- lrt_results -->
+  
+  <!-- # accordingly, the full covariate model is: -->
+  <!-- summary(base_scm <- lm(SR_Ec.SCM~gender+age+years.of.education+as.numeric(household.income)+risk.group+infection.test.status, data = data_en)) -->
+  <!-- ``` -->
+  
+  <!-- ```{r hyp_regression_scm, include=FALSE} -->
+  <!-- summary(h1PAS_scm <- update(base_scm, .~ scale(PAS) + .)) -->
+  <!-- summary(h2PSS_scm <- update(base_scm, .~ scale(PSS) + .)) -->
+  <!-- summary(h3CSS_scm <- update(base_scm, .~ scale(CSS) + .)) -->
+  <!-- summary(h4OPT_scm <- update(base_scm, .~ scale(OPT) + .)) -->
+  <!-- summary(h5GSE_scm <- update(base_scm, .~ scale(GSE) + .)) -->
+  <!-- summary(h6REC_scm <- update(base_scm, .~ scale(REC) + .)) -->
+  <!-- summary(h7NEU_scm <- update(base_scm, .~ scale(NEU) + .)) -->
+  <!-- summary(h8BCS_scm <- update(base_scm, .~ scale(BCS) + .)) -->
+  <!-- summary(h9PAC_scm <- update(base_scm, .~ scale(PAC) + .)) -->
+  <!-- ``` -->
+  
+  <!-- ```{r reg_tab_scm, results='asis'} -->
+  <!-- reg_title <- "Supplementary table: H1-H9 with SCM" -->
+  <!-- model.labels <- NULL -->
+  <!-- # notes.regression <- "Precise p-values available upon request<br>99% CI in brakets<br><sup>a</sup>Additionally explained variance in % by RF in comparison to covariates-only model" -->
+  
+  <!-- hyp_model_list <- list(h1PAS_scm, h2PSS_scm, h3CSS_scm, h4OPT_scm, h5GSE_scm, h6REC_scm, h7NEU_scm, h8BCS_scm, h9PAC_scm) -->
+  <!-- additional_r2 <- unlist(lapply(hyp_model_list, function(X)additional_R2(X, basemodel = base_scm))) -->
+  
+  <!-- # labels.IV <- NULL # LP -->
+  <!--  labels.IV <- labels.list # LP -->
+<!-- order <- NULL -->
+  <!-- table_type <- "html" -->
+  
+  <!-- stargazer(hyp_model_list,  -->
+                   <!--           order = order, -->
+                   <!--           out = "tables/reg_SR_Ec.SSM.html", -->
+                   <!--           # out = "all.html", -->
+                   <!--           digits = 2, -->
+                   <!--           report = "vcs*", -->
+                   <!--           star.cutoffs = c(0.01, 0.001, 0.0001), -->
+                   <!--           ci = TRUE, ci.level = 0.99, ci.separator = ";", -->
+                   <!--           type=table_type,  -->
+                   <!--           single.row = TRUE, -->
+                   <!--           model.numbers = FALSE, -->
+                   <!--           # add.lines = list(c("Adjusted R<sup>2</sup> increase by RF", round(additional_r2, 2))), # WRONG BECAUSE BASED ON BASE! -->
+                   <!--           initial.zero = F, -->
+                   <!--           title = reg_title, -->
+                   <!--           covariate.labels = labels.IV, -->
+                   <!--           dep.var.caption  = "DV: <i>SR (E<sub>C</sub>; SSM)</i>", -->
+                   <!--           dep.var.labels.include = FALSE, -->
+                   <!--           omit.stat = c("ll",  "aic", "bic"), -->
+                   <!--           notes = notes.regression) -->
+  <!-- ``` -->
+  
+  # References

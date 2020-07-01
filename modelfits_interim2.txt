@@ -1,0 +1,19 @@
+
+--------------------------------------------------
+ category   adj. R-sq.            model           
+---------- ------------ --------------------------
+  Eg.SCM      0.0776     scale(P) ~ scale(Eg.SCM) 
+
+  Es.SCM      0.0445     scale(P) ~ scale(Es.SCM) 
+
+  Ec.SCM      0.0679     scale(P) ~ scale(Ec.SCM) 
+
+  Eg.SSM      0.1746     scale(P) ~ scale(Eg.SSM) 
+
+  Es.SSM      0.1816     scale(P) ~ scale(Es.SSM) 
+
+  Ec.SSM      0.2111     scale(P) ~ scale(Ec.SSM) 
+--------------------------------------------------
+
+Table: Explained variance by stressor category
+

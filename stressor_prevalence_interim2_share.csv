@@ -1,0 +1,54 @@
+,Count,Frequency,severity,,CE_instr,"In the following, some situations are listed that people may experience due to the current Corona pandemic. Please indicate if you are currently experiencing the following situations, or have experienced these during the past two weeks in connection to the Corona pandemic, and how burdensome these are/were to you.",
+CE_01,6411,40.6,2.83,,CE_01 ,"Having COVID-19 symptoms, or symptoms that could be related to COVID-19.","Answer options: 
+""(0) This situation did not happen
+(1) Not at all burdensome
+(2) Hardly burdensome
+(3) Somewhat burdensome
+(4) Quite burdensome
+(5) Very burdensome"""
+CE_02,7664,48.54,3.08,,CE_02,"COVID-19 symptoms, or symptoms that could be related to COVID-19 in family members, friends, loved ones, or colleagues.",
+CE_03,9504,60.19,2.85,,CE_03,"Being at increased risk for an infection (e.g., at work).",
+CE_04,6250,39.58,2.99,,CE_04,"""Being at increased risk for a serious course of the disease in case of an 
+infection (belonging to a so-called 'risk group').""",
+CE_05,13090,82.9,3.5,,CE_05,"""Family, friends, or loved ones being at increased risk for a serious course of the 
+disease in case of an infection (they belong to a so-called 'risk group').""",
+CE_06,7447,47.16,2.96,,CE_06,"Problems with access to healthcare, medication, or sanitation.",
+CE_07,1734,10.98,3.32,,CE_07,You cannot return to the country you live in.,
+CE_08,13531,85.69,3.01,,CE_08,(Feeling) restricted to leave your home.,
+CE_09,13895,88,3.18,,CE_09,Loss of social contact.,
+CE_10,12937,81.93,2.95,,CE_10,Unable to attend an important social event.,
+CE_11,2871,18.18,3.66,,CE_11,"""Family, friends, or loved ones are at the hospital and you are restricted in visiting
+them.""",
+CE_12,2225,14.09,3.75,,CE_12,"Unable to attend a funeral of a family member, friend, or loved one.",
+CE_13,3789,24,2.97,,CE_13,"Family, friends, or loved ones serving in the army or as first responder (paramedic/firefighter/police).",
+CE_14,7986,50.58,2.9,,CE_14,"Family, friends, or loved ones working as health care professional.",
+CE_15,14215,90.03,3.07,,CE_15,Not being able to perform leisure activities.,
+CE_16,12613,79.88,3.14,,CE_16,Less physical activity than usual.,
+CE_17,3102,19.65,3.25,,CE_17,Problems arranging childcare.,
+CE_18,3203,20.28,3.4,,CE_18,Difficulties combining work with childcare.,
+CE_19,8383,53.09,2.78,,CE_19,Tensions at home or family conflict,
+CE_20,12235,77.49,3.08,,CE_20,Private travel not possible.,
+CE_21,8200,51.93,3.2,,CE_21,Being at an increased risk for economic damage in your occupation.,
+CE_22,7491,47.44,2.94,,CE_22,Increased work load.,
+CE_23,10133,64.17,3.1,,CE_23,Work-related delays/obstacles.,
+CE_24,4772,30.22,2.59,,CE_24,Business travel not possible.,
+CE_25,4507,28.54,3.38,,CE_25,(Threat of) job loss or insolvency of private company.,
+CE_26,5032,31.87,3.31,,CE_26,(Threat of) job loss or insolvency of private company for someone in your household.,
+CE_27,8397,53.18,2.59,,CE_27,Problems obtaining basic needs.,
+CE_28,10056,63.69,2.48,,CE_28,Problems obtaining other goods and services.,
+CE_29,14646,92.75,3.2,,CE_29,Corona-related media coverage,
+CE_30,4098,25.95,3.95,,CE_30,other (your description),
+,,,,,GE_instr,"In the following, some situations are listed that people may experience independent of the current Corona pandemic, or experiences that may have worsened because of the pandemic. Please indicate if you are currently experiencing the following situations, or have experienced these during the past two weeks, and how burdensome these are/were to you.",
+GE_01,13152,83.29,3.13,,GE_1,Negative political events.,
+GE_02,9755,61.78,2.91,,GE_2,"Conflicts or disagreements in family, social, or professional settings.",
+GE_03,7343,46.5,2.96,,GE_3,Financial problems.,
+GE_04,7797,49.38,3.17,,GE_4,Myself or a close person experienced physical health problems.,
+GE_05,7598,48.12,3.29,,GE_5,Myself or a close person experienced mental health problems.,
+GE_06,6771,42.88,2.89,,GE_6,"""Burdensome experiences at home or with your family (e.g., caring for/looking 
+after relatives).""",
+GE_07,9704,61.46,2.98,,GE_7,"Burdensome experiences at work, school, university, or another occupation.",
+GE_08,6773,42.89,2.49,,GE_8,"Burdensome environmental experiences (e.g., pollution, noise, unsafe neighborhood, ...).",
+GE_09,3098,19.62,2.62,,GE_9,"Conflicts with strangers (e.g., authorities, criminals).",
+GE_10,7121,45.1,3.56,,GE_10,Separation from a loved one.,
+GE_11,1684,10.66,3.85,,GE_11,Death of a loved one.,
+GE_12,1937,12.27,3.8,,GE_12,other (your description),
