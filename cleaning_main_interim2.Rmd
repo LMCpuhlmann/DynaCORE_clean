@@ -48,9 +48,8 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
-data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-#data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
+ data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+# data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 #data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 
@@ -76,10 +75,12 @@ data_text = data_text[which(!is.na(data_text$Respondent.ID)),] # remove row with
 # data_en_complete[,c(68:154,156:167)] <- lapply(data_en_complete[,c(68:154,156:167)], as.numeric) # questionnaires
 # data_en_complete$missings <- rowSums(is.na(data_en_complete[,c(68:154,156:167)]))
 
-
 # indicate missings in questionnaires
 data_en[,c(68:154,156:167)] <- lapply(data_en[,c(68:154,156:167)], as.numeric) # questionnaires
 data_en$missings <- rowSums(is.na(data_en[,c(68:154,156:167)]))
+
+# indicate missings in stress questions
+data_en$missings_stress <- rowSums(is.na(data_en[,c(125:154,156:167)]))
 
 # indicate missing data in covariates:
 data_en$missing.cov = NA
@@ -115,6 +116,7 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 
 # check what has changed between datasets 
 data_en_old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+#data_en_old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
 en_old_ten <- data_en_old[,c("Respondent.ID","What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..")]
 en_old_ten <- en_old_ten[en_old_ten$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..=="10",]
 en_new_ten <- data_en[,c("Respondent.ID","household.income")]
@@ -195,8 +197,8 @@ data_en$complete.april19[which(data_en$End.DateTime<"2020-04-19 23:59:59 CEST"&i
 
 sum(data_en$april19, na.rm=TRUE)
 sum(data_en$complete.april19, na.rm=TRUE)
-
 data_en=data_en[which(data_en$april19==1),]
+
 max(data_en$End.DateTime)
 #max(data_en$End.DateTime[data_en$End.Date=="2020-04-19 CEST"])
 
@@ -245,6 +247,10 @@ data_en$current.location[which(data_en$current.stay.out.of.town==1& data_en$miss
 # how many are not currently in Europe?
 #length(which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !=""))
 #data_en$current.stay.out.of.town.country[which(!(data_en$current.stay.out.of.town.country %in% Europe) & data_en$current.stay.out.of.town.country !="")]
+
+# indicate missing data in first covariates (age, ...):
+# data_en$missing.cov.num = rowSums(which(data_en[,c(3:8,10:22,39,52:67)])=="") 
+
 ```
 
 Format covariates
@@ -275,6 +281,11 @@ data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date,
 data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.status.date), tz = "Europe/Berlin", format="%Y-%m-%d") # date as POSIXlt
 ```
 
+```{r descriptives, include=FALSE}
+length(which(!is.na(data_en$missing.cov)))
+length(which(data_en$missings_stress[is.na(data_en$complete.april19)]==0)) # all but 56 incomplete cases miss stress data
+#rowSums(!is.na(data_en[which(is.na(data_en$complete.april19)),c(125:154,156:167)]))
+```
 Plausibility checks & cleaning of covariates 
 ```{r covs-cleaning, include = FALSE}
 sum(data_en$april19, na.rm=TRUE)
@@ -313,8 +324,6 @@ data_en$age[which(!is.na(data_en$complete.april19)& data_en$age< 18)]
 # exclude those resposes
 data_en$Respondent.ID[which(is.na(data_en$age))]<- NA
 data_en$Respondent.ID[which(data_en$age<18)]<- NA
-xx = which(is.na(data_en$Respondent.ID))
-if(length(xx)>0){data_en = data_en[-xx,]}
 
 #-->5 unreadable, 4 not following answering instructions, 6 under 18
 sum(data_en$april19, na.rm=TRUE)
@@ -329,6 +338,10 @@ data_en$years.of.education = as.numeric(data_en$years.of.education)
 length(which(data_en$years.of.education > data_en$age)) # indicate people with more years of education than age
 length(which(data_en$years.of.education[which(!is.na(data_en$complete.april19))] > data_en$age[which(!is.na(data_en$complete.april19))])) # 3 in complete sample
 
+# exclude those missing ID
+xx = which(is.na(data_en$Respondent.ID))
+if(length(xx)>0){data_en = data_en[-xx,]}
+
 for(i in 1:length(data_en$Respondent.ID)){
   if (!is.na(data_en$years.of.education[i])) {
     if(data_en$years.of.education[i] > data_en$age[i]){
@@ -342,7 +355,7 @@ for(i in 1:length(data_en$Respondent.ID)){
 
 # check fulltest answers to make sure this was not due to typos or nor summing the total years of 
 data_en$years.of.education.fulltext[which(!is.na(data_en$years.of.education.fulltext))] # all plausible
-data_en=data_en[!is.na(data_en$years.of.education),] # excludes 4
+data_en=data_en[!is.na(data_en$years.of.education),] # excludes 4 of complete sample
 
 ####  inconsistent responses ####
 
@@ -795,7 +808,6 @@ length(which(data_en$completionTime/60>2880)) # longer than 2 days
 # very short completion time
 which(is.na(data_en$completionTime[which(!is.na(data_en$complete.april19))]))
 min(data_en$completionTime[which(!is.na(data_en$complete.april19))], na.rm = T)
-# in complete sample at least 5.75 min, which is plausible
 
 ```
 
@@ -850,7 +862,8 @@ demovar <- c("age", "gender", "nationality","country.of.residence", "current.sta
 #demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
 
 # To get the table of incomplete cases run:
-demog <- data_en[which(is.na(data_en$complete.april19)), demovar]
+# data_all[which(is.na(data_all$gender))]
+demog <- data_en[which(is.na(data_en$complete.april19)), demovar] #cleaned data incomplete
 
 demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
 demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
@@ -866,7 +879,7 @@ demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" =
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
 demog$people.in.household = revalue(demog$people.in.household, c("2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
 demog$household.income = revalue(demog$household.income, c("2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
-demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English", "ja"="English", "ar"="Arabic", "el"="Greek", "fi"="Finnish", "hr"="Croatian", "lt"="Lithuanian", "pt"="Portuguese", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian","zh_Hant_TW"="Chinese","en_GB"="English", "en_US"="English" ))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English", "ja"="English", "ar"="Arabic", "el"="Greek", "fi"="Finnish", "hr"="Croatian", "lt"="Lithuanian", "pt"="Portuguese", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian","zh_Hant_TW"="Chinese","en_GB"="English", "en_US"="English", "th"="English" ))
 
 demog$survey.language = droplevels(demog$survey.language)
 
