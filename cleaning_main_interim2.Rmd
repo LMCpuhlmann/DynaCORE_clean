@@ -48,7 +48,7 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
- data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 # data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 #data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
@@ -718,6 +718,15 @@ length(which(mental.health$complete==1))
 length(which(nchar(data_en$mental.health.details)>0))
 length(which(data_en$diagnosed.mental.health==0)) # all who said yes specified their condition
 
+mental.health.new = read.delim("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE_diagnosis.txt")
+data_en = merge(data_en, mental.health.new, by=("Respondent.ID"), all.x = TRUE)
+x = merge(data_en, mental.health.new, by=("Respondent.ID"), all.x = TRUE)
+x = subset(x, x$diagnosis==1)
+df = data.frame(ID = x$Respondent.ID,
+                Diagnosis = x$diagnosis,
+                complete = x$complete.april19
+)
+write.csv(df, "diagnosed_participants.csv")
 #mental.health.old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/mental.health.csv")
 #mental.health.old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/mental.health.csv")
 # 
@@ -1206,7 +1215,19 @@ formattable(matrix.cor$r)
 df <- as.data.frame(matrix.cor$r)
 df <- round(df, 2)
 
+length(which(data_en$diagnosis[which(data_en$complete.april19==1)]==1))
+length(which(data_en$diagnosed.mental.health[which(data_en$complete.april19==1)]==0))
+data_en.complete = data_en[which(data_en$complete.april19==1),]
 
+mean(data_en.complete$P) #14.9592
+mean(data_en.complete$P[which(data_en.complete$diagnosis==1)]) # 17.67727
+sd(data_en.complete$P[which(data_en.complete$diagnosis==1)]) # 6.90
+mean(data_en.complete$P[which(is.na(data_en.complete$diagnosis)|data_en.complete$diagnosis==0)]) #14.88
+sd(data_en.complete$P[which(is.na(data_en.complete$diagnosis)|data_en.complete$diagnosis==0)]) #14.88
+
+data_en.complete$diagnosis[which(is.na(data_en.complete$diagnosis))]<-0
+
+t.test(data_en.complete$P~data_en.complete$diagnosis)
 # #means for diagnosed and non diagnosed cases:
 # 
 # complete.diagnosed <- read.csv("Complete_psych_diagnosis_N1039.csv", header=F)
