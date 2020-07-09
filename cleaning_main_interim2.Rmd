@@ -8,7 +8,6 @@ output:
     theme: united
 ---
 to do:
-- double check household income exclusion
 - update mental health for those 'officially' diagnosed
 
 Notes:
@@ -48,10 +47,10 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
 # load data - currently set up to work with owncloud. Data must have 171 columns!
 
 # user-specific path [change accordingly]:
-data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-# data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
-data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
-#data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
+# data_en = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+ data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
+# data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
+data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 
 data_en = rename(data_en) #rename variables
 data_text = rename(data_text) #rename variables
@@ -115,8 +114,8 @@ table(test$income[test$check_income_text=="â‚¬25,000-â‚¬49,999"])
 #1  409 2045 
 
 # check what has changed between datasets 
-data_en_old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
-#data_en_old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
+# data_en_old = read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/DynaCORE - the DynaMORE study on psychological responses to the Corona.csv", sep = ",", stringsAsFactors = FALSE)
+data_en_old = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE - the DynaMORE study on psychological responses to the Corona-5.csv", sep = ",", stringsAsFactors = FALSE)
 en_old_ten <- data_en_old[,c("Respondent.ID","What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..")]
 en_old_ten <- en_old_ten[en_old_ten$What.is.your.approximate.average.annual.household.income..please.estimate.in.Euro..=="10",]
 en_new_ten <- data_en[,c("Respondent.ID","household.income")]
@@ -281,10 +280,17 @@ data_en$infection.test.status.date = as.Date(data_en$infection.test.status.date,
 data_en$infection.test.status.date = as.POSIXlt(paste(data_en$infection.test.status.date), tz = "Europe/Berlin", format="%Y-%m-%d") # date as POSIXlt
 ```
 
-```{r descriptives, include=FALSE}
+```{r descriptives-missings, include=FALSE}
 length(which(!is.na(data_en$missing.cov)))
+length(which(data_en$missings_stress>0))
 length(which(data_en$missings_stress[is.na(data_en$complete.april19)]==0)) # all but 56 incomplete cases miss stress data
+length(which(data_en$missings[is.na(data_en$complete.april19)]==0)) # all but 56 incomplete cases miss stress data
+length(which(data_en$missing.cov[is.na(data_en$complete.april19)&data_en$missings==0]==1)) # all but 56 incomplete cases miss stress data
+
+
+#data_en$complete.april19[which(data_en$End.DateTime<"2020-04-19 23:59:59 CEST"&is.na(data_en$missing.cov)&data_en$missings==0)]=1
 #rowSums(!is.na(data_en[which(is.na(data_en$complete.april19)),c(125:154,156:167)]))
+# at this point, n = 26348
 ```
 Plausibility checks & cleaning of covariates 
 ```{r covs-cleaning, include = FALSE}
@@ -441,6 +447,29 @@ sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)
 # frequency table of 10 most frequent countries
 sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 
+```
+
+```{r, mental-health-data, include=FALSE}
+# tmp = data_en[which(data_en$diagnosed.mental.health==0),]
+# data_en_mhealth = data.frame(ID = tmp$Respondent.ID,
+#                              diagnosis = tmp$diagnosed.mental.health,
+#                              complete = tmp$complete.april19)
+# 
+# write.csv(data_en_mhealth, "diagnosed_participants_4231.csv")
+# # compare to old missing mental health diagnosis:
+# x = data_en$Respondent.ID[which(data_en$diagnosed.mental.health=="")]
+# data_en_new=data_en
+# load("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/cleaning/data_en_19.04.RData")
+# data_en_new$diagnosed.mental.health[which(data_en_new$Respondent.ID=="11438710356")]
+# data_en$diagnosed.mental.health[which(data_en$Respondent.ID=="11438710356")]
+# 
+# length(which(!is.na(data_en$complete.eu)))
+# y = data_en$Respondent.ID[which(!is.na(data_en$complete.eu)&data_en$diagnosed.mental.health=="")]
+# length(which(y %in% x))
+# y[which(!(y %in% x))]
+# 
+# table(data_en$diagnosed.mental.health[which(!is.na(data_en$complete.eu))])
+# all but 11438710356 are in there, who seems to have done the survey a second time. Inital completion date was 23/3; in second pull its 14/4
 ```
 
 Income coding was changed in-between survey responses, for this interim analysis drop all participants with answer option 1
