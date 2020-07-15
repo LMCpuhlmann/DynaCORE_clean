@@ -51,6 +51,8 @@ numextract <- function(string){str_extract(string, "\\-*\\d+\\.*\\d*")}
  data_en = read.csv("C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total.csv", sep = ",", stringsAsFactors = FALSE)
 # data_text <- read.csv("C:/Users/Matze/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
 data_text <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/DynaCORE-C_total_string.csv",sep = ",", stringsAsFactors = FALSE)
+diagnoses <- read.csv("C:/Users/Nutzer/ownCloud/data/DynaCORE_C/InterimAnalysis2/mental_health_diagnosis_final.csv", sep = "", header = FALSE)
+colnames(diagnoses) = c("Respondent.ID", "diagnosis.new")
 
 data_en = rename(data_en) #rename variables
 data_text = rename(data_text) #rename variables
@@ -450,6 +452,13 @@ sort( table(unlist(data_en$country.of.residence)),decreasing=TRUE)[1:10]
 ```
 
 ```{r, mental-health-data, include=FALSE}
+# at this point, 4231 diagnosed mental health
+length(which(data_en$complete.april19==1)) - 541
+# x = data_en$Respondent.ID[which(data_en$diagnosed.mental.health==0)]
+# length(which(diagnoses$Respondent.ID %in% x))
+# diagnoses$Respondent.ID=as.factor(diagnoses$Respondent.ID)
+# data_en = merge(data_en, diagnoses, by=c("Respondent.ID"), all.x = TRUE)
+
 # tmp = data_en[which(data_en$diagnosed.mental.health==0),]
 # data_en_mhealth = data.frame(ID = tmp$Respondent.ID,
 #                              diagnosis = tmp$diagnosed.mental.health,
@@ -897,11 +906,11 @@ demovar <- c("age", "gender", "nationality","country.of.residence", "current.sta
              "household.income", "relationship.status", "people.in.household", "diagnosed.mental.health",
              "risk.group", "infection.test.status", "quarantine.status", "opinion.about.authorities.measures",
              "adherence.to.recommended.procedures", "health.status", "people.in.household.under.18", "occupation", "occupational.status", "X.0", "X", "X.1", "X.2", "X.3", "X.4", "X.5", "X.6", "X.7", "X.8", "X.9" , "X.10" , "X.11" , "X.12" , "X.13" , "X.14" , "X.15" , "X.16" , "X.00" , "X.17" , "X.18" , "X.19" , "X.20" , "X.21" , "X.22" , "X.23" , "X.24" , "X.25" , "X.26" ,"X.27", "survey.language")
-#demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
+demog <- data_en[which(!is.na(data_en$complete.april19)), demovar]
 
 # To get the table of incomplete cases run:
 # data_all[which(is.na(data_all$gender))]
-demog <- data_en[which(is.na(data_en$complete.april19)), demovar] #cleaned data incomplete
+# demog <- data_en[which(is.na(data_en$complete.april19)), demovar] #cleaned data incomplete
 
 demog$people.in.household <- factor(demog$people.in.household, levels = c("1", "2", "3", "4", "0"))
 demog$quarantine.status <- factor(demog$quarantine.status, levels = c("1", "2", "3", "4", "0"))
@@ -917,7 +926,7 @@ demog$quarantine.status = revalue(demog$quarantine.status, c("1" = "none", "2" =
 demog$relationship.status = revalue(demog$relationship.status, c("1" = "married", "2" = "widowed", "3" = "divorced", "4" = "separated", "5" = "in a domestic partnership or civil union", "6" = "in a steady relationship living together", "7" = "in a steady relationship living apart", "8" = "single", "9" ="other"))
 demog$people.in.household = revalue(demog$people.in.household, c("2" = "2", "3" = "3-4", "4" = "5-6", "0"="more than 6"))
 demog$household.income = revalue(demog$household.income, c("2"= "0-4.999", "3" = "5.000-9.999", "4" = "10.000-14.999", "5" = "15.000-24.999", "6" = "25.000-49.999", "7" ="50.000-74.999", "8" = "75.000-99.999", "9" ="100.000-124.999", "11" ="125.000-149.999", "12" ="150.000-174.999", "13" ="175.000-200.000", "14" = "> 200.000"))
-demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "English", "da" = "English", "no" = "English", "ja"="English", "ar"="Arabic", "el"="Greek", "fi"="Finnish", "hr"="Croatian", "lt"="Lithuanian", "pt"="Portuguese", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian","zh_Hant_TW"="Chinese","en_GB"="English", "en_US"="English", "th"="English" ))
+demog$survey.language = revalue(demog$survey.language, c("de" = "German", "en" = "English", "es" = "Spanish", "et" = "Estonian", "fr" = "French", "he" = "Hebrew", "hu" = "Hungarian", "it" = "Italian", "nl" = "Dutch", "pl" = "Polish", "sk" = "Slovak", "zh_Hant" = "Chinese", "cs" = "Czech", "da" = "Danish", "no" = "Norwegian", "ja"="English", "ar"="Arabic", "el"="Greek", "fi"="Finnish", "hr"="Croatian", "lt"="Lithuanian", "pt"="Portuguese", "sr"="Serbian", "sv"="Swedish","uk"="Ukrainian","zh_Hant_TW"="Chinese","en_GB"="English", "en_US"="English", "th"="English" ))
 
 demog$survey.language = droplevels(demog$survey.language)
 
@@ -1210,6 +1219,19 @@ data_en$people.in.household <- revalue(data_en$people.in.household, c("0" = "6")
 data_en$people.in.household <- factor(data_en$people.in.household, levels = c("1", "2", "3", "4", "6"), order = FALSE)
 data_en$people.in.household = as.numeric(data_en$people.in.household)
 data_en$health.status = as.numeric(data_en$health.status)
+
+data_en = merge(data_en, diagnoses, by = "Respondent.ID", all.x = TRUE)
+
+# count diagnosed individuals and confirm with manually checked diagnoses
+length(which(data_en$diagnosed.mental.health==0))
+length(which(data_en$diagnosed.mental.health[which(data_en$complete.april19==1)]==0))
+
+length(which(!is.na(data_en$diagnosis.new)))
+length(which(!is.na(data_en$diagnosis.new[which(data_en$complete.april19==1)])))
+table(data_en$diagnosis.new[which(data_en$diagnosed.mental.health==0&data_en$complete.april19==1)])
+#length(which(data_en$diagnosis.new[which(data_en$complete.april19==1)]==1))
+#length(which(data_en$diagnosis.new[which(data_en$complete.april19==1)]==0))
+
 save(data_en, file = "C:/Users/Nutzer/ownCloud/DynaCORE_C/InterimAnalysis2/data_en2_28_06.RData")
 ```
 
@@ -1257,6 +1279,16 @@ sd(data_en.complete$P[which(is.na(data_en.complete$diagnosis)|data_en.complete$d
 data_en.complete$diagnosis[which(is.na(data_en.complete$diagnosis))]<-0
 
 t.test(data_en.complete$P~data_en.complete$diagnosis)
+
+## with updated diagnosis:
+data_en.complete$diagnosis.new[which(is.na(data_en.complete$diagnosis.new))]=0
+mean(data_en.complete$P[which(data_en.complete$diagnosis.new==1)]) # 17.67776
+sd(data_en.complete$P[which(data_en.complete$diagnosis.new==1)]) # 6.90
+mean(data_en.complete$P[which(data_en.complete$diagnosis.new==0)]) # 14.88447
+sd(data_en.complete$P[which(data_en.complete$diagnosis.new==0)]) # 5.82
+
+t.test(data_en.complete$P~data_en.complete$diagnosis.new)
+
 # #means for diagnosed and non diagnosed cases:
 # 
 # complete.diagnosed <- read.csv("Complete_psych_diagnosis_N1039.csv", header=F)
